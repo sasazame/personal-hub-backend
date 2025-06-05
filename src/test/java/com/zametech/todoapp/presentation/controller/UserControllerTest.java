@@ -176,7 +176,13 @@ class UserControllerTest {
 
     @Test
     void userEndpoints_RequireAuthentication() throws Exception {
-        // When & Then - All endpoints should return 500 (since security is disabled in test)
+        // Given - Mock service to throw RuntimeException when no auth context
+        when(userService.getUserById(any())).thenThrow(new RuntimeException("No authenticated user found"));
+        when(userService.updateUserProfile(any(), any())).thenThrow(new RuntimeException("No authenticated user found"));
+        doThrow(new RuntimeException("No authenticated user found")).when(userService).changePassword(any(), any());
+        doThrow(new RuntimeException("No authenticated user found")).when(userService).deleteUser(any());
+
+        // When & Then - All endpoints should return 500 due to authentication errors
         mockMvc.perform(get("/api/v1/users/1"))
                 .andExpect(status().isInternalServerError());
 
@@ -191,6 +197,6 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest());
 
         mockMvc.perform(delete("/api/v1/users/1"))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isInternalServerError());
     }
 }

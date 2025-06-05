@@ -24,6 +24,9 @@ public class UserController {
     public ResponseEntity<UserResponse> getUserProfile(@PathVariable Long id) {
         log.info("Getting user profile for id: {}", id);
         User user = userService.getUserById(id);
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
         UserResponse response = mapToUserResponse(user);
         return ResponseEntity.ok(response);
     }
