@@ -1,7 +1,7 @@
 # アーキテクチャ設計書
 
 ## 概要
-本プロジェクトは、ヘキサゴナルアーキテクチャ（ポート&アダプターパターン）を採用したSpring Boot製TODOアプリケーションです。
+本プロジェクトは、ヘキサゴナルアーキテクチャ（ポート&アダプターパターン）を採用したSpring Boot製Personal Hub統合アプリケーションです。TODO管理、カレンダー、ノート、分析機能を統合的に提供します。
 
 ## アーキテクチャ図
 ```
@@ -33,7 +33,8 @@
 │                   Domain Layer                          │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────────┐    │
 │  │ Model       │ │ Repository  │ │ Domain Service  │    │
-│  │ (User,Todo) │ │ Interface   │ │                 │    │
+│  │ (User,Todo, │ │ Interface   │ │                 │    │
+│  │ Event,Note) │ │             │ │                 │    │
 │  └─────────────┘ └─────────────┘ └─────────────────┘    │
 └─────────────────────┬───────────────────────────────────┘
                       │
@@ -81,9 +82,9 @@
 - 技術的な設定
 
 **主要コンポーネント**:
-- `TodoEntity`, `UserEntity`: JPA エンティティ
-- `TodoRepositoryImpl`, `UserRepositoryImpl`: リポジトリ実装
-- `TodoJpaRepository`, `UserJpaRepository`: Spring Data JPA
+- `TodoEntity`, `UserEntity`, `EventEntity`, `NoteEntity`: JPA エンティティ
+- `TodoRepositoryImpl`, `UserRepositoryImpl`, `EventRepositoryImpl`, `NoteRepositoryImpl`: リポジトリ実装
+- `TodoJpaRepository`, `UserJpaRepository`, `EventJpaRepository`, `NoteJpaRepository`: Spring Data JPA
 - `SecurityConfig`: セキュリティ設定
 - Flyway マイグレーション: データベーススキーマ管理
 
@@ -115,7 +116,11 @@ HTTP Request → Security Filter → Controller → Service → Repository Inter
 1. APIリクエスト + JWT → JwtAuthenticationFilter
 2. トークン検証 → JwtService
 3. ユーザー情報設定 → SecurityContext
-4. アクセス制御 → TodoService (所有者チェック)
+4. アクセス制御 → 各Service (所有者チェック)
+   - TodoService: TODO所有者チェック
+   - EventService: イベント所有者チェック
+   - NoteService: ノート所有者チェック
+   - AnalyticsService: ユーザーデータのみ集計
 ```
 
 ## 設計原則
@@ -152,9 +157,10 @@ HTTP Request → Security Filter → Controller → Service → Repository Inter
 - **ツール**: SpringBootTest + MockMvc + H2
 - **テスト内容**:
   - 認証・認可フロー
-  - TODO CRUD操作とアクセス制御
+  - TODO/カレンダー/ノート CRUD操作とアクセス制御
   - HTTPステータスコード検証
-- **例**: `AuthenticationIntegrationTest`, `TodoIntegrationTest`
+  - 分析機能のデータ集計検証
+- **例**: `AuthenticationIntegrationTest`, `TodoIntegrationTest`, `CalendarIntegrationTest`, `NoteIntegrationTest`
 
 #### 3. セキュリティテスト
 - **対象**: 認証・認可機能
@@ -175,8 +181,10 @@ HTTP Request → Security Filter → Controller → Service → Repository Inter
 - **並列実行**: 各テストクラスが独立して実行可能
 
 ## 今後の拡張予定
-1. **キャッシュ**: Redis, Spring Cache
-2. **メッセージング**: RabbitMQ, Spring AMQP  
+1. **キャッシュ**: Redis, Spring Cache（分析データのキャッシュ）
+2. **メッセージング**: RabbitMQ, Spring AMQP（リマインダー通知）
 3. **監視**: Spring Boot Actuator, Micrometer
-4. **検索**: Elasticsearch
+4. **検索**: Elasticsearch（全文検索）
 5. **API仕様**: OpenAPI/Swagger
+6. **ファイルストレージ**: S3互換ストレージ（ノート添付ファイル）
+7. **バッチ処理**: Spring Batch（定期タスク生成、統計集計）

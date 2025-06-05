@@ -62,7 +62,7 @@ src/main/java/com/zametech/todoapp/
 
 | フォルダ | 用途 | 現在の状況 | 将来の使用例 |
 |---------|------|-----------|------------|
-| `service/` | ビジネスロジック | ✅ 実装済み | TodoService, UserService |
+| `service/` | ビジネスロジック | ✅ 実装済み | TodoService, UserService, EventService, NoteService |
 | `dto/` | アプリケーション層専用DTO | 📦 空フォルダ | 複合データ転送オブジェクト |
 
 #### `application/dto/` の将来的な使用例
@@ -87,7 +87,17 @@ public record TodoStatistics(
 public record UserActivitySummaryDto(
     User user,
     List<Todo> recentTodos,
+    List<Event> upcomingEvents,
+    List<Note> recentNotes,
     UserProductivityMetrics metrics
+) {}
+
+// 統合ダッシュボード用DTO
+public record DashboardDto(
+    TodoSummary todoSummary,
+    EventSummary eventSummary,
+    NoteSummary noteSummary,
+    List<ActivityTrend> trends
 ) {}
 ```
 
@@ -142,6 +152,21 @@ public class TodoMapper {
             .toList();
     }
 }
+
+@Component
+public class DashboardMapper {
+    
+    public DashboardResponse toDashboardResponse(DashboardDto dto) {
+        return DashboardResponse.builder()
+            .todoSummary(toTodoSummaryResponse(dto.todoSummary()))
+            .eventSummary(toEventSummaryResponse(dto.eventSummary()))
+            .noteSummary(toNoteSummaryResponse(dto.noteSummary()))
+            .trends(dto.trends().stream()
+                .map(this::toActivityTrendResponse)
+                .toList())
+            .build();
+    }
+}
 ```
 
 ## 空フォルダの設計思想
@@ -178,9 +203,10 @@ public class TodoMapper {
 |---------------|----------|----------|
 | API用DTO | `presentation/dto/` | 外部との通信に使用 |
 | ビジネスロジック用DTO | `application/dto/` | 複数エンティティの組み合わせ |
-| ドメインモデル | `domain/model/` | ビジネス概念を表現 |
+| ドメインモデル | `domain/model/` | ビジネス概念を表現（Event, Note等） |
 | 変換ロジック | `presentation/mapper/` | 複雑なDTO変換 |
 | ユーティリティ | `common/util/` | 横断的な処理 |
+| 分析ロジック | `application/service/` | AnalyticsService等 |
 
 ### コーディング規約
 
@@ -240,6 +266,8 @@ public record UserProductivityReportDto(
     User user,
     Period period,
     List<Todo> completedTodos,
+    List<Event> attendedEvents,
+    List<Note> createdNotes,
     ProductivityMetrics metrics
 ) {}
 
@@ -248,6 +276,27 @@ public record UserProductivityReportDto(
 public class DateRangeUtils {
     public static List<LocalDate> generateDateRange(Period period) {
         // 日付範囲の生成ロジック
+    }
+}
+```
+
+### シナリオ3: カレンダー統合機能
+
+```java
+// application/dto/
+public record CalendarViewDto(
+    LocalDate startDate,
+    LocalDate endDate,
+    List<Event> events,
+    List<Todo> dueTodos,
+    Map<LocalDate, DailySummary> dailySummaries
+) {}
+
+// presentation/mapper/
+@Component
+public class CalendarMapper {
+    public CalendarViewResponse toCalendarViewResponse(CalendarViewDto dto) {
+        // カレンダービューへの変換
     }
 }
 ```

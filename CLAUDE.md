@@ -1,7 +1,7 @@
 # Claude Code 協働開発ガイドライン
 
 ## プロジェクト概要
-Personal Hub アプリケーション - バックエンド API
+Personal Hub 統合アプリケーション - バックエンド API
 - **技術スタック**: Spring Boot 3.3+, Java 21, PostgreSQL, Maven
 - **アーキテクチャ**: ヘキサゴナルアーキテクチャ
 - **目的**: 堅牢でスケーラブルなRESTful 個人用ハブ管理API
@@ -67,7 +67,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 **ヘキサゴナルアーキテクチャ** を採用し、各層の責務を明確に分離。
 
 ```
-src/main/java/com/zametech/personalhub/
+src/main/java/com/zametech/todoapp/
 ├── common/           # 共通コンポーネント
 ├── domain/           # ドメイン層（ビジネスルール）
 ├── application/      # アプリケーション層（ユースケース）
@@ -81,7 +81,7 @@ src/main/java/com/zametech/personalhub/
 - **ベースURL**: `/api/v1`
 - **認証**: JWT Bearer Token（一部エンドポイントを除く）
 - **認証不要**: `/auth/register`, `/auth/login`
-- **認証必須**: `/todos/**`, `/calendar/**`, `/notes/**`, `/analytics/**`（ユーザーは自分のデータのみアクセス可能）
+- **認証必須**: `/todos/**`, `/calendar/**`, `/notes/**`, `/analytics/**`, `/users/**`（ユーザーは自分のデータのみアクセス可能）
 - **CORS**: localhost:3000許可、適切なヘッダー設定
 - **エラーレスポンス**: 統一形式（401, 403, 404等）
 
@@ -121,6 +121,7 @@ src/main/java/com/zametech/personalhub/
 - Java 21, Maven 3.8+, PostgreSQL 16+
 - application.yml: 詳細は`docs/`参照
 - DB接続: localhost:5432/personalhub (personalhub/personalhub)
+- ディレクトリ名: personal-hub-backend（todo-app-backendからフォーク）
 
 ## 重要な実装パターン
 1. **Repository**: インターフェース/実装分離

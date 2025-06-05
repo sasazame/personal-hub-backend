@@ -1,7 +1,8 @@
 # API仕様書
 
 ## 概要
-TODO管理アプリケーションのRESTful API仕様
+Personal Hub アプリケーションのRESTful API仕様
+統合型個人管理システムで、TODO、カレンダー、ノート、分析機能を提供
 
 ## ベース情報
 - **ベースURL**: `http://localhost:8080/api/v1`
@@ -602,10 +603,180 @@ curl -X PUT http://localhost:8080/api/v1/users/1/password \
   }'
 ```
 
+## 🔒 カレンダーエンドポイント（認証必須）
+
+### 15. イベント作成
+```
+POST /api/v1/calendar/events
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**リクエストボディ**:
+```json
+{
+  "title": "会議",
+  "description": "定例会議",
+  "startDate": "2024-12-31T10:00:00",
+  "endDate": "2024-12-31T11:00:00",
+  "location": "会議室A",
+  "isAllDay": false,
+  "reminder": 15
+}
+```
+
+**レスポンス** (201 Created):
+```json
+{
+  "id": 1,
+  "title": "会議",
+  "description": "定例会議",
+  "startDate": "2024-12-31T10:00:00",
+  "endDate": "2024-12-31T11:00:00",
+  "location": "会議室A",
+  "isAllDay": false,
+  "reminder": 15,
+  "createdAt": "2024-01-01T09:00:00+09:00",
+  "updatedAt": "2024-01-01T09:00:00+09:00"
+}
+```
+
+### 16. イベント一覧取得
+```
+GET /api/v1/calendar/events
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**クエリパラメータ**:
+- `startDate`: 開始日（YYYY-MM-DD）
+- `endDate`: 終了日（YYYY-MM-DD）
+- `page`: ページ番号（デフォルト: 0）
+- `size`: 1ページあたりの件数（デフォルト: 20）
+
+**レスポンス** (200 OK):
+認証済みユーザーのイベントのみが返されます。
+
+## 🔒 ノートエンドポイント（認証必須）
+
+### 17. ノート作成
+```
+POST /api/v1/notes
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**リクエストボディ**:
+```json
+{
+  "title": "アイデアメモ",
+  "content": "新しいプロジェクトのアイデア...",
+  "tags": ["アイデア", "プロジェクト"]
+}
+```
+
+**レスポンス** (201 Created):
+```json
+{
+  "id": 1,
+  "title": "アイデアメモ",
+  "content": "新しいプロジェクトのアイデア...",
+  "tags": ["アイデア", "プロジェクト"],
+  "createdAt": "2024-01-01T09:00:00+09:00",
+  "updatedAt": "2024-01-01T09:00:00+09:00"
+}
+```
+
+### 18. ノート検索
+```
+GET /api/v1/notes/search
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**クエリパラメータ**:
+- `query`: 検索キーワード
+- `tags`: タグフィルター（カンマ区切り）
+- `page`: ページ番号（デフォルト: 0）
+- `size`: 1ページあたりの件数（デフォルト: 20）
+
+**レスポンス** (200 OK):
+認証済みユーザーのノートのみが返されます。
+
+## 🔒 分析エンドポイント（認証必須）
+
+### 19. 生産性ダッシュボード取得
+```
+GET /api/v1/analytics/dashboard
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**クエリパラメータ**:
+- `period`: 期間（week, month, year）
+- `startDate`: 開始日（YYYY-MM-DD）
+- `endDate`: 終了日（YYYY-MM-DD）
+
+**レスポンス** (200 OK):
+```json
+{
+  "period": "month",
+  "todoStats": {
+    "total": 50,
+    "completed": 35,
+    "inProgress": 10,
+    "pending": 5,
+    "completionRate": 0.7
+  },
+  "eventStats": {
+    "total": 20,
+    "upcoming": 5,
+    "past": 15
+  },
+  "noteStats": {
+    "total": 100,
+    "recentlyUpdated": 10,
+    "topTags": ["アイデア", "プロジェクト", "メモ"]
+  },
+  "productivityTrends": [
+    {
+      "date": "2024-01-01",
+      "tasksCompleted": 5,
+      "eventsAttended": 2,
+      "notesCreated": 3
+    }
+  ]
+}
+```
+
+### 20. TODOアクティビティ統計
+```
+GET /api/v1/analytics/todos/activity
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**クエリパラメータ**:
+- `period`: 期間（day, week, month, year）
+- `groupBy`: グループ化（status, priority, date）
+
+**レスポンス** (200 OK):
+```json
+{
+  "period": "month",
+  "summary": {
+    "created": 20,
+    "completed": 15,
+    "averageCompletionTime": "3.5 days"
+  },
+  "breakdown": [
+    {
+      "label": "HIGH",
+      "count": 8,
+      "percentage": 0.4
+    }
+  ]
+}
+```
+
 ## 今後の機能拡張予定
-1. **検索機能**: タイトル・説明での部分一致検索
-2. **カテゴリー・タグ**: TODO の分類機能
-3. **一括操作**: 複数TODO の一括更新・削除
-4. **ファイル添付**: TODO へのファイル添付機能
-5. **通知機能**: 期限間近の TODO 通知
+1. **統合検索**: 全機能横断の検索機能
+2. **データエクスポート**: CSV、PDF形式でのエクスポート
+3. **定期タスク**: 繰り返しタスクの自動生成
+4. **コラボレーション**: タスクやノートの共有機能
+5. **AI提案**: タスク優先度やスケジュールの最適化提案
 6. **OpenAPI**: Swagger UI での API ドキュメント
