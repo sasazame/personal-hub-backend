@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.zametech</groupId>
-	<artifactId>todoapp</artifactId>
+	<artifactId>personal-hub</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>TodoApp</name>
-	<description>TODO Application Backend API</description>
+	<name>PersonalHub</name>
+	<description>Personal Hub Application Backend API</description>
 	<url/>
 	<licenses>
 		<license/>

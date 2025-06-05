@@ -84,7 +84,7 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
 本プロジェクトは **ヘキサゴナルアーキテクチャ** に基づいて設計されています。
 
 ```
-src/main/java/com/zametech/todoapp/
+src/main/java/com/zametech/personalhub/
 ├── common/           # 共通コンポーネント
 ├── domain/           # ドメイン層（ビジネスルール）
 ├── application/      # アプリケーション層（ユースケース）
