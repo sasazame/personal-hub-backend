@@ -71,7 +71,7 @@ management:
 logging:
   level:
     root: INFO
-    com.example.todoapp: DEBUG
+    com.zametech.todoapp: DEBUG
     org.springframework.web: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE

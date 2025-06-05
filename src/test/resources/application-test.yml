@@ -21,14 +21,12 @@ spring:
     baseline-version: 0
     clean-on-validation-error: true
 
-app:
-  security:
-    jwt:
-      secret-key: test-secret-key-that-is-at-least-256-bits-long-for-HS256-algorithm-security
-      expiration: 3600000 # 1 hour for tests
+jwt:
+  secret: test-secret-key-that-is-at-least-256-bits-long-for-HS256-algorithm-security
+  expiration: 3600000 # 1 hour for tests
 
 logging:
   level:
-    com.example.todoapp: DEBUG
+    com.zametech.todoapp: DEBUG
     org.springframework.security: DEBUG
     org.springframework.web: DEBUG

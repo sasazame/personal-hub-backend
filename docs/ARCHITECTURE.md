@@ -1,7 +1,7 @@
 # アーキテクチャ設計書
 
 ## 概要
-本プロジェクトは、ヘキサゴナルアーキテクチャ（ポート&アダプターパターン）を採用したSpring Boot製TODOアプリケーションです。
+本プロジェクトは、ヘキサゴナルアーキテクチャ（ポート&アダプターパターン）を採用したSpring Boot製Personal Hub統合アプリケーションです。TODO管理、カレンダー、ノート、分析機能を統合的に提供します。
 
 ## アーキテクチャ図
 ```
@@ -33,7 +33,8 @@
 │                   Domain Layer                          │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────────┐    │
 │  │ Model       │ │ Repository  │ │ Domain Service  │    │
-│  │ (User,Todo) │ │ Interface   │ │                 │    │
+│  │ (User,Todo, │ │ Interface   │ │                 │    │
+│  │ Event,Note) │ │             │ │                 │    │
 │  └─────────────┘ └─────────────┘ └─────────────────┘    │
 └─────────────────────┬───────────────────────────────────┘
                       │
@@ -48,61 +49,42 @@
 
 ## レイヤー詳細
 
+> 📁 **詳細なフォルダ構成**: [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) を参照
+
 ### 1. Presentation Layer
 **責務**: 外部とのインターフェース
-- **Controller**: HTTP リクエスト/レスポンス処理
-- **Request/Response DTO**: データ転送オブジェクト
-- **Mapper**: DTO ⇔ Domain Model 変換
+- HTTP リクエスト/レスポンス処理
+- DTO による データ転送
+- 入力バリデーション
 
-**主要コンポーネント**:
-- `TodoController`: TODO REST APIエンドポイント
-- `AuthenticationController`: 認証APIエンドポイント
-- `CreateTodoRequest`, `UpdateTodoRequest`: TODO関連DTO
-- `RegisterRequest`, `LoginRequest`: 認証関連DTO
-- `TodoResponse`, `AuthenticationResponse`: レスポンスDTO
-
-### 2. Security Layer
+### 2. Security Layer  
 **責務**: 認証・認可、セキュリティ制御
-- **Authentication Filter**: JWTトークン検証
-- **JWT Service**: トークン生成・検証
-- **User Context**: セキュリティコンテキスト管理
-
-**主要コンポーネント**:
-- `JwtAuthenticationFilter`: JWT認証フィルター
-- `JwtService`: JWT処理サービス
-- `UserContextService`: ユーザーコンテキスト管理
-- `CustomUserDetailsService`: Spring Securityユーザー詳細サービス
+- JWT トークン検証・生成
+- セキュリティコンテキスト管理
+- アクセス制御
 
 ### 3. Application Layer
 **責務**: ビジネスロジック、ユースケース実行
-- **Service**: ビジネスルール実装
-- **Transaction管理**: データ一貫性保証
-
-**主要コンポーネント**:
-- `TodoService`: TODOのCRUD操作とアクセス制御
-- `AuthenticationService`: ユーザー登録・ログイン処理
-- `UserContextService`: 認証ユーザー情報管理
+- ビジネスルール実装
+- トランザクション管理
+- ドメインサービスの調整
 
 ### 4. Domain Layer
-**責務**: 核となるビジネスルール、他の層に依存しない
-- **Model**: ビジネス概念
-- **Repository Interface**: データアクセスの抽象化
-
-**主要コンポーネント**:
-- `Todo`, `User`: ドメインモデル
-- `TodoStatus`, `TodoPriority`: ドメインモデル（Enum）
-- `TodoRepository`, `UserRepository`: リポジトリインターフェース
+**責務**: 核となるビジネスルール（他の層に依存しない）
+- ビジネス概念のモデリング
+- ドメインルールの実装
+- データアクセスの抽象化
 
 ### 5. Infrastructure Layer
 **責務**: 外部システムとの連携
-- **Repository Implementation**: データアクセス実装
-- **Entity**: データベーステーブルマッピング
-- **Configuration**: インフラ設定
+- データベースアクセス実装
+- 外部API連携
+- 技術的な設定
 
 **主要コンポーネント**:
-- `TodoEntity`, `UserEntity`: JPA エンティティ
-- `TodoRepositoryImpl`, `UserRepositoryImpl`: リポジトリ実装
-- `TodoJpaRepository`, `UserJpaRepository`: Spring Data JPA
+- `TodoEntity`, `UserEntity`, `EventEntity`, `NoteEntity`: JPA エンティティ
+- `TodoRepositoryImpl`, `UserRepositoryImpl`, `EventRepositoryImpl`, `NoteRepositoryImpl`: リポジトリ実装
+- `TodoJpaRepository`, `UserJpaRepository`, `EventJpaRepository`, `NoteJpaRepository`: Spring Data JPA
 - `SecurityConfig`: セキュリティ設定
 - Flyway マイグレーション: データベーススキーマ管理
 
@@ -134,7 +116,11 @@ HTTP Request → Security Filter → Controller → Service → Repository Inter
 1. APIリクエスト + JWT → JwtAuthenticationFilter
 2. トークン検証 → JwtService
 3. ユーザー情報設定 → SecurityContext
-4. アクセス制御 → TodoService (所有者チェック)
+4. アクセス制御 → 各Service (所有者チェック)
+   - TodoService: TODO所有者チェック
+   - EventService: イベント所有者チェック
+   - NoteService: ノート所有者チェック
+   - AnalyticsService: ユーザーデータのみ集計
 ```
 
 ## 設計原則
@@ -171,9 +157,10 @@ HTTP Request → Security Filter → Controller → Service → Repository Inter
 - **ツール**: SpringBootTest + MockMvc + H2
 - **テスト内容**:
   - 認証・認可フロー
-  - TODO CRUD操作とアクセス制御
+  - TODO/カレンダー/ノート CRUD操作とアクセス制御
   - HTTPステータスコード検証
-- **例**: `AuthenticationIntegrationTest`, `TodoIntegrationTest`
+  - 分析機能のデータ集計検証
+- **例**: `AuthenticationIntegrationTest`, `TodoIntegrationTest`, `CalendarIntegrationTest`, `NoteIntegrationTest`
 
 #### 3. セキュリティテスト
 - **対象**: 認証・認可機能
@@ -194,8 +181,10 @@ HTTP Request → Security Filter → Controller → Service → Repository Inter
 - **並列実行**: 各テストクラスが独立して実行可能
 
 ## 今後の拡張予定
-1. **キャッシュ**: Redis, Spring Cache
-2. **メッセージング**: RabbitMQ, Spring AMQP  
+1. **キャッシュ**: Redis, Spring Cache（分析データのキャッシュ）
+2. **メッセージング**: RabbitMQ, Spring AMQP（リマインダー通知）
 3. **監視**: Spring Boot Actuator, Micrometer
-4. **検索**: Elasticsearch
+4. **検索**: Elasticsearch（全文検索）
 5. **API仕様**: OpenAPI/Swagger
+6. **ファイルストレージ**: S3互換ストレージ（ノート添付ファイル）
+7. **バッチ処理**: Spring Batch（定期タスク生成、統計集計）

@@ -1,0 +1,40 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/todoapp_test}
+    username: ${SPRING_DATASOURCE_USERNAME:todoapp}
+    password: ${SPRING_DATASOURCE_PASSWORD:todoapp}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+  
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:ThisIsAVeryLongSecretKeyForJWTTokenGenerationInTestEnvironment}
+  expiration: 86400000 # 24 hours
+
+# Logging
+logging:
+  level:
+    com.zametech.todoapp: INFO
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: INFO
+    org.hibernate.type.descriptor.sql.BasicBinder: INFO
+
+# Test-specific settings
+test:
+  security:
+    enabled: true

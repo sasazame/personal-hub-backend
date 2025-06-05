@@ -1,6 +1,9 @@
-# TODO App Backend
+# Personal Hub Backend
 
-Spring Boot + PostgreSQL で構築されたTODOアプリケーションのバックエンドAPI
+[![CI Pipeline](https://github.com/sasazame/personal-hub-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/sasazame/personal-hub-backend/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/sasazame/personal-hub-backend/branch/main/graph/badge.svg)](https://codecov.io/gh/sasazame/personal-hub-backend)
+
+Spring Boot + PostgreSQL で構築された統合型個人管理システムのバックエンドAPI
 
 ## 🚀 プロジェクト概要
 
@@ -14,11 +17,11 @@ Spring Boot + PostgreSQL で構築されたTODOアプリケーションのバッ
 ### 主な機能
 - ✅ **認証・認可**: JWT ベースの認証システム
 - ✅ **ユーザー管理**: ユーザー登録・ログイン機能
-- ✅ **TODO管理**: CRUD 操作（作成・取得・更新・削除）
-- ✅ **アクセス制御**: ユーザーは自分のTODOのみアクセス可能
-- ✅ **ステータス管理**: TODO/進行中/完了
-- ✅ **優先度設定**: 高/中/低
-- ✅ **期限日設定**: 日付指定での期限管理
+- ✅ **TODO管理**: CRUD 操作、親子タスク関係、ステータス・優先度管理
+- ✅ **カレンダー機能**: イベント管理、リマインダー設定
+- ✅ **ノート機能**: マークダウン対応ノート、タグ管理
+- ✅ **分析機能**: 生産性ダッシュボード、アクティビティ統計
+- ✅ **アクセス制御**: ユーザーは自分のデータのみアクセス可能
 - ✅ **ページネーション**: 大量データの効率的な取得
 - ✅ **セキュリティ**: エンドポイント別アクセス制御・CORS設定
 - ✅ **RESTful API**: 標準的なHTTPメソッドとステータスコード
@@ -27,11 +30,12 @@ Spring Boot + PostgreSQL で構築されたTODOアプリケーションのバッ
 
 ## 📋 目次
 1. [クイックスタート](#クイックスタート)
-2. [環境構築](#環境構築)
-3. [API 仕様](#api-仕様)
-4. [開発ガイド](#開発ガイド)
-5. [テスト](#テスト)
-6. [設計資料](#設計資料)
+2. [プロジェクト構造](#プロジェクト構造)
+3. [環境構築](#環境構築)
+4. [API 仕様](#api-仕様)
+5. [開発ガイド](#開発ガイド)
+6. [テスト](#テスト)
+7. [設計資料](#設計資料)
 
 ## ⚡ クイックスタート
 
@@ -43,13 +47,13 @@ Spring Boot + PostgreSQL で構築されたTODOアプリケーションのバッ
 ### 起動手順
 ```bash
 # 1. リポジトリをクローン
-git clone https://github.com/sasazame/todo-app-backend.git
-cd todo-app-backend
+git clone https://github.com/sasazame/personal-hub-backend.git
+cd personal-hub-backend
 
 # 2. データベース設定
-sudo -u postgres psql -c "CREATE DATABASE todoapp;"
-sudo -u postgres psql -c "CREATE USER todoapp WITH ENCRYPTED PASSWORD 'todoapp';"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE todoapp TO todoapp;"
+sudo -u postgres psql -c "CREATE DATABASE personalhub;"
+sudo -u postgres psql -c "CREATE USER personalhub WITH ENCRYPTED PASSWORD 'personalhub';"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE personalhub TO personalhub;"
 
 # 3. アプリケーション起動
 mvn spring-boot:run
@@ -59,9 +63,8 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
-    "password": "password123",
-    "firstName": "Test",
-    "lastName": "User"
+    "password": "SecurePass123!",
+    "username": "testuser"
   }'
 
 # 5. ログインしてJWTトークン取得
@@ -69,11 +72,35 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
-    "password": "password123"
+    "password": "SecurePass123!"
   }'
 ```
 
 アプリケーションは http://localhost:8080 で起動します。
+
+## 🏗️ プロジェクト構造
+
+本プロジェクトは **ヘキサゴナルアーキテクチャ** に基づいて設計されています。
+
+```
+src/main/java/com/zametech/personalhub/
+├── common/           # 共通コンポーネント
+├── domain/           # ドメイン層（ビジネスルール）
+├── application/      # アプリケーション層（ユースケース）
+├── infrastructure/   # インフラ層（外部システム連携）
+└── presentation/     # プレゼンテーション層（API）
+```
+
+### 📚 詳細ドキュメント
+- **[📁 フォルダ構成](docs/FOLDER_STRUCTURE.md)** - 各フォルダの目的と使用例
+- **[🏛️ アーキテクチャ](docs/ARCHITECTURE.md)** - 設計思想とレイヤー構成
+- **[📖 API仕様](docs/API.md)** - REST APIの詳細仕様
+
+### 主な特徴
+- **依存性の制御**: 各層の責務が明確に分離
+- **拡張性**: 新機能追加時の影響範囲を最小化
+- **テストしやすさ**: 各層を独立してテスト可能
+- **保守性**: ビジネスロジックとインフラの分離
 
 ## 🛠️ 環境構築
 
@@ -85,10 +112,10 @@ sudo apt install postgresql postgresql-contrib
 
 # データベース・ユーザー作成
 sudo -u postgres psql << EOF
-CREATE DATABASE todoapp;
-CREATE USER todoapp WITH ENCRYPTED PASSWORD 'todoapp';
-GRANT ALL PRIVILEGES ON DATABASE todoapp TO todoapp;
-ALTER DATABASE todoapp OWNER TO todoapp;
+CREATE DATABASE personalhub;
+CREATE USER personalhub WITH ENCRYPTED PASSWORD 'personalhub';
+GRANT ALL PRIVILEGES ON DATABASE personalhub TO personalhub;
+ALTER DATABASE personalhub OWNER TO personalhub;
 \q
 EOF
 ```
@@ -99,9 +126,9 @@ EOF
 ```yaml
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/todoapp
-    username: todoapp
-    password: todoapp
+    url: jdbc:postgresql://localhost:5432/personalhub
+    username: personalhub
+    password: personalhub
   jpa:
     hibernate:
       ddl-auto: validate
@@ -130,11 +157,37 @@ http://localhost:8080/api/v1
 | POST | `/todos` | TODO作成 |
 | GET | `/todos` | TODO一覧取得（ページング） |
 | GET | `/todos/{id}` | TODO取得（ID指定） |
-| GET | `/todos?status={status}` | ステータス別TODO取得 |
+| GET | `/todos/status/{status}` | ステータス別TODO取得 |
 | PUT | `/todos/{id}` | TODO更新 |
 | DELETE | `/todos/{id}` | TODO削除 |
+| GET | `/todos/{id}/children` | 子タスク一覧取得 |
 
-**注意**: TODOエンドポイントにアクセスするには、Authorizationヘッダーに`Bearer {token}`形式でJWTトークンを含める必要があります。
+#### カレンダーエンドポイント（認証必須）
+| メソッド | エンドポイント | 説明 |
+|---------|---------------|------|
+| POST | `/calendar/events` | イベント作成 |
+| GET | `/calendar/events` | イベント一覧取得 |
+| GET | `/calendar/events/{id}` | イベント取得 |
+| PUT | `/calendar/events/{id}` | イベント更新 |
+| DELETE | `/calendar/events/{id}` | イベント削除 |
+
+#### ノートエンドポイント（認証必須）
+| メソッド | エンドポイント | 説明 |
+|---------|---------------|------|
+| POST | `/notes` | ノート作成 |
+| GET | `/notes` | ノート一覧取得 |
+| GET | `/notes/{id}` | ノート取得 |
+| PUT | `/notes/{id}` | ノート更新 |
+| DELETE | `/notes/{id}` | ノート削除 |
+| GET | `/notes/search` | ノート検索 |
+
+#### 分析エンドポイント（認証必須）
+| メソッド | エンドポイント | 説明 |
+|---------|---------------|------|
+| GET | `/analytics/dashboard` | 生産性ダッシュボード |
+| GET | `/analytics/todos/activity` | TODOアクティビティ統計 |
+
+**注意**: 認証必須エンドポイントにアクセスするには、Authorizationヘッダーに`Bearer {token}`形式でJWTトークンを含める必要があります。
 
 ### リクエスト例
 ```bash
@@ -143,9 +196,8 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
-    "password": "password123",
-    "firstName": "山田",
-    "lastName": "太郎"
+    "password": "SecurePass123!",
+    "username": "yamada_taro"
   }'
 
 # 2. ログイン（レスポンスからaccessTokenを取得）
@@ -153,7 +205,7 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
-    "password": "password123"
+    "password": "SecurePass123!"
   }'
 
 # 3. TODO作成（認証必須）
@@ -194,7 +246,7 @@ gh pr create --assignee sasazame
 
 ### プロジェクト構造
 ```
-src/main/java/com/example/todoapp/
+src/main/java/com/zametech/personalhub/
 ├── common/              # 共通コンポーネント
 │   ├── config/         # 設定クラス（SecurityConfig等）
 │   ├── exception/      # 例外ハンドリング
@@ -243,9 +295,10 @@ mvn test jacoco:report
 ## 📚 設計資料
 
 ### 詳細ドキュメント
-- [アーキテクチャ設計](docs/ARCHITECTURE.md) - システム全体の設計思想
-- [データベース設計](docs/DATABASE.md) - DB スキーマと設計方針
-- [API 仕様書](docs/API.md) - 詳細な API ドキュメント
+- **[🏛️ アーキテクチャ設計](docs/ARCHITECTURE.md)** - システム全体の設計思想とレイヤー構成
+- **[📁 フォルダ構成](docs/FOLDER_STRUCTURE.md)** - プロジェクト構造と各フォルダの目的
+- **[📖 API仕様書](docs/API.md)** - REST APIの詳細仕様
+- **[🗄️ データベース設計](docs/DATABASE.md)** - DB スキーマと設計方針
 
 ### アーキテクチャ概要
 ```
@@ -280,16 +333,20 @@ mvn test jacoco:report
 ## 🚧 今後の開発予定
 
 ### 近期予定
-- [ ] カテゴリー・タグ機能
-- [ ] 検索・フィルタリング機能強化
+- [ ] イベント管理機能の完全実装
+- [ ] ノート機能の完全実装
+- [ ] 分析機能の完全実装
+- [ ] 統合検索機能
 - [ ] ファイル添付機能
-- [ ] 通知・リマインダー機能
 
 ### 中長期予定
+- [ ] 通知・リマインダー機能
 - [ ] キャッシュ機能（Redis）
 - [ ] 一括操作 API
 - [ ] OpenAPI ドキュメント自動生成
 - [ ] パフォーマンス監視・メトリクス
+- [ ] コラボレーション機能
+- [ ] AI提案機能
 
 ## 📝 ライセンス
 
@@ -305,7 +362,7 @@ mvn test jacoco:report
 
 ## 📞 サポート
 
-質問や問題がある場合は、[Issues](https://github.com/sasazame/todo-app-backend/issues) を作成してください。
+質問や問題がある場合は、[Issues](https://github.com/sasazame/personal-hub-backend/issues) を作成してください。
 
 ---
 

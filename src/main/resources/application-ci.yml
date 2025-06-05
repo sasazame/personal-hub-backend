@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: todoapp
+    
+  datasource:
+    url: jdbc:postgresql://localhost:5432/todoapp_test
+    username: todoapp
+    password: todoapp
+    driver-class-name: org.postgresql.Driver
+    
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+    
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    
+jwt:
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+  expiration: 86400000
+  
+logging:
+  level:
+    root: WARN
+    com.zametech.todoapp: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+    
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
