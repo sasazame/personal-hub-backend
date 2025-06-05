@@ -2,9 +2,9 @@ name: CI Pipeline
 
 on:
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, feat/user-management-and-task-hierarchy ]
   push:
-    branches: [ main ]
+    branches: [ main, feat/user-management-and-task-hierarchy ]
 
 permissions:
   contents: read
