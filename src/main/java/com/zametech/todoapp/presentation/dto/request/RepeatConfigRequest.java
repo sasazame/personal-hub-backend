@@ -18,8 +18,7 @@ public record RepeatConfigRequest(
     @Min(value = 1, message = "間隔は1以上で指定してください")
     Integer interval,
     
-    @Pattern(regexp = "^[1-7](,[1-7])*$", message = "曜日は1-7の範囲でカンマ区切りで指定してください")
-    String daysOfWeek,
+    List<Integer> daysOfWeek,
     
     @Min(value = 1, message = "日付は1以上で指定してください")
     Integer dayOfMonth,
@@ -35,16 +34,15 @@ public record RepeatConfigRequest(
     }
     
     /**
-     * 曜日文字列をリストに変換
+     * 曜日リストを文字列に変換（データベース保存用）
      */
-    public List<Integer> getDaysOfWeekList() {
+    public String getDaysOfWeekString() {
         if (daysOfWeek == null || daysOfWeek.isEmpty()) {
-            return List.of();
+            return null;
         }
-        return List.of(daysOfWeek.split(","))
-                .stream()
-                .map(String::trim)
-                .map(Integer::parseInt)
-                .toList();
+        return daysOfWeek.stream()
+                .map(String::valueOf)
+                .reduce((a, b) -> a + "," + b)
+                .orElse(null);
     }
 }

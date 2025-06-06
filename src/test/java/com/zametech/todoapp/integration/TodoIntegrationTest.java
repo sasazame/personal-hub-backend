@@ -106,6 +106,8 @@ class TodoIntegrationTest {
             "Test Description",
             TodoPriority.HIGH,
             LocalDate.now().plusDays(7),
+            null,
+            false,
             null
         );
 
@@ -129,6 +131,8 @@ class TodoIntegrationTest {
             "Description",
             TodoPriority.MEDIUM,
             LocalDate.now().plusDays(1),
+            null,
+            false,
             null
         );
 
@@ -144,6 +148,8 @@ class TodoIntegrationTest {
             "Another Description",
             TodoPriority.LOW,
             LocalDate.now().plusDays(2),
+            null,
+            false,
             null
         );
 
@@ -177,6 +183,8 @@ class TodoIntegrationTest {
             "Private Description",
             TodoPriority.HIGH,
             LocalDate.now(),
+            null,
+            false,
             null
         );
 
@@ -203,6 +211,8 @@ class TodoIntegrationTest {
             TodoStatus.DONE,
             TodoPriority.LOW,
             LocalDate.now(),
+            null,
+            false,
             null
         );
 
@@ -226,6 +236,8 @@ class TodoIntegrationTest {
             "Original Description",
             TodoPriority.LOW,
             LocalDate.now().plusDays(3),
+            null,
+            false,
             null
         );
 
@@ -246,6 +258,8 @@ class TodoIntegrationTest {
             TodoStatus.IN_PROGRESS,
             TodoPriority.HIGH,
             LocalDate.now().plusDays(5),
+            null,
+            false,
             null
         );
 
@@ -269,6 +283,8 @@ class TodoIntegrationTest {
             "This will be deleted",
             TodoPriority.MEDIUM,
             LocalDate.now(),
+            null,
+            false,
             null
         );
 
@@ -302,6 +318,8 @@ class TodoIntegrationTest {
             "Description 1",
             TodoPriority.HIGH,
             LocalDate.now(),
+            null,
+            false,
             null
         );
 
@@ -310,6 +328,8 @@ class TodoIntegrationTest {
             "Description 2",
             TodoPriority.MEDIUM,
             LocalDate.now(),
+            null,
+            false,
             null
         );
 
@@ -338,6 +358,8 @@ class TodoIntegrationTest {
             TodoStatus.DONE,
             TodoPriority.MEDIUM,
             LocalDate.now(),
+            null,
+            false,
             null
         );
 

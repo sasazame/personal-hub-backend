@@ -41,6 +41,15 @@ public class RepeatService {
             log.debug("Repeat period ended for todo: {}", originalTodo.getId());
             return null;
         }
+        
+        // Check if instance already exists for this date
+        List<TodoEntity> existingInstances = todoRepository.findByOriginalTodoIdAndDueDate(
+            originalTodo.getId(), nextDueDate
+        );
+        if (!existingInstances.isEmpty()) {
+            log.debug("Instance already exists for date {} for todo: {}", nextDueDate, originalTodo.getId());
+            return null;
+        }
 
         TodoEntity nextInstance = new TodoEntity(
                 originalTodo.getUserId(),
