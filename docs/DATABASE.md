@@ -65,6 +65,13 @@ TODO管理、カレンダー、ノート機能を統合的に管理
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'TODO' | ステータス |
 | priority | VARCHAR(10) | NOT NULL, DEFAULT 'MEDIUM' | 優先度 |
 | due_date | DATE | NULL | 期限日 |
+| is_repeatable | BOOLEAN | DEFAULT FALSE | 繰り返し可能フラグ |
+| repeat_type | VARCHAR(50) | NULL | 繰り返しタイプ |
+| repeat_interval | INTEGER | DEFAULT 1 | 繰り返し間隔 |
+| repeat_days_of_week | VARCHAR(20) | NULL | 繰り返し曜日（カンマ区切り） |
+| repeat_day_of_month | INTEGER | NULL | 月次繰り返し日 |
+| repeat_end_date | DATE | NULL | 繰り返し終了日 |
+| original_todo_id | BIGINT | NULL, FK → todos.id | 元繰り返しTODO ID |
 | created_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | 作成日時 |
 | updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | 更新日時 |
 
@@ -112,6 +119,10 @@ ALTER TABLE todos ADD CONSTRAINT fk_todos_user_id
 ALTER TABLE todos ADD CONSTRAINT fk_todos_parent_id 
     FOREIGN KEY (parent_id) REFERENCES todos(id) ON DELETE CASCADE;
 
+-- TODO → 元繰り返しTODO関連付け
+ALTER TABLE todos ADD CONSTRAINT fk_todos_original_todo_id 
+    FOREIGN KEY (original_todo_id) REFERENCES todos(id) ON DELETE CASCADE;
+
 -- イベント → ユーザー関連付け
 ALTER TABLE events ADD CONSTRAINT fk_events_user_id 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
@@ -134,6 +145,18 @@ ALTER TABLE todos ADD CONSTRAINT chk_status
 -- 優先度制約  
 ALTER TABLE todos ADD CONSTRAINT chk_priority
     CHECK (priority IN ('HIGH', 'MEDIUM', 'LOW'));
+
+-- 繰り返しタイプ制約
+ALTER TABLE todos ADD CONSTRAINT chk_repeat_type
+    CHECK (repeat_type IN ('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY', 'ONCE'));
+
+-- 繰り返し間隔制約
+ALTER TABLE todos ADD CONSTRAINT chk_repeat_interval
+    CHECK (repeat_interval >= 1);
+
+-- 月次繰り返し日制約
+ALTER TABLE todos ADD CONSTRAINT chk_repeat_day_of_month
+    CHECK (repeat_day_of_month >= 1 AND repeat_day_of_month <= 31);
 ```
 
 ### インデックス
@@ -149,6 +172,10 @@ CREATE INDEX idx_todos_parent_id ON todos(parent_id);
 CREATE INDEX idx_todos_user_status ON todos(user_id, status);
 CREATE INDEX idx_todos_status ON todos(status);
 CREATE INDEX idx_todos_due_date ON todos(due_date);
+CREATE INDEX idx_todos_is_repeatable ON todos(is_repeatable);
+CREATE INDEX idx_todos_user_repeatable ON todos(user_id, is_repeatable);
+CREATE INDEX idx_todos_original_todo_id ON todos(original_todo_id);
+CREATE INDEX idx_todos_original_due_date ON todos(original_todo_id, due_date);
 
 -- events テーブル
 CREATE INDEX idx_events_user_id ON events(user_id);
@@ -203,9 +230,9 @@ CREATE TRIGGER update_users_updated_at BEFORE UPDATE
   - `V3__add_user_id_to_todos.sql`: TODO-ユーザー関連付け
   - `V4__update_user_table_to_username.sql`: ユーザー名カラム追加
   - `V5__add_parent_id_to_todos.sql`: 親子TODO関係
-  - `V6__create_events_table.sql`: イベントテーブル作成（予定）
-  - `V7__create_notes_table.sql`: ノートテーブル作成（予定）
-  - `V8__create_note_tags_table.sql`: ノートタグテーブル作成（予定）
+  - `V6__create_event_table.sql`: イベントテーブル作成
+  - `V7__create_note_table.sql`: ノートテーブル作成
+  - `V8__add_repeat_fields_to_todos.sql`: TODOに繰り返し機能追加
 
 ### 設定
 ```yaml
@@ -270,21 +297,31 @@ spring:
 
 ### 実装済み機能
 1. ✅ **users**: ユーザー管理（認証用）
-2. ✅ **todos**: TODO管理（親子関係、所有者制御付き）
-3. ✅ **外部キー制約**: データ整合性保証
-4. ✅ **インデックス**: パフォーマンス最適化
+2. ✅ **todos**: TODO管理（親子関係、繰り返し機能、所有者制御付き）
+3. ✅ **events**: カレンダーイベント管理
+4. ✅ **notes**: ノート管理
+5. ✅ **外部キー制約**: データ整合性保証
+6. ✅ **インデックス**: パフォーマンス最適化
 
-### 実装予定機能
-1. 🔄 **events**: カレンダーイベント管理
-2. 🔄 **notes**: ノート管理
-3. 🔄 **note_tags**: タグ機能
+### 新規追加機能（v8）
+1. ✅ **繰り返しTODO**: 日次・週次・月次・年次の自動繰り返し
+2. ✅ **インスタンス管理**: 元TODOから生成されるインスタンスの追跡
+3. ✅ **繰り返し設定**: 間隔・曜日・終了日の詳細設定
+4. ✅ **自動生成**: 完了時の次回インスタンス自動作成
+
+### 繰り返し機能の技術仕様
+- **RepeatType**: DAILY, WEEKLY, MONTHLY, YEARLY, ONCE
+- **interval**: 繰り返し間隔（例：2週間おき）
+- **daysOfWeek**: 週次の曜日指定（1=月曜...7=日曜）
+- **dayOfMonth**: 月次の日付指定（1-31）
+- **originalTodoId**: 生成されたインスタンスと元TODOの関連
 
 ### 将来の拡張予定
 1. **attachments**: ファイル添付（ノート、TODO）
 2. **notifications**: 通知管理（リマインダー、期限通知）
-3. **recurring_tasks**: 定期タスク設定
-4. **user_preferences**: ユーザー設定（タイムゾーン、言語等）
-5. **activity_logs**: アクティビティログ（監査ログ）
+3. **user_preferences**: ユーザー設定（タイムゾーン、言語等）
+4. **activity_logs**: アクティビティログ（監査ログ）
+5. **collaboration**: タスク・ノート共有機能
 
 ### 拡張時の設計方針
 - **外部キー制約**: 参照整合性保証
