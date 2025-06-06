@@ -603,11 +603,11 @@ curl -X PUT http://localhost:8080/api/v1/users/1/password \
   }'
 ```
 
-## 🔒 カレンダーエンドポイント（認証必須）
+## 🔒 イベント（カレンダー）エンドポイント（認証必須）
 
 ### 15. イベント作成
 ```
-POST /api/v1/calendar/events
+POST /api/v1/events
 Authorization: Bearer <JWT_TOKEN>
 ```
 
@@ -616,11 +616,12 @@ Authorization: Bearer <JWT_TOKEN>
 {
   "title": "会議",
   "description": "定例会議",
-  "startDate": "2024-12-31T10:00:00",
-  "endDate": "2024-12-31T11:00:00",
+  "startDateTime": "2024-12-31T10:00:00",
+  "endDateTime": "2024-12-31T11:00:00",
   "location": "会議室A",
-  "isAllDay": false,
-  "reminder": 15
+  "allDay": false,
+  "reminderMinutes": 15,
+  "color": "#FF5722"
 }
 ```
 
@@ -630,19 +631,46 @@ Authorization: Bearer <JWT_TOKEN>
   "id": 1,
   "title": "会議",
   "description": "定例会議",
-  "startDate": "2024-12-31T10:00:00",
-  "endDate": "2024-12-31T11:00:00",
+  "startDateTime": "2024-12-31T10:00:00",
+  "endDateTime": "2024-12-31T11:00:00",
   "location": "会議室A",
-  "isAllDay": false,
-  "reminder": 15,
+  "allDay": false,
+  "reminderMinutes": 15,
+  "color": "#FF5722",
   "createdAt": "2024-01-01T09:00:00+09:00",
   "updatedAt": "2024-01-01T09:00:00+09:00"
 }
 ```
 
-### 16. イベント一覧取得
+### 16. イベント取得（ID指定）
 ```
-GET /api/v1/calendar/events
+GET /api/v1/events/{id}
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**パスパラメータ**:
+- `id`: イベント ID (Long)
+
+**レスポンス** (200 OK):
+```json
+{
+  "id": 1,
+  "title": "会議",
+  "description": "定例会議",
+  "startDateTime": "2024-12-31T10:00:00",
+  "endDateTime": "2024-12-31T11:00:00",
+  "location": "会議室A",
+  "allDay": false,
+  "reminderMinutes": 15,
+  "color": "#FF5722",
+  "createdAt": "2024-01-01T09:00:00+09:00",
+  "updatedAt": "2024-01-01T09:00:00+09:00"
+}
+```
+
+### 17. イベント一覧取得
+```
+GET /api/v1/events
 Authorization: Bearer <JWT_TOKEN>
 ```
 
@@ -654,10 +682,87 @@ Authorization: Bearer <JWT_TOKEN>
 
 **レスポンス** (200 OK):
 認証済みユーザーのイベントのみが返されます。
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "title": "会議",
+      "description": "定例会議",
+      "startDateTime": "2024-12-31T10:00:00",
+      "endDateTime": "2024-12-31T11:00:00",
+      "location": "会議室A",
+      "allDay": false,
+      "reminderMinutes": 15,
+      "color": "#FF5722",
+      "createdAt": "2024-01-01T09:00:00+09:00",
+      "updatedAt": "2024-01-01T09:00:00+09:00"
+    }
+  ],
+  "pageable": {
+    "pageNumber": 0,
+    "pageSize": 20
+  },
+  "totalElements": 1,
+  "totalPages": 1
+}
+```
+
+### 18. イベント更新
+```
+PUT /api/v1/events/{id}
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**パスパラメータ**:
+- `id`: イベント ID (Long)
+
+**リクエストボディ**:
+```json
+{
+  "title": "更新された会議",
+  "description": "更新された定例会議",
+  "startDateTime": "2024-12-31T14:00:00",
+  "endDateTime": "2024-12-31T15:00:00",
+  "location": "会議室B",
+  "allDay": false,
+  "reminderMinutes": 30,
+  "color": "#4CAF50"
+}
+```
+
+**レスポンス** (200 OK):
+```json
+{
+  "id": 1,
+  "title": "更新された会議",
+  "description": "更新された定例会議",
+  "startDateTime": "2024-12-31T14:00:00",
+  "endDateTime": "2024-12-31T15:00:00",
+  "location": "会議室B",
+  "allDay": false,
+  "reminderMinutes": 30,
+  "color": "#4CAF50",
+  "createdAt": "2024-01-01T09:00:00+09:00",
+  "updatedAt": "2024-01-01T12:00:00+09:00"
+}
+```
+
+### 19. イベント削除
+```
+DELETE /api/v1/events/{id}
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**パスパラメータ**:
+- `id`: イベント ID (Long)
+
+**レスポンス** (204 No Content):
+レスポンスボディなし
 
 ## 🔒 ノートエンドポイント（認証必須）
 
-### 17. ノート作成
+### 20. ノート作成
 ```
 POST /api/v1/notes
 Authorization: Bearer <JWT_TOKEN>
@@ -684,7 +789,61 @@ Authorization: Bearer <JWT_TOKEN>
 }
 ```
 
-### 18. ノート検索
+### 21. ノート取得（ID指定）
+```
+GET /api/v1/notes/{id}
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**パスパラメータ**:
+- `id`: ノート ID (Long)
+
+**レスポンス** (200 OK):
+```json
+{
+  "id": 1,
+  "title": "アイデアメモ",
+  "content": "新しいプロジェクトのアイデア...",
+  "tags": ["アイデア", "プロジェクト"],
+  "createdAt": "2024-01-01T09:00:00+09:00",
+  "updatedAt": "2024-01-01T09:00:00+09:00"
+}
+```
+
+### 22. ノート一覧取得
+```
+GET /api/v1/notes
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**クエリパラメータ**:
+- `page`: ページ番号（デフォルト: 0）
+- `size`: 1ページあたりの件数（デフォルト: 20）
+
+**レスポンス** (200 OK):
+認証済みユーザーのノートのみが返されます。
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "title": "アイデアメモ",
+      "content": "新しいプロジェクトのアイデア...",
+      "tags": ["アイデア", "プロジェクト"],
+      "createdAt": "2024-01-01T09:00:00+09:00",
+      "updatedAt": "2024-01-01T09:00:00+09:00"
+    }
+  ],
+  "pageable": {
+    "pageNumber": 0,
+    "pageSize": 20
+  },
+  "totalElements": 1,
+  "totalPages": 1
+}
+```
+
+### 23. ノート検索
 ```
 GET /api/v1/notes/search
 Authorization: Bearer <JWT_TOKEN>
@@ -692,16 +851,67 @@ Authorization: Bearer <JWT_TOKEN>
 
 **クエリパラメータ**:
 - `query`: 検索キーワード
-- `tags`: タグフィルター（カンマ区切り）
-- `page`: ページ番号（デフォルト: 0）
-- `size`: 1ページあたりの件数（デフォルト: 20）
 
 **レスポンス** (200 OK):
 認証済みユーザーのノートのみが返されます。
+```json
+[
+  {
+    "id": 1,
+    "title": "アイデアメモ",
+    "content": "新しいプロジェクトのアイデア...",
+    "tags": ["アイデア", "プロジェクト"],
+    "createdAt": "2024-01-01T09:00:00+09:00",
+    "updatedAt": "2024-01-01T09:00:00+09:00"
+  }
+]
+```
+
+### 24. ノート更新
+```
+PUT /api/v1/notes/{id}
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**パスパラメータ**:
+- `id`: ノート ID (Long)
+
+**リクエストボディ**:
+```json
+{
+  "title": "更新されたアイデアメモ",
+  "content": "更新されたプロジェクトのアイデア...",
+  "tags": ["アイデア", "プロジェクト", "更新"]
+}
+```
+
+**レスポンス** (200 OK):
+```json
+{
+  "id": 1,
+  "title": "更新されたアイデアメモ",
+  "content": "更新されたプロジェクトのアイデア...",
+  "tags": ["アイデア", "プロジェクト", "更新"],
+  "createdAt": "2024-01-01T09:00:00+09:00",
+  "updatedAt": "2024-01-01T12:00:00+09:00"
+}
+```
+
+### 25. ノート削除
+```
+DELETE /api/v1/notes/{id}
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**パスパラメータ**:
+- `id`: ノート ID (Long)
+
+**レスポンス** (204 No Content):
+レスポンスボディなし
 
 ## 🔒 分析エンドポイント（認証必須）
 
-### 19. 生産性ダッシュボード取得
+### 26. 生産性ダッシュボード取得
 ```
 GET /api/v1/analytics/dashboard
 Authorization: Bearer <JWT_TOKEN>
@@ -715,61 +925,74 @@ Authorization: Bearer <JWT_TOKEN>
 **レスポンス** (200 OK):
 ```json
 {
-  "period": "month",
   "todoStats": {
-    "total": 50,
-    "completed": 35,
-    "inProgress": 10,
-    "pending": 5,
-    "completionRate": 0.7
+    "totalTodos": 50,
+    "completedTodos": 35,
+    "inProgressTodos": 10,
+    "pendingTodos": 5,
+    "completionRate": 0.7,
+    "overdueTodos": 3
   },
   "eventStats": {
-    "total": 20,
-    "upcoming": 5,
-    "past": 15
+    "totalEvents": 20,
+    "upcomingEvents": 5,
+    "pastEvents": 15,
+    "todayEvents": 2
   },
   "noteStats": {
-    "total": 100,
-    "recentlyUpdated": 10,
+    "totalNotes": 100,
+    "recentlyUpdatedNotes": 10,
     "topTags": ["アイデア", "プロジェクト", "メモ"]
   },
-  "productivityTrends": [
-    {
-      "date": "2024-01-01",
-      "tasksCompleted": 5,
-      "eventsAttended": 2,
-      "notesCreated": 3
-    }
-  ]
+  "productivityStats": {
+    "weeklyProductivityScore": 85.5,
+    "tasksCompletedThisWeek": 12,
+    "eventsAttendedThisWeek": 4,
+    "notesCreatedThisWeek": 6
+  }
 }
 ```
 
-### 20. TODOアクティビティ統計
+### 27. TODOアクティビティ統計
 ```
 GET /api/v1/analytics/todos/activity
 Authorization: Bearer <JWT_TOKEN>
 ```
 
-**クエリパラメータ**:
-- `period`: 期間（day, week, month, year）
-- `groupBy`: グループ化（status, priority, date）
-
 **レスポンス** (200 OK):
 ```json
 {
-  "period": "month",
-  "summary": {
-    "created": 20,
-    "completed": 15,
-    "averageCompletionTime": "3.5 days"
-  },
-  "breakdown": [
+  "dailyCompletions": [
     {
-      "label": "HIGH",
-      "count": 8,
-      "percentage": 0.4
+      "date": "2024-01-01",
+      "completed": 5
+    },
+    {
+      "date": "2024-01-02", 
+      "completed": 3
     }
-  ]
+  ],
+  "dailyCreations": [
+    {
+      "date": "2024-01-01",
+      "created": 8
+    },
+    {
+      "date": "2024-01-02",
+      "created": 4
+    }
+  ],
+  "priorityDistribution": {
+    "HIGH": 8,
+    "MEDIUM": 12,
+    "LOW": 5
+  },
+  "statusDistribution": {
+    "TODO": 10,
+    "IN_PROGRESS": 8,
+    "DONE": 7
+  },
+  "averageCompletionTimeInDays": 3.5
 }
 ```
 
