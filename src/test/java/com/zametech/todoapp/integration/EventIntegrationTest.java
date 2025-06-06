@@ -1,7 +1,9 @@
 package com.zametech.todoapp.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zametech.todoapp.application.service.AuthenticationService;
 import com.zametech.todoapp.presentation.dto.request.CreateEventRequest;
+import com.zametech.todoapp.presentation.dto.request.RegisterRequest;
 import com.zametech.todoapp.presentation.dto.request.UpdateEventRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +32,24 @@ class EventIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private AuthenticationService authenticationService;
+
+    @BeforeEach
+    void setUp() {
+        try {
+            // Create test user for integration tests
+            RegisterRequest registerRequest = new RegisterRequest(
+                    "test@example.com",
+                    "TestPassword123!",
+                    "testuser"
+            );
+            authenticationService.register(registerRequest);
+        } catch (Exception e) {
+            // User already exists, ignore
+        }
+    }
 
     @Test
     @WithMockUser(username = "test@example.com")
