@@ -1,10 +1,13 @@
 package com.zametech.todoapp.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zametech.todoapp.application.service.AuthenticationService;
 import com.zametech.todoapp.domain.model.TodoPriority;
 import com.zametech.todoapp.presentation.dto.request.CreateEventRequest;
 import com.zametech.todoapp.presentation.dto.request.CreateNoteRequest;
 import com.zametech.todoapp.presentation.dto.request.CreateTodoRequest;
+import com.zametech.todoapp.presentation.dto.request.RegisterRequest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -33,6 +36,24 @@ class AnalyticsIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private AuthenticationService authenticationService;
+
+    @BeforeEach
+    void setUp() {
+        try {
+            // Create test user for integration tests
+            RegisterRequest registerRequest = new RegisterRequest(
+                    "test@example.com",
+                    "TestPassword123!",
+                    "testuser"
+            );
+            authenticationService.register(registerRequest);
+        } catch (Exception e) {
+            // User already exists, ignore
+        }
+    }
 
     @Test
     @WithMockUser(username = "test@example.com")
