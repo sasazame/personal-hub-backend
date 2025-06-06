@@ -1,10 +1,12 @@
 package com.zametech.todoapp.application.service;
 
 import com.zametech.todoapp.common.exception.TodoNotFoundException;
+import com.zametech.todoapp.domain.model.RepeatType;
 import com.zametech.todoapp.domain.model.TodoStatus;
 import com.zametech.todoapp.domain.repository.TodoRepository;
 import com.zametech.todoapp.infrastructure.persistence.entity.TodoEntity;
 import com.zametech.todoapp.presentation.dto.request.CreateTodoRequest;
+import com.zametech.todoapp.presentation.dto.request.RepeatConfigRequest;
 import com.zametech.todoapp.presentation.dto.request.UpdateTodoRequest;
 import com.zametech.todoapp.presentation.dto.response.TodoResponse;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class TodoService {
 
     private final TodoRepository todoRepository;
     private final UserContextService userContextService;
+    private final RepeatService repeatService;
 
     /**
      * TODO作成

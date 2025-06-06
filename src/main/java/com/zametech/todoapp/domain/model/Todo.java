@@ -22,4 +22,13 @@ public class Todo {
     private Long parentId;  // Parent task ID for hierarchical structure
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
+    
+    // Repeat fields
+    private Boolean isRepeatable;
+    private RepeatType repeatType;
+    private Integer repeatInterval;
+    private String repeatDaysOfWeek;  // Comma-separated string: "1,3,5"
+    private Integer repeatDayOfMonth;
+    private LocalDate repeatEndDate;
+    private Long originalTodoId;  // Reference to original repeatable todo
 }

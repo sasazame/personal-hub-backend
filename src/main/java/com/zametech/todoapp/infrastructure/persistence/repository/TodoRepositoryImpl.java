@@ -81,4 +81,24 @@ public class TodoRepositoryImpl implements TodoRepository {
     public List<TodoEntity> findByParentId(Long parentId) {
         return todoJpaRepository.findByParentIdOrderByCreatedAtDesc(parentId);
     }
+    
+    @Override
+    public List<TodoEntity> findByIsRepeatableTrue() {
+        return todoJpaRepository.findByIsRepeatableTrueOrderByCreatedAtDesc();
+    }
+    
+    @Override
+    public List<TodoEntity> findByUserIdAndIsRepeatableTrue(Long userId) {
+        return todoJpaRepository.findByUserIdAndIsRepeatableTrueOrderByCreatedAtDesc(userId);
+    }
+    
+    @Override
+    public List<TodoEntity> findByOriginalTodoIdAndDueDate(Long originalTodoId, LocalDate dueDate) {
+        return todoJpaRepository.findByOriginalTodoIdAndDueDate(originalTodoId, dueDate);
+    }
+    
+    @Override
+    public List<TodoEntity> findByOriginalTodoId(Long originalTodoId) {
+        return todoJpaRepository.findByOriginalTodoIdOrderByCreatedAtDesc(originalTodoId);
+    }
 }

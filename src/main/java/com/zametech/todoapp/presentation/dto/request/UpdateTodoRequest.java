@@ -2,6 +2,7 @@ package com.zametech.todoapp.presentation.dto.request;
 
 import com.zametech.todoapp.domain.model.TodoPriority;
 import com.zametech.todoapp.domain.model.TodoStatus;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -27,5 +28,20 @@ public record UpdateTodoRequest(
     
     LocalDate dueDate,
     
-    Long parentId
-) {}
+    Long parentId,
+    
+    Boolean isRepeatable,
+    
+    @Valid
+    RepeatConfigRequest repeatConfig
+) {
+    public UpdateTodoRequest {
+        // 繰り返し設定の妥当性チェック
+        if (Boolean.TRUE.equals(isRepeatable) && repeatConfig == null) {
+            throw new IllegalArgumentException("繰り返し設定が有効な場合、繰り返し設定は必須です");
+        }
+        if (Boolean.FALSE.equals(isRepeatable) && repeatConfig != null) {
+            throw new IllegalArgumentException("繰り返し設定が無効な場合、繰り返し設定は指定できません");
+        }
+    }
+}
