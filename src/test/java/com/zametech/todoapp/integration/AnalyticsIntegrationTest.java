@@ -109,6 +109,8 @@ class AnalyticsIntegrationTest {
                 "Test Description",
                 TodoPriority.MEDIUM,
                 LocalDate.now().plusDays(1),
+                null,
+                false,
                 null
         );
 

@@ -154,7 +154,9 @@ Authorization: Bearer <JWT_TOKEN>
   "description": "詳細説明（任意）",
   "priority": "HIGH",
   "dueDate": "2024-12-31",
-  "parentId": null
+  "parentId": null,
+  "isRepeatable": false,
+  "repeatConfig": null
 }
 ```
 
@@ -168,6 +170,9 @@ Authorization: Bearer <JWT_TOKEN>
   "priority": "HIGH",
   "dueDate": "2024-12-31",
   "parentId": null,
+  "isRepeatable": false,
+  "repeatConfig": null,
+  "originalTodoId": null,
   "createdAt": "2024-01-01T09:00:00+09:00",
   "updatedAt": "2024-01-01T09:00:00+09:00"
 }
@@ -365,15 +370,211 @@ Authorization: Bearer <JWT_TOKEN>
     "priority": "MEDIUM",
     "dueDate": "2024-12-31",
     "parentId": 1,
+    "isRepeatable": false,
+    "repeatConfig": null,
+    "originalTodoId": null,
     "createdAt": "2024-01-01T09:30:00+09:00",
     "updatedAt": "2024-01-01T09:30:00+09:00"
   }
 ]
 ```
 
+## 🔒 繰り返しTODOエンドポイント（認証必須）
+
+### 11. 繰り返しTODO作成
+```
+POST /api/v1/todos
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**リクエストボディ（毎日繰り返し）**:
+```json
+{
+  "title": "毎日の運動",
+  "description": "30分間のウォーキング",
+  "priority": "HIGH",
+  "dueDate": "2025-01-01",
+  "parentId": null,
+  "isRepeatable": true,
+  "repeatConfig": {
+    "repeatType": "DAILY",
+    "interval": 1,
+    "daysOfWeek": null,
+    "dayOfMonth": null,
+    "endDate": null
+  }
+}
+```
+
+**リクエストボディ（週次繰り返し）**:
+```json
+{
+  "title": "ジム通い",
+  "description": "筋力トレーニング",
+  "priority": "MEDIUM",
+  "dueDate": "2025-01-06",
+  "parentId": null,
+  "isRepeatable": true,
+  "repeatConfig": {
+    "repeatType": "WEEKLY",
+    "interval": 1,
+    "daysOfWeek": [1, 3, 5],
+    "dayOfMonth": null,
+    "endDate": null
+  }
+}
+```
+
+**リクエストボディ（月次繰り返し）**:
+```json
+{
+  "title": "月次レポート",
+  "description": "月末のレポート作成",
+  "priority": "HIGH",
+  "dueDate": "2025-01-31",
+  "parentId": null,
+  "isRepeatable": true,
+  "repeatConfig": {
+    "repeatType": "MONTHLY",
+    "interval": 1,
+    "daysOfWeek": null,
+    "dayOfMonth": 31,
+    "endDate": "2025-12-31"
+  }
+}
+```
+
+**レスポンス** (201 Created):
+```json
+{
+  "id": 1,
+  "title": "毎日の運動",
+  "description": "30分間のウォーキング",
+  "status": "TODO",
+  "priority": "HIGH",
+  "dueDate": "2025-01-01",
+  "parentId": null,
+  "isRepeatable": true,
+  "repeatConfig": {
+    "repeatType": "DAILY",
+    "interval": 1,
+    "daysOfWeek": null,
+    "dayOfMonth": null,
+    "endDate": null
+  },
+  "originalTodoId": null,
+  "createdAt": "2025-01-01T09:00:00+09:00",
+  "updatedAt": "2025-01-01T09:00:00+09:00"
+}
+```
+
+### 12. 繰り返し可能なTODO一覧取得
+```
+GET /api/v1/todos/repeatable
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**レスポンス** (200 OK):
+認証済みユーザーの繰り返し設定が有効なTODOのみが返されます。
+```json
+[
+  {
+    "id": 1,
+    "title": "毎日の運動",
+    "description": "30分間のウォーキング",
+    "status": "TODO",
+    "priority": "HIGH",
+    "dueDate": "2025-01-01",
+    "parentId": null,
+    "isRepeatable": true,
+    "repeatConfig": {
+      "repeatType": "DAILY",
+      "interval": 1,
+      "daysOfWeek": null,
+      "dayOfMonth": null,
+      "endDate": null
+    },
+    "originalTodoId": null,
+    "createdAt": "2025-01-01T09:00:00+09:00",
+    "updatedAt": "2025-01-01T09:00:00+09:00"
+  }
+]
+```
+
+### 13. 繰り返しTODOのインスタンス一覧取得
+```
+GET /api/v1/todos/{originalTodoId}/instances
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**パスパラメータ**:
+- `originalTodoId`: 元の繰り返しTODO ID (Long)
+
+**レスポンス** (200 OK):
+指定された繰り返しTODOから自動生成されたインスタンス一覧が返されます。
+```json
+[
+  {
+    "id": 2,
+    "title": "毎日の運動",
+    "description": "30分間のウォーキング",
+    "status": "TODO",
+    "priority": "HIGH",
+    "dueDate": "2025-01-02",
+    "parentId": null,
+    "isRepeatable": false,
+    "repeatConfig": null,
+    "originalTodoId": 1,
+    "createdAt": "2025-01-02T00:00:00+09:00",
+    "updatedAt": "2025-01-02T00:00:00+09:00"
+  },
+  {
+    "id": 3,
+    "title": "毎日の運動",
+    "description": "30分間のウォーキング",
+    "status": "DONE",
+    "priority": "HIGH",
+    "dueDate": "2025-01-03",
+    "parentId": null,
+    "isRepeatable": false,
+    "repeatConfig": null,
+    "originalTodoId": 1,
+    "createdAt": "2025-01-03T00:00:00+09:00",
+    "updatedAt": "2025-01-03T08:30:00+09:00"
+  }
+]
+```
+
+### 14. 期限到来した繰り返しTODOのインスタンス生成
+```
+POST /api/v1/todos/repeat/generate
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**レスポンス** (201 Created):
+新しく生成されたTODOインスタンス一覧が返されます。
+```json
+[
+  {
+    "id": 4,
+    "title": "毎日の運動",
+    "description": "30分間のウォーキング",
+    "status": "TODO",
+    "priority": "HIGH",
+    "dueDate": "2025-01-04",
+    "parentId": null,
+    "isRepeatable": false,
+    "repeatConfig": null,
+    "originalTodoId": 1,
+    "createdAt": "2025-01-04T00:00:00+09:00",
+    "updatedAt": "2025-01-04T00:00:00+09:00"
+  }
+]
+```
+
 ## 🔒 ユーザー管理エンドポイント（認証必須）
 
-### 11. ユーザー情報取得
+### 15. ユーザー情報取得
 ```
 GET /api/v1/users/{id}
 Authorization: Bearer <JWT_TOKEN>
@@ -393,7 +594,7 @@ Authorization: Bearer <JWT_TOKEN>
 }
 ```
 
-### 12. ユーザー情報更新
+### 16. ユーザー情報更新
 ```
 PUT /api/v1/users/{id}
 Authorization: Bearer <JWT_TOKEN>
@@ -423,7 +624,7 @@ Authorization: Bearer <JWT_TOKEN>
 }
 ```
 
-### 13. パスワード変更
+### 17. パスワード変更
 ```
 PUT /api/v1/users/{id}/password
 Authorization: Bearer <JWT_TOKEN>
@@ -443,7 +644,7 @@ Authorization: Bearer <JWT_TOKEN>
 **レスポンス** (204 No Content):
 レスポンスボディなし
 
-### 14. ユーザーアカウント削除
+### 18. ユーザーアカウント削除
 ```
 DELETE /api/v1/users/{id}
 Authorization: Bearer <JWT_TOKEN>
@@ -484,6 +685,8 @@ Authorization: Bearer <JWT_TOKEN>
 - `priority`: 任意（デフォルト: MEDIUM）
 - `dueDate`: 任意
 - `parentId`: 任意、親TODO ID
+- `isRepeatable`: 任意（デフォルト: false）
+- `repeatConfig`: 任意、繰り返し設定オブジェクト
 
 ### UpdateTodoRequest
 - `title`: 必須、最大255文字
@@ -492,6 +695,8 @@ Authorization: Bearer <JWT_TOKEN>
 - `priority`: 必須
 - `dueDate`: 任意
 - `parentId`: 任意、親TODO ID
+- `isRepeatable`: 任意（デフォルト: false）
+- `repeatConfig`: 任意、繰り返し設定オブジェクト
 
 ### UpdateUserRequest
 - `username`: 任意、3-20文字
@@ -502,6 +707,13 @@ Authorization: Bearer <JWT_TOKEN>
 ### ChangePasswordRequest
 - `currentPassword`: 必須
 - `newPassword`: 必須、強力なパスワード
+
+### RepeatConfigRequest
+- `repeatType`: 必須、DAILY/WEEKLY/MONTHLY/YEARLY/ONCE
+- `interval`: 任意（デフォルト: 1）、1以上の整数
+- `daysOfWeek`: 任意、1-7の整数配列（WEEKLY時のみ）
+- `dayOfMonth`: 任意、1-31の整数（MONTHLY時のみ）
+- `endDate`: 任意、終了日（YYYY-MM-DD形式）
 
 ## セキュリティ設定
 
@@ -603,9 +815,63 @@ curl -X PUT http://localhost:8080/api/v1/users/1/password \
   }'
 ```
 
+#### 10. 繰り返しTODO作成（要認証）
+```bash
+# 毎日繰り返しTODO
+curl -X POST http://localhost:8080/api/v1/todos \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "title": "毎日の運動",
+    "description": "30分間のウォーキング",
+    "priority": "HIGH",
+    "dueDate": "2025-01-01",
+    "isRepeatable": true,
+    "repeatConfig": {
+      "repeatType": "DAILY",
+      "interval": 1
+    }
+  }'
+
+# 週次繰り返しTODO（月・水・金）
+curl -X POST http://localhost:8080/api/v1/todos \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "title": "ジム通い",
+    "description": "筋力トレーニング",
+    "priority": "MEDIUM",
+    "dueDate": "2025-01-06",
+    "isRepeatable": true,
+    "repeatConfig": {
+      "repeatType": "WEEKLY",
+      "interval": 1,
+      "daysOfWeek": [1, 3, 5]
+    }
+  }'
+
+# 月次繰り返しTODO
+curl -X POST http://localhost:8080/api/v1/todos \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "title": "月次レポート",
+    "description": "月末のレポート作成",
+    "priority": "HIGH",
+    "dueDate": "2025-01-31",
+    "isRepeatable": true,
+    "repeatConfig": {
+      "repeatType": "MONTHLY",
+      "interval": 1,
+      "dayOfMonth": 31,
+      "endDate": "2025-12-31"
+    }
+  }'
+```
+
 ## 🔒 イベント（カレンダー）エンドポイント（認証必須）
 
-### 15. イベント作成
+### 19. イベント作成
 ```
 POST /api/v1/events
 Authorization: Bearer <JWT_TOKEN>
@@ -642,7 +908,7 @@ Authorization: Bearer <JWT_TOKEN>
 }
 ```
 
-### 16. イベント取得（ID指定）
+### 20. イベント取得（ID指定）
 ```
 GET /api/v1/events/{id}
 Authorization: Bearer <JWT_TOKEN>
@@ -668,7 +934,7 @@ Authorization: Bearer <JWT_TOKEN>
 }
 ```
 
-### 17. イベント一覧取得
+### 21. イベント一覧取得
 ```
 GET /api/v1/events
 Authorization: Bearer <JWT_TOKEN>
@@ -708,7 +974,7 @@ Authorization: Bearer <JWT_TOKEN>
 }
 ```
 
-### 18. イベント更新
+### 22. イベント更新
 ```
 PUT /api/v1/events/{id}
 Authorization: Bearer <JWT_TOKEN>
@@ -748,7 +1014,7 @@ Authorization: Bearer <JWT_TOKEN>
 }
 ```
 
-### 19. イベント削除
+### 23. イベント削除
 ```
 DELETE /api/v1/events/{id}
 Authorization: Bearer <JWT_TOKEN>
@@ -762,7 +1028,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ## 🔒 ノートエンドポイント（認証必須）
 
-### 20. ノート作成
+### 24. ノート作成
 ```
 POST /api/v1/notes
 Authorization: Bearer <JWT_TOKEN>
@@ -789,7 +1055,7 @@ Authorization: Bearer <JWT_TOKEN>
 }
 ```
 
-### 21. ノート取得（ID指定）
+### 25. ノート取得（ID指定）
 ```
 GET /api/v1/notes/{id}
 Authorization: Bearer <JWT_TOKEN>
@@ -810,7 +1076,7 @@ Authorization: Bearer <JWT_TOKEN>
 }
 ```
 
-### 22. ノート一覧取得
+### 26. ノート一覧取得
 ```
 GET /api/v1/notes
 Authorization: Bearer <JWT_TOKEN>
@@ -843,7 +1109,7 @@ Authorization: Bearer <JWT_TOKEN>
 }
 ```
 
-### 23. ノート検索
+### 27. ノート検索
 ```
 GET /api/v1/notes/search
 Authorization: Bearer <JWT_TOKEN>
@@ -867,7 +1133,7 @@ Authorization: Bearer <JWT_TOKEN>
 ]
 ```
 
-### 24. ノート更新
+### 28. ノート更新
 ```
 PUT /api/v1/notes/{id}
 Authorization: Bearer <JWT_TOKEN>
@@ -897,7 +1163,7 @@ Authorization: Bearer <JWT_TOKEN>
 }
 ```
 
-### 25. ノート削除
+### 29. ノート削除
 ```
 DELETE /api/v1/notes/{id}
 Authorization: Bearer <JWT_TOKEN>
@@ -911,7 +1177,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ## 🔒 分析エンドポイント（認証必須）
 
-### 26. 生産性ダッシュボード取得
+### 30. 生産性ダッシュボード取得
 ```
 GET /api/v1/analytics/dashboard
 Authorization: Bearer <JWT_TOKEN>
@@ -953,7 +1219,7 @@ Authorization: Bearer <JWT_TOKEN>
 }
 ```
 
-### 27. TODOアクティビティ統計
+### 31. TODOアクティビティ統計
 ```
 GET /api/v1/analytics/todos/activity
 Authorization: Bearer <JWT_TOKEN>

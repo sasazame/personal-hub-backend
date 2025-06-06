@@ -102,4 +102,34 @@ public class TodoController {
         List<TodoResponse> response = todoService.getChildTasks(parentId);
         return ResponseEntity.ok(response);
     }
+    
+    /**
+     * 繰り返し可能なTODO一覧取得
+     */
+    @GetMapping("/repeatable")
+    public ResponseEntity<List<TodoResponse>> getRepeatableTodos() {
+        log.info("GET /api/v1/todos/repeatable - Getting repeatable TODOs");
+        List<TodoResponse> response = todoService.getRepeatableTodos();
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * 特定の繰り返しTODOから生成されたインスタンス一覧を取得
+     */
+    @GetMapping("/{originalTodoId}/instances")
+    public ResponseEntity<List<TodoResponse>> getRepeatInstances(@PathVariable Long originalTodoId) {
+        log.info("GET /api/v1/todos/{}/instances - Getting repeat instances", originalTodoId);
+        List<TodoResponse> response = todoService.getRepeatInstances(originalTodoId);
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * 期限到来した繰り返しTODOの新しいインスタンスを生成
+     */
+    @PostMapping("/repeat/generate")
+    public ResponseEntity<List<TodoResponse>> generatePendingRepeatInstances() {
+        log.info("POST /api/v1/todos/repeat/generate - Generating pending repeat instances");
+        List<TodoResponse> response = todoService.generatePendingRepeatInstances();
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 }

@@ -1,10 +1,12 @@
 package com.zametech.todoapp.application.service;
 
 import com.zametech.todoapp.common.exception.TodoNotFoundException;
+import com.zametech.todoapp.domain.model.RepeatType;
 import com.zametech.todoapp.domain.model.TodoStatus;
 import com.zametech.todoapp.domain.repository.TodoRepository;
 import com.zametech.todoapp.infrastructure.persistence.entity.TodoEntity;
 import com.zametech.todoapp.presentation.dto.request.CreateTodoRequest;
+import com.zametech.todoapp.presentation.dto.request.RepeatConfigRequest;
 import com.zametech.todoapp.presentation.dto.request.UpdateTodoRequest;
 import com.zametech.todoapp.presentation.dto.response.TodoResponse;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class TodoService {
 
     private final TodoRepository todoRepository;
     private final UserContextService userContextService;
+    private final RepeatService repeatService;
 
     /**
      * TODO作成
@@ -49,15 +52,38 @@ public class TodoService {
             }
         }
         
-        TodoEntity todo = new TodoEntity(
-            currentUserId,
-            request.title(),
-            request.description(),
-            TodoStatus.TODO,
-            request.priority(),
-            request.dueDate(),
-            request.parentId()
-        );
+        TodoEntity todo;
+        
+        if (Boolean.TRUE.equals(request.isRepeatable()) && request.repeatConfig() != null) {
+            // 繰り返し設定ありのTODO作成
+            todo = new TodoEntity(
+                currentUserId,
+                request.title(),
+                request.description(),
+                TodoStatus.TODO,
+                request.priority(),
+                request.dueDate(),
+                request.parentId(),
+                request.isRepeatable(),
+                request.repeatConfig().repeatType(),
+                request.repeatConfig().interval(),
+                request.repeatConfig().getDaysOfWeekString(),
+                request.repeatConfig().dayOfMonth(),
+                request.repeatConfig().endDate(),
+                null // originalTodoId - 元となるTODOなのでnull
+            );
+        } else {
+            // 通常のTODO作成
+            todo = new TodoEntity(
+                currentUserId,
+                request.title(),
+                request.description(),
+                TodoStatus.TODO,
+                request.priority(),
+                request.dueDate(),
+                request.parentId()
+            );
+        }
         
         TodoEntity saved = todoRepository.save(todo);
         log.info("Created TODO with id: {} for user: {}", saved.getId(), currentUserId);
@@ -137,12 +163,36 @@ public class TodoService {
             }
         }
         
+        // 基本フィールドの更新
         todo.setTitle(request.title());
         todo.setDescription(request.description());
         todo.setStatus(request.status());
         todo.setPriority(request.priority());
         todo.setDueDate(request.dueDate());
         todo.setParentId(request.parentId());
+        
+        // 繰り返し設定の更新
+        if (Boolean.TRUE.equals(request.isRepeatable()) && request.repeatConfig() != null) {
+            todo.setIsRepeatable(true);
+            todo.setRepeatType(request.repeatConfig().repeatType());
+            todo.setRepeatInterval(request.repeatConfig().interval());
+            todo.setRepeatDaysOfWeek(request.repeatConfig().getDaysOfWeekString());
+            todo.setRepeatDayOfMonth(request.repeatConfig().dayOfMonth());
+            todo.setRepeatEndDate(request.repeatConfig().endDate());
+        } else {
+            // 繰り返し設定を無効化
+            todo.setIsRepeatable(false);
+            todo.setRepeatType(null);
+            todo.setRepeatInterval(null);
+            todo.setRepeatDaysOfWeek(null);
+            todo.setRepeatDayOfMonth(null);
+            todo.setRepeatEndDate(null);
+        }
+        
+        // TODOが完了状態になった場合、次の繰り返しインスタンスを生成
+        if (request.status() == TodoStatus.DONE && Boolean.TRUE.equals(todo.getIsRepeatable()) && todo.getOriginalTodoId() == null) {
+            handleTodoCompletion(todo);
+        }
         
         TodoEntity updated = todoRepository.save(todo);
         log.info("Updated TODO with id: {} for user: {}", updated.getId(), currentUserId);
@@ -188,5 +238,80 @@ public class TodoService {
         return childTasks.stream()
             .map(TodoResponse::from)
             .toList();
+    }
+    
+    /**
+     * 繰り返し可能なTODO一覧取得
+     */
+    public List<TodoResponse> getRepeatableTodos() {
+        log.debug("Getting all repeatable TODOs for current user");
+        
+        Long currentUserId = userContextService.getCurrentUserId();
+        List<TodoEntity> repeatableTodos = todoRepository.findByUserIdAndIsRepeatableTrue(currentUserId);
+        return repeatableTodos.stream()
+            .map(TodoResponse::from)
+            .toList();
+    }
+    
+    /**
+     * 特定の繰り返しTODOから生成されたインスタンス一覧を取得
+     */
+    public List<TodoResponse> getRepeatInstances(Long originalTodoId) {
+        log.debug("Getting repeat instances for original TODO id: {}", originalTodoId);
+        
+        // Verify original TODO exists and user has access
+        TodoEntity originalTodo = todoRepository.findById(originalTodoId)
+            .orElseThrow(() -> new TodoNotFoundException(originalTodoId));
+        
+        Long currentUserId = userContextService.getCurrentUserId();
+        if (!originalTodo.getUserId().equals(currentUserId)) {
+            throw new AccessDeniedException("Access denied to TODO with id: " + originalTodoId);
+        }
+        
+        List<TodoEntity> instances = todoRepository.findByOriginalTodoId(originalTodoId);
+        return instances.stream()
+            .map(TodoResponse::from)
+            .toList();
+    }
+    
+    /**
+     * 期限到来した繰り返しTODOの新しいインスタンスを生成
+     */
+    @Transactional
+    public List<TodoResponse> generatePendingRepeatInstances() {
+        log.debug("Generating pending repeat instances for current user");
+        
+        Long currentUserId = userContextService.getCurrentUserId();
+        List<TodoEntity> newInstances = repeatService.generateAllPendingOccurrences(currentUserId);
+        
+        List<TodoEntity> savedInstances = newInstances.stream()
+            .map(todoRepository::save)
+            .toList();
+        
+        log.info("Generated {} new repeat instances for user: {}", savedInstances.size(), currentUserId);
+        
+        return savedInstances.stream()
+            .map(TodoResponse::from)
+            .toList();
+    }
+    
+    /**
+     * TODO完了時の繰り返し処理
+     */
+    private void handleTodoCompletion(TodoEntity completedTodo) {
+        if (!Boolean.TRUE.equals(completedTodo.getIsRepeatable()) || completedTodo.getOriginalTodoId() != null) {
+            return; // 繰り返し設定がないか、すでに生成されたインスタンスの場合は何もしない
+        }
+        
+        try {
+            TodoEntity nextInstance = repeatService.generateNextOccurrence(completedTodo);
+            if (nextInstance != null) {
+                todoRepository.save(nextInstance);
+                log.info("Generated next occurrence for completed TODO id: {}", completedTodo.getId());
+            }
+        } catch (Exception e) {
+            log.error("Failed to generate next occurrence for TODO id: {}", completedTodo.getId(), e);
+            // エラーをログに記録するが、元のTODOの更新は続行
+        }
     }
 }

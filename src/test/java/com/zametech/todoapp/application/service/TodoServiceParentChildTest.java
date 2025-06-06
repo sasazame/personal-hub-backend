@@ -34,6 +34,9 @@ class TodoServiceParentChildTest {
 
     @Mock
     private UserContextService userContextService;
+    
+    @Mock
+    private RepeatService repeatService;
 
     @InjectMocks
     private TodoService todoService;
@@ -72,7 +75,9 @@ class TodoServiceParentChildTest {
                 "Description",
                 TodoPriority.MEDIUM,
                 LocalDate.now().plusDays(7),
-                PARENT_TODO_ID
+                PARENT_TODO_ID,
+                false,
+                null
         );
 
         when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
@@ -104,7 +109,9 @@ class TodoServiceParentChildTest {
                 "Description",
                 TodoPriority.MEDIUM,
                 LocalDate.now().plusDays(7),
-                999L
+                999L,
+                false,
+                null
         );
 
         when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
@@ -124,7 +131,9 @@ class TodoServiceParentChildTest {
                 "Description",
                 TodoPriority.MEDIUM,
                 LocalDate.now().plusDays(7),
-                PARENT_TODO_ID
+                PARENT_TODO_ID,
+                false,
+                null
         );
 
         when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
@@ -145,7 +154,9 @@ class TodoServiceParentChildTest {
                 TodoStatus.IN_PROGRESS,
                 TodoPriority.HIGH,
                 LocalDate.now().plusDays(7),
-                PARENT_TODO_ID
+                PARENT_TODO_ID,
+                false,
+                null
         );
 
         when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
@@ -171,7 +182,9 @@ class TodoServiceParentChildTest {
                 TodoStatus.IN_PROGRESS,
                 TodoPriority.HIGH,
                 LocalDate.now().plusDays(7),
-                CHILD_TODO_ID  // Trying to set itself as parent
+                CHILD_TODO_ID,  // Trying to set itself as parent
+                false,
+                null
         );
 
         when(userContextService.getCurrentUserId()).thenReturn(USER_ID);

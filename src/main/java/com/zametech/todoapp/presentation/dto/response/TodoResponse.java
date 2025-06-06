@@ -18,6 +18,9 @@ public record TodoResponse(
     TodoPriority priority,
     LocalDate dueDate,
     Long parentId,
+    Boolean isRepeatable,
+    RepeatConfigResponse repeatConfig,
+    Long originalTodoId,
     ZonedDateTime createdAt,
     ZonedDateTime updatedAt
 ) {
@@ -33,6 +36,9 @@ public record TodoResponse(
             entity.getPriority(),
             entity.getDueDate(),
             entity.getParentId(),
+            entity.getIsRepeatable(),
+            RepeatConfigResponse.from(entity),
+            entity.getOriginalTodoId(),
             entity.getCreatedAt(),
             entity.getUpdatedAt()
         );

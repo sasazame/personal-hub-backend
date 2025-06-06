@@ -65,4 +65,24 @@ public interface TodoJpaRepository extends JpaRepository<TodoEntity, Long> {
      * 親タスクIDで子タスクを検索する
      */
     List<TodoEntity> findByParentIdOrderByCreatedAtDesc(Long parentId);
+    
+    /**
+     * 繰り返し可能なTODOを検索する
+     */
+    List<TodoEntity> findByIsRepeatableTrueOrderByCreatedAtDesc();
+    
+    /**
+     * ユーザーIDで繰り返し可能なTODOを検索する
+     */
+    List<TodoEntity> findByUserIdAndIsRepeatableTrueOrderByCreatedAtDesc(Long userId);
+    
+    /**
+     * 元TODOIDと期限日でTODOを検索する
+     */
+    List<TodoEntity> findByOriginalTodoIdAndDueDate(Long originalTodoId, LocalDate dueDate);
+    
+    /**
+     * 元TODOIDで生成されたインスタンスを検索する
+     */
+    List<TodoEntity> findByOriginalTodoIdOrderByCreatedAtDesc(Long originalTodoId);
 }

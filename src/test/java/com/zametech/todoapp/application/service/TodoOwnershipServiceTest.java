@@ -36,12 +36,15 @@ class TodoOwnershipServiceTest {
 
     @Mock
     private UserContextService userContextService;
+    
+    @Mock
+    private RepeatService repeatService;
 
     private TodoService todoService;
 
     @BeforeEach
     void setUp() {
-        todoService = new TodoService(todoRepository, userContextService);
+        todoService = new TodoService(todoRepository, userContextService, repeatService);
     }
 
     @Test
@@ -52,6 +55,8 @@ class TodoOwnershipServiceTest {
                 "Test Description",
                 TodoPriority.HIGH,
                 LocalDate.now().plusDays(1),
+                null,
+                false,
                 null
         );
 
@@ -220,6 +225,8 @@ class TodoOwnershipServiceTest {
                 TodoStatus.DONE,
                 TodoPriority.HIGH,
                 LocalDate.now().plusDays(1),
+                null,
+                false,
                 null
         );
 
@@ -257,6 +264,8 @@ class TodoOwnershipServiceTest {
                 TodoStatus.DONE,
                 TodoPriority.HIGH,
                 LocalDate.now().plusDays(1),
+                null,
+                false,
                 null
         );
 

@@ -74,4 +74,24 @@ public interface TodoRepository {
      * 親タスクIDで子タスクを検索する
      */
     List<TodoEntity> findByParentId(Long parentId);
+    
+    /**
+     * 繰り返し可能なTODOを検索する
+     */
+    List<TodoEntity> findByIsRepeatableTrue();
+    
+    /**
+     * ユーザーIDで繰り返し可能なTODOを検索する
+     */
+    List<TodoEntity> findByUserIdAndIsRepeatableTrue(Long userId);
+    
+    /**
+     * 元TODOIDと期限日でTODOを検索する（繰り返しインスタンス検索用）
+     */
+    List<TodoEntity> findByOriginalTodoIdAndDueDate(Long originalTodoId, LocalDate dueDate);
+    
+    /**
+     * 元TODOIDで生成されたインスタンスを検索する
+     */
+    List<TodoEntity> findByOriginalTodoId(Long originalTodoId);
 }
