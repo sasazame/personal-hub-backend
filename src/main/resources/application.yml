@@ -3,9 +3,9 @@ spring:
     name: todo-app-backend
   
   datasource:
-    url: jdbc:postgresql://localhost:5432/todoapp
-    username: todoapp
-    password: todoapp
+    url: jdbc:postgresql://localhost:5432/personalhub
+    username: personalhub
+    password: personalhub
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -58,6 +58,20 @@ app:
     jwt:
       secret-key: ${JWT_SECRET_KEY:your-secret-key-that-is-at-least-256-bits-long-for-HS256-algorithm-security}
       expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
+
+google:
+  calendar:
+    credentials:
+      file: ${GOOGLE_CREDENTIALS_FILE:credentials.json}
+    tokens:
+      directory:
+        path: ${GOOGLE_TOKENS_DIR:tokens}
+    oauth:
+      client:
+        id: ${GOOGLE_CLIENT_ID:}
+        secret: ${GOOGLE_CLIENT_SECRET:}
+      redirect:
+        uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/api/v1/calendar/sync/auth/callback}
 
 management:
   endpoints:
