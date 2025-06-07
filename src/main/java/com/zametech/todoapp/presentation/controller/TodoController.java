@@ -132,4 +132,14 @@ public class TodoController {
         List<TodoResponse> response = todoService.generatePendingRepeatInstances();
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+    
+    /**
+     * TODOステータス切り替え
+     */
+    @PostMapping("/{id}/toggle-status")
+    public ResponseEntity<TodoResponse> toggleTodoStatus(@PathVariable Long id) {
+        log.info("POST /api/v1/todos/{}/toggle-status - Toggling TODO status", id);
+        TodoResponse response = todoService.toggleTodoStatus(id);
+        return ResponseEntity.ok(response);
+    }
 }

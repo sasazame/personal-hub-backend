@@ -21,7 +21,10 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(CalendarSyncController.class)
+@WebMvcTest(value = CalendarSyncController.class, excludeAutoConfiguration = {
+    org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
+    org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration.class
+})
 @Import(TestSecurityConfig.class)
 class CalendarSyncControllerTest {
 
@@ -41,7 +44,7 @@ class CalendarSyncControllerTest {
     private UserContextService userContextService;
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "USER")
     void testGetSyncStatus_ReturnsStatusSuccessfully() throws Exception {
         // Given
         CalendarSyncStatusResponse.SyncStatistics stats = 
@@ -51,12 +54,13 @@ class CalendarSyncControllerTest {
             true, LocalDateTime.now(), "SUCCESS", List.of(), stats
         );
         
+        when(userContextService.getCurrentUserId()).thenReturn(1L);
         when(calendarSyncService.getSyncStatus()).thenReturn(response);
 
         // When & Then
         mockMvc.perform(get("/api/v1/calendar/sync/status"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.connected").value(true))
+                .andExpect(jsonPath("$.isConnected").value(true))
                 .andExpect(jsonPath("$.syncStatus").value("SUCCESS"))
                 .andExpect(jsonPath("$.syncStatistics.totalEvents").value(10))
                 .andExpect(jsonPath("$.syncStatistics.syncedEvents").value(8))
@@ -65,7 +69,7 @@ class CalendarSyncControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "USER")
     void testGetSyncSettings_ReturnsEmptyList() throws Exception {
         // Given
         when(userContextService.getCurrentUserId()).thenReturn(1L);
@@ -79,7 +83,7 @@ class CalendarSyncControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "USER")
     void testTestConnection_WithValidCredentials_ReturnsSuccess() throws Exception {
         // Given
         String credentials = "{\"type\":\"service_account\"}";
@@ -94,7 +98,7 @@ class CalendarSyncControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "USER")
     void testTestConnection_WithInvalidCredentials_ReturnsBadRequest() throws Exception {
         // Given
         String credentials = "{\"invalid\":\"credentials\"}";
@@ -110,7 +114,7 @@ class CalendarSyncControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "USER")
     void testDisconnectGoogleCalendar_ReturnsNoContent() throws Exception {
         // Given
         String calendarId = "primary";
@@ -121,7 +125,7 @@ class CalendarSyncControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "USER")
     void testGetAuthorizationUrl_ReturnsUrl() throws Exception {
         // When & Then
         mockMvc.perform(post("/api/v1/calendar/sync/auth/url"))
@@ -130,7 +134,7 @@ class CalendarSyncControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "USER")
     void testHandleOAuthCallback_ReturnsSuccess() throws Exception {
         // When & Then
         mockMvc.perform(post("/api/v1/calendar/sync/auth/callback")

@@ -3,6 +3,7 @@ package com.zametech.todoapp.common.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
@@ -63,6 +64,34 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * JSON デシリアライゼーション エラー（DTOコンストラクタ内でのバリデーション失敗を含む）
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        log.warn("HTTP message not readable: {}", e.getMessage());
+        
+        // DTOコンストラクタでのIllegalArgumentExceptionかチェック
+        Throwable rootCause = e.getRootCause();
+        if (rootCause instanceof IllegalArgumentException) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                "VALIDATION_ERROR",
+                rootCause.getMessage(),
+                ZonedDateTime.now()
+            );
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
+        
+        // その他のJSON parsing errors
+        ErrorResponse errorResponse = new ErrorResponse(
+            "INVALID_JSON",
+            "リクエストの形式が不正です",
+            ZonedDateTime.now()
+        );
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    /**
      * パスパラメータの型変換エラー
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -111,6 +140,22 @@ public class GlobalExceptionHandler {
         );
         
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+    }
+
+    /**
+     * 引数不正エラー（DTOコンストラクタ内でのバリデーション失敗）
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
+        log.warn("Illegal argument error: {}", e.getMessage());
+        
+        ErrorResponse errorResponse = new ErrorResponse(
+            "VALIDATION_ERROR",
+            e.getMessage(),
+            ZonedDateTime.now()
+        );
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     /**

@@ -296,6 +296,48 @@ public class TodoService {
     }
     
     /**
+     * TODOステータス切り替え
+     * TODO <-> DONE, IN_PROGRESS -> DONE に切り替え
+     */
+    @Transactional
+    public TodoResponse toggleTodoStatus(Long id) {
+        log.debug("Toggling TODO status for id: {}", id);
+        
+        TodoEntity todo = todoRepository.findById(id)
+            .orElseThrow(() -> new TodoNotFoundException(id));
+        
+        Long currentUserId = userContextService.getCurrentUserId();
+        if (!todo.getUserId().equals(currentUserId)) {
+            throw new AccessDeniedException("Access denied to TODO with id: " + id);
+        }
+        
+        // ステータス切り替えロジック
+        TodoStatus newStatus = switch (todo.getStatus()) {
+            case TODO -> TodoStatus.DONE;
+            case IN_PROGRESS -> TodoStatus.DONE;
+            case DONE -> TodoStatus.TODO;
+        };
+        
+        todo.setStatus(newStatus);
+        
+        // 繰り返しタスクインスタンスが完了になった場合、新しいインスタンス生成
+        if (newStatus == TodoStatus.DONE && todo.getOriginalTodoId() != null) {
+            // このインスタンスのオリジナルTODOを取得
+            TodoEntity originalTodo = todoRepository.findById(todo.getOriginalTodoId())
+                .orElse(null);
+            if (originalTodo != null && Boolean.TRUE.equals(originalTodo.getIsRepeatable())) {
+                handleRepeatInstanceCompletion(originalTodo);
+            }
+        }
+        
+        TodoEntity updated = todoRepository.save(todo);
+        log.info("Toggled TODO status from {} to {} for id: {} (user: {})", 
+                 todo.getStatus(), newStatus, id, currentUserId);
+        
+        return TodoResponse.from(updated);
+    }
+
+    /**
      * TODO完了時の繰り返し処理
      */
     private void handleTodoCompletion(TodoEntity completedTodo) {
@@ -312,6 +354,21 @@ public class TodoService {
         } catch (Exception e) {
             log.error("Failed to generate next occurrence for TODO id: {}", completedTodo.getId(), e);
             // エラーをログに記録するが、元のTODOの更新は続行
+        }
+    }
+    
+    /**
+     * 繰り返しタスクインスタンス完了時の処理
+     */
+    private void handleRepeatInstanceCompletion(TodoEntity originalTodo) {
+        try {
+            TodoEntity nextInstance = repeatService.generateNextOccurrence(originalTodo);
+            if (nextInstance != null) {
+                todoRepository.save(nextInstance);
+                log.info("Generated next repeat instance for original TODO id: {}", originalTodo.getId());
+            }
+        } catch (Exception e) {
+            log.error("Failed to generate next repeat instance for original TODO id: {}", originalTodo.getId(), e);
         }
     }
 }
