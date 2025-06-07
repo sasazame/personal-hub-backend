@@ -118,13 +118,12 @@ public class EventRepositoryImpl implements EventRepository {
                 entity.getColor(),
                 entity.getUserId(),
                 entity.getCreatedAt(),
-                entity.getUpdatedAt()
+                entity.getUpdatedAt(),
+                entity.getGoogleCalendarId(),
+                entity.getGoogleEventId(),
+                entity.getLastSyncedAt(),
+                entity.getSyncStatus()
         );
-        // Set Google Calendar sync fields
-        event.setGoogleCalendarId(entity.getGoogleCalendarId());
-        event.setGoogleEventId(entity.getGoogleEventId());
-        event.setLastSyncedAt(entity.getLastSyncedAt());
-        event.setSyncStatus(entity.getSyncStatus());
         return event;
     }
 }

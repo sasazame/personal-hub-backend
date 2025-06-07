@@ -2,6 +2,7 @@ package com.zametech.todoapp.presentation.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zametech.todoapp.application.service.CalendarSyncService;
+import com.zametech.todoapp.application.service.UserContextService;
 import com.zametech.todoapp.domain.repository.CalendarSyncSettingsRepository;
 import com.zametech.todoapp.presentation.dto.response.CalendarSyncStatusResponse;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,9 @@ class CalendarSyncControllerTest {
 
     @MockBean
     private CalendarSyncSettingsRepository calendarSyncSettingsRepository;
+    
+    @MockBean
+    private UserContextService userContextService;
 
     @Test
     @WithMockUser
@@ -63,6 +67,10 @@ class CalendarSyncControllerTest {
     @Test
     @WithMockUser
     void testGetSyncSettings_ReturnsEmptyList() throws Exception {
+        // Given
+        when(userContextService.getCurrentUserId()).thenReturn(1L);
+        when(calendarSyncSettingsRepository.findByUserId(1L)).thenReturn(List.of());
+        
         // When & Then
         mockMvc.perform(get("/api/v1/calendar/sync/settings"))
                 .andExpect(status().isOk())

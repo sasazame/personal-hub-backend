@@ -2,13 +2,12 @@ package com.zametech.todoapp.presentation.controller;
 
 import com.google.api.services.calendar.model.CalendarListEntry;
 import com.zametech.todoapp.application.service.CalendarSyncService;
+import com.zametech.todoapp.application.service.UserContextService;
 import com.zametech.todoapp.domain.repository.CalendarSyncSettingsRepository;
 import com.zametech.todoapp.infrastructure.persistence.entity.CalendarSyncSettingsEntity;
 import com.zametech.todoapp.presentation.dto.request.CalendarSyncSettingsRequest;
 import com.zametech.todoapp.presentation.dto.response.CalendarSyncSettingsResponse;
 import com.zametech.todoapp.presentation.dto.response.CalendarSyncStatusResponse;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,15 +22,13 @@ import java.util.Optional;
 @RequestMapping("/api/v1/calendar/sync")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Calendar Sync", description = "Google Calendar sync management")
 public class CalendarSyncController {
 
     private final CalendarSyncService calendarSyncService;
     private final CalendarSyncSettingsRepository calendarSyncSettingsRepository;
+    private final UserContextService userContextService;
 
     @PostMapping("/connect")
-    @Operation(summary = "Connect to Google Calendar", 
-               description = "Connect user account to Google Calendar and retrieve available calendars")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<CalendarListEntry>> connectGoogleCalendar(
             @RequestBody String userCredentialsJson) {
@@ -45,8 +42,6 @@ public class CalendarSyncController {
     }
 
     @DeleteMapping("/disconnect/{calendarId}")
-    @Operation(summary = "Disconnect from Google Calendar", 
-               description = "Disconnect specific calendar from sync")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> disconnectGoogleCalendar(@PathVariable String calendarId) {
         try {
@@ -59,8 +54,6 @@ public class CalendarSyncController {
     }
 
     @PostMapping("/manual")
-    @Operation(summary = "Perform manual sync", 
-               description = "Manually trigger bidirectional sync with Google Calendar")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<CalendarSyncStatusResponse> performManualSync(
             @RequestBody String userCredentialsJson) {
@@ -74,8 +67,6 @@ public class CalendarSyncController {
     }
 
     @GetMapping("/status")
-    @Operation(summary = "Get sync status", 
-               description = "Get current sync status and statistics")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<CalendarSyncStatusResponse> getSyncStatus() {
         try {
@@ -88,14 +79,24 @@ public class CalendarSyncController {
     }
 
     @GetMapping("/settings")
-    @Operation(summary = "Get sync settings", 
-               description = "Get all calendar sync settings for current user")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<CalendarSyncSettingsResponse>> getSyncSettings() {
         try {
-            // This would need userContextService to get current user ID
-            // For now, returning empty list as placeholder
-            return ResponseEntity.ok(List.of());
+            Long userId = userContextService.getCurrentUserId();
+            List<CalendarSyncSettingsEntity> settings = calendarSyncSettingsRepository.findByUserId(userId);
+            List<CalendarSyncSettingsResponse> responses = settings.stream()
+                .map(setting -> new CalendarSyncSettingsResponse(
+                    setting.getId(),
+                    setting.getGoogleCalendarId(),
+                    setting.getCalendarName(),
+                    setting.getSyncEnabled(),
+                    setting.getLastSyncAt(),
+                    setting.getSyncDirection(),
+                    setting.getCreatedAt(),
+                    setting.getUpdatedAt()
+                ))
+                .toList();
+            return ResponseEntity.ok(responses);
         } catch (Exception e) {
             log.error("Error getting sync settings: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().build();
@@ -103,8 +104,6 @@ public class CalendarSyncController {
     }
 
     @PutMapping("/settings/{calendarId}")
-    @Operation(summary = "Update sync settings", 
-               description = "Update sync settings for specific calendar")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<CalendarSyncSettingsResponse> updateSyncSettings(
             @PathVariable String calendarId,
@@ -120,8 +119,6 @@ public class CalendarSyncController {
     }
 
     @PostMapping("/auth/url")
-    @Operation(summary = "Get OAuth authorization URL", 
-               description = "Get Google OAuth2 authorization URL for calendar access")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getAuthorizationUrl() {
         try {
@@ -136,8 +133,6 @@ public class CalendarSyncController {
     }
 
     @PostMapping("/auth/callback")
-    @Operation(summary = "Handle OAuth callback", 
-               description = "Handle OAuth2 callback and exchange code for tokens")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> handleOAuthCallback(
             @RequestParam String code,
@@ -154,8 +149,6 @@ public class CalendarSyncController {
     }
 
     @PostMapping("/test")
-    @Operation(summary = "Test calendar connection", 
-               description = "Test connection to Google Calendar API")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> testConnection(@RequestBody String userCredentialsJson) {
         try {

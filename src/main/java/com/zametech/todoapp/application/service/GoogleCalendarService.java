@@ -1,16 +1,13 @@
 package com.zametech.todoapp.application.service;
 
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
-import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.DateTime;
-import com.google.api.client.util.store.FileDataStoreFactory;
+import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.calendar.model.CalendarList;
@@ -49,25 +46,19 @@ public class GoogleCalendarService {
     private String tokensDirectoryPath;
 
     /**
-     * Create Calendar service with authorized credentials
+     * Create Calendar service with service account credentials
      */
     public Calendar getCalendarService(String userCredentialsJson) throws IOException, GeneralSecurityException {
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         
-        // Build flow and trigger user authorization request
-        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, 
-            new InputStreamReader(new ByteArrayInputStream(userCredentialsJson.getBytes())));
+        // Load service account credentials
+        GoogleCredentials credentials = GoogleCredentials
+            .fromStream(new ByteArrayInputStream(userCredentialsJson.getBytes()))
+            .createScoped(Collections.singletonList(CalendarScopes.CALENDAR));
         
-        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-                HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, Collections.singletonList(CalendarScopes.CALENDAR))
-                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(tokensDirectoryPath)))
-                .setAccessType("offline")
-                .build();
+        HttpRequestInitializer requestInitializer = new HttpCredentialsAdapter(credentials);
         
-        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
-        Credential credential = new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
-        
-        return new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
+        return new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
     }
@@ -243,12 +234,13 @@ public class GoogleCalendarService {
         if (googleStart.getDate() != null) {
             // All day event
             personalHubEvent.setAllDay(true);
-            personalHubEvent.setStartDateTime(LocalDateTime.of(
-                new DateTime(googleStart.getDate().getValue()).toStringRfc3339().substring(0, 10) + "T00:00:00", 
-                java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-            personalHubEvent.setEndDateTime(LocalDateTime.of(
-                new DateTime(googleEnd.getDate().getValue()).toStringRfc3339().substring(0, 10) + "T23:59:59", 
-                java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            
+            // Parse date string for all-day events
+            String startDateStr = new DateTime(googleStart.getDate().getValue()).toStringRfc3339().substring(0, 10) + "T00:00:00";
+            String endDateStr = new DateTime(googleEnd.getDate().getValue()).toStringRfc3339().substring(0, 10) + "T23:59:59";
+            
+            personalHubEvent.setStartDateTime(LocalDateTime.parse(startDateStr, java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            personalHubEvent.setEndDateTime(LocalDateTime.parse(endDateStr, java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         } else {
             // Timed event
             personalHubEvent.setAllDay(false);
