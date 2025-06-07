@@ -28,4 +28,11 @@ public interface EventJpaRepository extends JpaRepository<EventEntity, Long> {
     );
     
     void deleteByUserId(Long userId);
+    
+    // Google Calendar sync methods
+    Optional<EventEntity> findByGoogleEventId(String googleEventId);
+    
+    List<EventEntity> findByUserIdAndSyncStatus(Long userId, String syncStatus);
+    
+    List<EventEntity> findByUserIdAndLastSyncedAtAfter(Long userId, LocalDateTime lastSyncedAt);
 }

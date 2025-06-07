@@ -16,4 +16,9 @@ public interface EventRepository {
     List<Event> findByUserIdAndDateRange(Long userId, LocalDateTime startDate, LocalDateTime endDate);
     void deleteById(Long id);
     void deleteByUserId(Long userId);
+    
+    // Google Calendar sync methods
+    Optional<Event> findByGoogleEventId(String googleEventId);
+    List<Event> findByUserIdAndSyncStatus(Long userId, String syncStatus);
+    List<Event> findByUserIdAndLastSyncedAtAfter(Long userId, LocalDateTime lastSyncedAt);
 }

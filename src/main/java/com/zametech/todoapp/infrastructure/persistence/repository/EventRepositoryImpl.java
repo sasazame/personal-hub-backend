@@ -61,6 +61,28 @@ public class EventRepositoryImpl implements EventRepository {
         eventJpaRepository.deleteByUserId(userId);
     }
 
+    @Override
+    public Optional<Event> findByGoogleEventId(String googleEventId) {
+        return eventJpaRepository.findByGoogleEventId(googleEventId)
+                .map(this::toModel);
+    }
+
+    @Override
+    public List<Event> findByUserIdAndSyncStatus(Long userId, String syncStatus) {
+        return eventJpaRepository.findByUserIdAndSyncStatus(userId, syncStatus)
+                .stream()
+                .map(this::toModel)
+                .toList();
+    }
+
+    @Override
+    public List<Event> findByUserIdAndLastSyncedAtAfter(Long userId, LocalDateTime lastSyncedAt) {
+        return eventJpaRepository.findByUserIdAndLastSyncedAtAfter(userId, lastSyncedAt)
+                .stream()
+                .map(this::toModel)
+                .toList();
+    }
+
     private EventEntity toEntity(Event event) {
         EventEntity entity = new EventEntity();
         entity.setId(event.getId());
@@ -75,11 +97,16 @@ public class EventRepositoryImpl implements EventRepository {
         entity.setUserId(event.getUserId());
         entity.setCreatedAt(event.getCreatedAt());
         entity.setUpdatedAt(event.getUpdatedAt());
+        // Google Calendar sync fields
+        entity.setGoogleCalendarId(event.getGoogleCalendarId());
+        entity.setGoogleEventId(event.getGoogleEventId());
+        entity.setLastSyncedAt(event.getLastSyncedAt());
+        entity.setSyncStatus(event.getSyncStatus());
         return entity;
     }
 
     private Event toModel(EventEntity entity) {
-        return new Event(
+        Event event = new Event(
                 entity.getId(),
                 entity.getTitle(),
                 entity.getDescription(),
@@ -91,7 +118,12 @@ public class EventRepositoryImpl implements EventRepository {
                 entity.getColor(),
                 entity.getUserId(),
                 entity.getCreatedAt(),
-                entity.getUpdatedAt()
+                entity.getUpdatedAt(),
+                entity.getGoogleCalendarId(),
+                entity.getGoogleEventId(),
+                entity.getLastSyncedAt(),
+                entity.getSyncStatus()
         );
+        return event;
     }
 }

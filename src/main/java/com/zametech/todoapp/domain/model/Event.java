@@ -22,6 +22,12 @@ public class Event {
     private Long userId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    
+    // Google Calendar sync fields
+    private String googleCalendarId;
+    private String googleEventId;
+    private LocalDateTime lastSyncedAt;
+    private String syncStatus;
 
     public void setTitle(String title) {
         this.title = title;

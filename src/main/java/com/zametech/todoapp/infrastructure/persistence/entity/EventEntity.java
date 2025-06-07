@@ -52,4 +52,17 @@ public class EventEntity {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    // Google Calendar sync fields
+    @Column(name = "google_calendar_id")
+    private String googleCalendarId;
+
+    @Column(name = "google_event_id")
+    private String googleEventId;
+
+    @Column(name = "last_synced_at")
+    private LocalDateTime lastSyncedAt;
+
+    @Column(name = "sync_status", length = 50)
+    private String syncStatus; // NONE, SYNCED, SYNC_PENDING, SYNC_ERROR
 }

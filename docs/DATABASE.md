@@ -87,6 +87,10 @@ TODO管理、カレンダー、ノート機能を統合的に管理
 | location | VARCHAR(255) | NULL | 場所 |
 | is_all_day | BOOLEAN | NOT NULL, DEFAULT FALSE | 終日フラグ |
 | reminder | INTEGER | NULL | リマインダー（分） |
+| google_calendar_id | VARCHAR(255) | NULL | Google Calendar ID |
+| google_event_id | VARCHAR(255) | NULL | Google Event ID |
+| last_synced_at | TIMESTAMPTZ | NULL | 最終同期日時 |
+| sync_status | VARCHAR(50) | DEFAULT 'NONE' | 同期ステータス |
 | created_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | 作成日時 |
 | updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | 更新日時 |
 
@@ -97,6 +101,19 @@ TODO管理、カレンダー、ノート機能を統合的に管理
 | user_id | BIGINT | NOT NULL, FK → users.id | 所有者ユーザーID |
 | title | VARCHAR(255) | NOT NULL | ノートタイトル |
 | content | TEXT | NOT NULL | ノート内容 |
+| created_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | 作成日時 |
+| updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | 更新日時 |
+
+### calendar_sync_settings テーブル
+| カラム名 | データ型 | 制約 | 説明 |
+|---------|----------|------|------|
+| id | BIGSERIAL | PRIMARY KEY | 自動採番ID |
+| user_id | BIGINT | NOT NULL, FK → users.id | 所有者ユーザーID |
+| google_calendar_id | VARCHAR(255) | NOT NULL | Google Calendar ID |
+| calendar_name | VARCHAR(255) | NULL | カレンダー名 |
+| sync_enabled | BOOLEAN | DEFAULT TRUE | 同期有効フラグ |
+| last_sync_at | TIMESTAMPTZ | NULL | 最終同期日時 |
+| sync_direction | VARCHAR(20) | DEFAULT 'BIDIRECTIONAL' | 同期方向 |
 | created_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | 作成日時 |
 | updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | 更新日時 |
 
@@ -233,6 +250,7 @@ CREATE TRIGGER update_users_updated_at BEFORE UPDATE
   - `V6__create_event_table.sql`: イベントテーブル作成
   - `V7__create_note_table.sql`: ノートテーブル作成
   - `V8__add_repeat_fields_to_todos.sql`: TODOに繰り返し機能追加
+  - `V9__add_google_calendar_sync_fields.sql`: Google Calendar同期フィールド追加
 
 ### 設定
 ```yaml

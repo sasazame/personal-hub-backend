@@ -815,6 +815,251 @@ curl -X PUT http://localhost:8080/api/v1/users/1/password \
   }'
 ```
 
+## 🔒 Google Calendar連携エンドポイント（認証必須）
+
+### カレンダー同期機能
+Personal HubのイベントとGoogleカレンダーの双方向同期機能
+
+#### 32. Google Calendar接続
+```
+POST /api/v1/calendar/sync/connect
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**リクエストボディ**:
+```json
+{
+  "type": "service_account",
+  "project_id": "your-project-id",
+  "private_key_id": "key-id",
+  "private_key": "-----BEGIN PRIVATE KEY-----\n...",
+  "client_email": "service-account@project.iam.gserviceaccount.com",
+  "client_id": "client-id",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token"
+}
+```
+
+**レスポンス** (200 OK):
+```json
+[
+  {
+    "id": "primary",
+    "summary": "Primary Calendar",
+    "description": "Your primary calendar",
+    "timeZone": "Asia/Tokyo",
+    "accessRole": "owner"
+  },
+  {
+    "id": "work@company.com",
+    "summary": "Work Calendar", 
+    "description": "Work events calendar",
+    "timeZone": "Asia/Tokyo",
+    "accessRole": "writer"
+  }
+]
+```
+
+#### 33. Calendar同期設定取得
+```
+GET /api/v1/calendar/sync/settings
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**レスポンス** (200 OK):
+```json
+[
+  {
+    "id": 1,
+    "googleCalendarId": "primary",
+    "calendarName": "Primary Calendar",
+    "syncEnabled": true,
+    "lastSyncAt": "2025-01-01T10:00:00+09:00",
+    "syncDirection": "BIDIRECTIONAL",
+    "createdAt": "2025-01-01T09:00:00+09:00",
+    "updatedAt": "2025-01-01T10:00:00+09:00"
+  }
+]
+```
+
+#### 34. 同期設定更新
+```
+PUT /api/v1/calendar/sync/settings/{calendarId}
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**リクエストボディ**:
+```json
+{
+  "googleCalendarId": "primary",
+  "calendarName": "Updated Calendar Name", 
+  "syncEnabled": true,
+  "syncDirection": "TO_GOOGLE"
+}
+```
+
+**レスポンス** (200 OK):
+```json
+{
+  "id": 1,
+  "googleCalendarId": "primary", 
+  "calendarName": "Updated Calendar Name",
+  "syncEnabled": true,
+  "lastSyncAt": "2025-01-01T10:00:00+09:00",
+  "syncDirection": "TO_GOOGLE",
+  "createdAt": "2025-01-01T09:00:00+09:00",
+  "updatedAt": "2025-01-01T11:00:00+09:00"
+}
+```
+
+#### 35. 手動同期実行
+```
+POST /api/v1/calendar/sync/manual
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**リクエストボディ**:
+```json
+{
+  "type": "service_account",
+  "project_id": "your-project-id",
+  ...
+}
+```
+
+**レスポンス** (200 OK):
+```json
+{
+  "connected": true,
+  "lastSyncAt": "2025-01-01T11:00:00+09:00",
+  "syncStatus": "SUCCESS",
+  "connectedCalendars": [
+    {
+      "id": 1,
+      "googleCalendarId": "primary",
+      "calendarName": "Primary Calendar",
+      "syncEnabled": true,
+      "lastSyncAt": "2025-01-01T11:00:00+09:00", 
+      "syncDirection": "BIDIRECTIONAL",
+      "createdAt": "2025-01-01T09:00:00+09:00",
+      "updatedAt": "2025-01-01T11:00:00+09:00"
+    }
+  ],
+  "syncStatistics": {
+    "totalEvents": 25,
+    "syncedEvents": 23,
+    "pendingEvents": 1,
+    "errorEvents": 1,
+    "lastSuccessfulSync": "2025-01-01T11:00:00+09:00"
+  }
+}
+```
+
+#### 36. 同期状況取得
+```
+GET /api/v1/calendar/sync/status
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**レスポンス** (200 OK):
+```json
+{
+  "connected": true,
+  "lastSyncAt": "2025-01-01T11:00:00+09:00",
+  "syncStatus": "SUCCESS",
+  "connectedCalendars": [...],
+  "syncStatistics": {
+    "totalEvents": 25,
+    "syncedEvents": 23, 
+    "pendingEvents": 1,
+    "errorEvents": 1,
+    "lastSuccessfulSync": "2025-01-01T11:00:00+09:00"
+  }
+}
+```
+
+#### 37. Calendar連携解除
+```
+DELETE /api/v1/calendar/sync/disconnect/{calendarId}
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**パスパラメータ**:
+- `calendarId`: Google Calendar ID
+
+**レスポンス** (204 No Content):
+レスポンスボディなし
+
+#### 38. OAuth認証URL取得
+```
+POST /api/v1/calendar/sync/auth/url
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**レスポンス** (200 OK):
+```
+https://accounts.google.com/oauth2/auth?client_id=...&redirect_uri=...&scope=https://www.googleapis.com/auth/calendar&response_type=code&access_type=offline
+```
+
+#### 39. OAuth認証コールバック
+```
+POST /api/v1/calendar/sync/auth/callback?code={authCode}&state={state}
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**クエリパラメータ**:
+- `code`: OAuth認証コード
+- `state`: CSRF保護用のstate値
+
+**レスポンス** (200 OK):
+```
+Authorization successful
+```
+
+#### 40. 接続テスト
+```
+POST /api/v1/calendar/sync/test
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**リクエストボディ**:
+```json
+{
+  "type": "service_account",
+  ...
+}
+```
+
+**レスポンス** (200 OK):
+```
+Connection successful. Found 3 calendars.
+```
+
+### 同期の仕組み
+
+#### 双方向同期
+- **Personal Hub → Google**: 新規作成・更新されたイベントをGoogleカレンダーに送信
+- **Google → Personal Hub**: Googleカレンダーの変更をPersonal Hubに反映
+- **競合解決**: 最新更新時刻を優先
+
+#### 同期ステータス
+- `NONE`: 同期対象外
+- `SYNCED`: 同期済み  
+- `SYNC_PENDING`: 同期待ち
+- `SYNC_ERROR`: 同期エラー
+- `SYNC_CONFLICT`: 同期競合
+
+#### 同期方向設定
+- `BIDIRECTIONAL`: 双方向同期（デフォルト）
+- `TO_GOOGLE`: Personal Hub → Googleのみ
+- `FROM_GOOGLE`: Google → Personal Hubのみ
+
+### セキュリティ考慮事項
+- OAuth 2.0による安全な認証
+- 最小権限スコープの設定
+- 認証情報の暗号化保存
+- API使用量制限の考慮
+
 #### 10. 繰り返しTODO作成（要認証）
 ```bash
 # 毎日繰り返しTODO
