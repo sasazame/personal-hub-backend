@@ -176,6 +176,46 @@ public class OidcTokenService {
         return tokenValue;
     }
     
+    /**
+     * 通常のJWTトークンを生成（Google OIDC認証用）
+     */
+    public String generateToken(User user) {
+        try {
+            Instant now = Instant.now();
+            Instant expiration = now.plusSeconds(accessTokenTtl);
+            
+            JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                .issuer(issuer)
+                .subject(user.getId().toString())
+                .expirationTime(Date.from(expiration))
+                .issueTime(Date.from(now))
+                .notBeforeTime(Date.from(now))
+                .jwtID(UUID.randomUUID().toString())
+                .claim("username", user.getUsername())
+                .claim("email", user.getEmail())
+                .claim("email_verified", user.getEmailVerified())
+                .build();
+            
+            JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
+                .keyID(jwksService.getKeyId())
+                .type(JOSEObjectType.JWT)
+                .build();
+            
+            SignedJWT signedJWT = new SignedJWT(header, claimsSet);
+            RSASSASigner signer = new RSASSASigner((RSAPrivateKey) jwksService.getKeyPair().getPrivate());
+            signedJWT.sign(signer);
+            
+            return signedJWT.serialize();
+        } catch (Exception e) {
+            log.error("Error generating JWT token", e);
+            throw new RuntimeException("Failed to generate JWT token", e);
+        }
+    }
+    
+    public long getExpirationTime() {
+        return accessTokenTtl * 1000L; // Convert to milliseconds
+    }
+    
     private String generateIdToken(User user, String clientId, String nonce, LocalDateTime authTime) {
         try {
             Instant now = Instant.now();

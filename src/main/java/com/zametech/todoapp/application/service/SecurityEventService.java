@@ -64,6 +64,45 @@ public class SecurityEventService {
         return failedAttempts >= 5;
     }
     
+    /**
+     * ログイン成功を記録
+     */
+    public void recordLoginSuccess(User user, String provider, String ipAddress, String userAgent, Map<String, Object> metadata) {
+        SecurityEvent event = SecurityEvent.builder()
+                .eventType(SecurityEvent.EventType.LOGIN_SUCCESS)
+                .user(user)
+                .clientId(provider)
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .success(true)
+                .metadata(metadata)
+                .build();
+        
+        securityEventRepository.save(event);
+        log.info("Login successful for user: {} via {}", user.getEmail(), provider);
+    }
+    
+    /**
+     * ログイン失敗を記録
+     */
+    public void recordLoginFailure(User user, String provider, String ipAddress, String userAgent, 
+                                  String errorCode, String errorDescription, Map<String, Object> metadata) {
+        SecurityEvent event = SecurityEvent.builder()
+                .eventType(SecurityEvent.EventType.LOGIN_FAILURE)
+                .user(user)
+                .clientId(provider)
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .success(false)
+                .errorCode(errorCode)
+                .errorDescription(errorDescription)
+                .metadata(metadata)
+                .build();
+        
+        securityEventRepository.save(event);
+        log.warn("Login failed for provider: {}, IP: {}, Error: {}", provider, ipAddress, errorDescription);
+    }
+    
     private String getClientIpAddress(HttpServletRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
         if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
