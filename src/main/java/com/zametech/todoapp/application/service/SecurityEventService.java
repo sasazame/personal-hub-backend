@@ -3,16 +3,22 @@ package com.zametech.todoapp.application.service;
 import com.zametech.todoapp.domain.model.SecurityEvent;
 import com.zametech.todoapp.domain.model.User;
 import com.zametech.todoapp.domain.repository.SecurityEventRepository;
+import com.zametech.todoapp.domain.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +26,17 @@ import java.util.UUID;
 public class SecurityEventService {
     
     private final SecurityEventRepository securityEventRepository;
+    private final UserRepository userRepository;
+    
+    // Track failed login attempts by IP
+    private final Map<String, Integer> failedAttemptsPerIp = new ConcurrentHashMap<>();
+    private final Map<String, LocalDateTime> lastFailedAttemptTime = new ConcurrentHashMap<>();
+    
+    @Value("${app.security.max-failed-attempts:5}")
+    private int maxFailedAttempts;
+    
+    @Value("${app.security.lockout-duration-minutes:30}")
+    private int lockoutDurationMinutes;
     
     public void logSecurityEvent(SecurityEvent.EventType eventType, User user, String clientId, boolean success) {
         logSecurityEvent(eventType, user, clientId, success, null, null, null);
@@ -115,5 +132,106 @@ public class SecurityEventService {
         }
         
         return request.getRemoteAddr();
+    }
+    
+    /**
+     * Check if IP address is locked due to too many failed attempts
+     */
+    public boolean isIpAddressLocked(String ipAddress) {
+        LocalDateTime lastAttempt = lastFailedAttemptTime.get(ipAddress);
+        if (lastAttempt != null && lastAttempt.isAfter(LocalDateTime.now().minusMinutes(lockoutDurationMinutes))) {
+            Integer attempts = failedAttemptsPerIp.getOrDefault(ipAddress, 0);
+            return attempts >= maxFailedAttempts;
+        }
+        // Reset if lockout period has passed
+        failedAttemptsPerIp.remove(ipAddress);
+        lastFailedAttemptTime.remove(ipAddress);
+        return false;
+    }
+    
+    /**
+     * Track failed login attempt by IP
+     */
+    @Async
+    public void trackFailedLoginAttempt(String ipAddress) {
+        failedAttemptsPerIp.merge(ipAddress, 1, Integer::sum);
+        lastFailedAttemptTime.put(ipAddress, LocalDateTime.now());
+        
+        Integer attempts = failedAttemptsPerIp.get(ipAddress);
+        if (attempts >= maxFailedAttempts) {
+            log.warn("IP address {} has been locked after {} failed attempts", ipAddress, attempts);
+        }
+    }
+    
+    /**
+     * Clear failed attempts for IP after successful login
+     */
+    @Async
+    public void clearFailedAttempts(String ipAddress) {
+        failedAttemptsPerIp.remove(ipAddress);
+        lastFailedAttemptTime.remove(ipAddress);
+    }
+    
+    /**
+     * Record token refresh event
+     */
+    public void recordTokenRefresh(User user, String ipAddress, String userAgent) {
+        SecurityEvent event = SecurityEvent.builder()
+                .eventType(SecurityEvent.EventType.TOKEN_REFRESH)
+                .user(user)
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .success(true)
+                .build();
+        
+        securityEventRepository.save(event);
+        log.debug("Token refreshed for user: {}", user.getEmail());
+    }
+    
+    /**
+     * Record logout event
+     */
+    public void recordLogout(User user, String ipAddress, String userAgent) {
+        SecurityEvent event = SecurityEvent.builder()
+                .eventType(SecurityEvent.EventType.LOGOUT)
+                .user(user)
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .success(true)
+                .build();
+        
+        securityEventRepository.save(event);
+        log.info("User {} logged out", user.getEmail());
+    }
+    
+    /**
+     * Get recent security events for a user
+     */
+    public List<SecurityEvent> getRecentSecurityEvents(UUID userId, int limit) {
+        return securityEventRepository.findRecentEventsByUser(userId, limit);
+    }
+    
+    /**
+     * Get suspicious activity summary
+     */
+    public Map<String, Object> getSuspiciousActivitySummary() {
+        LocalDateTime oneDayAgo = LocalDateTime.now().minusDays(1);
+        Map<String, Object> summary = new HashMap<>();
+        
+        // Count failed login attempts in last 24 hours
+        long failedLogins = securityEventRepository.countByEventTypeAndSuccessAndCreatedAtAfter(
+                SecurityEvent.EventType.LOGIN_FAILURE, false, oneDayAgo);
+        
+        // Get IPs with multiple failed attempts
+        List<String> suspiciousIps = failedAttemptsPerIp.entrySet().stream()
+                .filter(entry -> entry.getValue() >= 3)
+                .map(Map.Entry::getKey)
+                .toList();
+        
+        summary.put("failedLoginsLast24h", failedLogins);
+        summary.put("suspiciousIps", suspiciousIps);
+        summary.put("lockedIpCount", suspiciousIps.size());
+        
+        return summary;
     }
 }

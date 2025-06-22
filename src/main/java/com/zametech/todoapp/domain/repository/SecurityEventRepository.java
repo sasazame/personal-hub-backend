@@ -10,4 +10,6 @@ public interface SecurityEventRepository {
     List<SecurityEvent> findByUserIdAndCreatedAtAfter(UUID userId, LocalDateTime after);
     List<SecurityEvent> findByEventTypeAndCreatedAtAfter(SecurityEvent.EventType eventType, LocalDateTime after);
     long countFailedLoginAttempts(UUID userId, LocalDateTime after);
+    List<SecurityEvent> findRecentEventsByUser(UUID userId, int limit);
+    long countByEventTypeAndSuccessAndCreatedAtAfter(SecurityEvent.EventType eventType, boolean success, LocalDateTime after);
 }

@@ -57,8 +57,18 @@ app:
   security:
     jwt:
       secret-key: ${JWT_SECRET_KEY:your-secret-key-that-is-at-least-256-bits-long-for-HS256-algorithm-security}
-      expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
+      expiration: ${JWT_EXPIRATION:900000} # 15 minutes in milliseconds (reduced from 24 hours)
       key-id: ${JWT_KEY_ID:default-key}
+    
+    rate-limit:
+      auth:
+        capacity: ${RATE_LIMIT_AUTH_CAPACITY:10} # Max 10 requests per IP
+        refill-tokens: ${RATE_LIMIT_AUTH_REFILL:10}
+        refill-period-minutes: ${RATE_LIMIT_AUTH_PERIOD:15} # Refill every 15 minutes
+      general:
+        capacity: ${RATE_LIMIT_GENERAL_CAPACITY:100} # Max 100 requests per IP
+        refill-tokens: ${RATE_LIMIT_GENERAL_REFILL:100}
+        refill-period-minutes: ${RATE_LIMIT_GENERAL_PERIOD:1} # Refill every minute
   
   oidc:
     issuer: ${OIDC_ISSUER:http://localhost:8080}
