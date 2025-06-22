@@ -1,10 +1,11 @@
-package com.zametech.todoapp.infrastructure.persistence;
+package com.zametech.todoapp.infrastructure.persistence.repository;
 
 import com.zametech.todoapp.domain.model.UserSocialAccount;
 import com.zametech.todoapp.domain.repository.UserSocialAccountRepository;
 import com.zametech.todoapp.infrastructure.persistence.jpa.JpaUserSocialAccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,16 @@ public class UserSocialAccountRepositoryImpl implements UserSocialAccountReposit
     }
     
     @Override
+    public Optional<UserSocialAccount> findById(UUID id) {
+        return jpaRepository.findById(id);
+    }
+    
+    @Override
+    public Optional<UserSocialAccount> findByUserIdAndProvider(UUID userId, String provider) {
+        return jpaRepository.findByUserIdAndProvider(userId, provider);
+    }
+    
+    @Override
     public List<UserSocialAccount> findByUserId(UUID userId) {
         return jpaRepository.findByUserId(userId);
     }
@@ -34,6 +45,12 @@ public class UserSocialAccountRepositoryImpl implements UserSocialAccountReposit
     @Override
     public void deleteById(UUID id) {
         jpaRepository.deleteById(id);
+    }
+    
+    @Override
+    @Transactional
+    public void deleteByUserIdAndProvider(UUID userId, String provider) {
+        jpaRepository.deleteByUserIdAndProvider(userId, provider);
     }
     
     @Override
