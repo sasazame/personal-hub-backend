@@ -82,7 +82,7 @@ public class CalendarSyncController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<CalendarSyncSettingsResponse>> getSyncSettings() {
         try {
-            Long userId = userContextService.getCurrentUserId();
+            Long userId = userContextService.getCurrentUserIdAsLong();
             List<CalendarSyncSettingsEntity> settings = calendarSyncSettingsRepository.findByUserId(userId);
             List<CalendarSyncSettingsResponse> responses = settings.stream()
                 .map(setting -> new CalendarSyncSettingsResponse(

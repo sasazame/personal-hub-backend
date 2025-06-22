@@ -39,7 +39,7 @@ public class TodoService {
     public TodoResponse createTodo(CreateTodoRequest request) {
         log.debug("Creating new TODO: {}", request.title());
         
-        Long currentUserId = userContextService.getCurrentUserId();
+        Long currentUserId = userContextService.getCurrentUserIdAsLong();
         
         // Validate parent task if provided
         if (request.parentId() != null) {
@@ -100,7 +100,7 @@ public class TodoService {
         TodoEntity todo = todoRepository.findById(id)
             .orElseThrow(() -> new TodoNotFoundException(id));
         
-        Long currentUserId = userContextService.getCurrentUserId();
+        Long currentUserId = userContextService.getCurrentUserIdAsLong();
         if (!todo.getUserId().equals(currentUserId)) {
             throw new AccessDeniedException("Access denied to TODO with id: " + id);
         }
@@ -114,7 +114,7 @@ public class TodoService {
     public Page<TodoResponse> getTodos(Pageable pageable) {
         log.debug("Getting TODO list with pageable: {}", pageable);
         
-        Long currentUserId = userContextService.getCurrentUserId();
+        Long currentUserId = userContextService.getCurrentUserIdAsLong();
         Page<TodoEntity> todos = todoRepository.findByUserId(currentUserId, pageable);
         return todos.map(TodoResponse::from);
     }
@@ -125,7 +125,7 @@ public class TodoService {
     public List<TodoResponse> getTodosByStatus(TodoStatus status) {
         log.debug("Getting TODOs with status: {}", status);
         
-        Long currentUserId = userContextService.getCurrentUserId();
+        Long currentUserId = userContextService.getCurrentUserIdAsLong();
         List<TodoEntity> todos = todoRepository.findByUserIdAndStatus(currentUserId, status);
         return todos.stream()
             .map(TodoResponse::from)
@@ -142,7 +142,7 @@ public class TodoService {
         TodoEntity todo = todoRepository.findById(id)
             .orElseThrow(() -> new TodoNotFoundException(id));
         
-        Long currentUserId = userContextService.getCurrentUserId();
+        Long currentUserId = userContextService.getCurrentUserIdAsLong();
         if (!todo.getUserId().equals(currentUserId)) {
             throw new AccessDeniedException("Access denied to update TODO with id: " + id);
         }
@@ -210,7 +210,7 @@ public class TodoService {
         TodoEntity todo = todoRepository.findById(id)
             .orElseThrow(() -> new TodoNotFoundException(id));
         
-        Long currentUserId = userContextService.getCurrentUserId();
+        Long currentUserId = userContextService.getCurrentUserIdAsLong();
         if (!todo.getUserId().equals(currentUserId)) {
             throw new AccessDeniedException("Access denied to delete TODO with id: " + id);
         }
@@ -229,7 +229,7 @@ public class TodoService {
         TodoEntity parentTodo = todoRepository.findById(parentId)
             .orElseThrow(() -> new TodoNotFoundException(parentId));
         
-        Long currentUserId = userContextService.getCurrentUserId();
+        Long currentUserId = userContextService.getCurrentUserIdAsLong();
         if (!parentTodo.getUserId().equals(currentUserId)) {
             throw new AccessDeniedException("Access denied to TODO with id: " + parentId);
         }
@@ -246,7 +246,7 @@ public class TodoService {
     public List<TodoResponse> getRepeatableTodos() {
         log.debug("Getting all repeatable TODOs for current user");
         
-        Long currentUserId = userContextService.getCurrentUserId();
+        Long currentUserId = userContextService.getCurrentUserIdAsLong();
         List<TodoEntity> repeatableTodos = todoRepository.findByUserIdAndIsRepeatableTrue(currentUserId);
         return repeatableTodos.stream()
             .map(TodoResponse::from)
@@ -263,7 +263,7 @@ public class TodoService {
         TodoEntity originalTodo = todoRepository.findById(originalTodoId)
             .orElseThrow(() -> new TodoNotFoundException(originalTodoId));
         
-        Long currentUserId = userContextService.getCurrentUserId();
+        Long currentUserId = userContextService.getCurrentUserIdAsLong();
         if (!originalTodo.getUserId().equals(currentUserId)) {
             throw new AccessDeniedException("Access denied to TODO with id: " + originalTodoId);
         }
@@ -281,7 +281,7 @@ public class TodoService {
     public List<TodoResponse> generatePendingRepeatInstances() {
         log.debug("Generating pending repeat instances for current user");
         
-        Long currentUserId = userContextService.getCurrentUserId();
+        Long currentUserId = userContextService.getCurrentUserIdAsLong();
         List<TodoEntity> newInstances = repeatService.generateAllPendingOccurrences(currentUserId);
         
         List<TodoEntity> savedInstances = newInstances.stream()
@@ -306,7 +306,7 @@ public class TodoService {
         TodoEntity todo = todoRepository.findById(id)
             .orElseThrow(() -> new TodoNotFoundException(id));
         
-        Long currentUserId = userContextService.getCurrentUserId();
+        Long currentUserId = userContextService.getCurrentUserIdAsLong();
         if (!todo.getUserId().equals(currentUserId)) {
             throw new AccessDeniedException("Access denied to TODO with id: " + id);
         }

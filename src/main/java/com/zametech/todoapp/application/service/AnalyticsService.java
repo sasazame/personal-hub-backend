@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -30,7 +31,7 @@ public class AnalyticsService {
     private final UserContextService userContextService;
 
     public DashboardResponse getDashboard() {
-        Long currentUserId = userContextService.getCurrentUserId();
+        Long currentUserId = userContextService.getCurrentUserIdAsLong();
         
         log.info("Generating dashboard for user: {}", currentUserId);
         
@@ -43,7 +44,7 @@ public class AnalyticsService {
     }
 
     public TodoActivityResponse getTodoActivity() {
-        Long currentUserId = userContextService.getCurrentUserId();
+        Long currentUserId = userContextService.getCurrentUserIdAsLong();
         
         log.info("Generating TODO activity for user: {}", currentUserId);
         

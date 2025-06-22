@@ -30,7 +30,7 @@ public class CalendarSyncService {
      */
     @Transactional
     public List<CalendarListEntry> connectGoogleCalendar(String userCredentialsJson) {
-        Long userId = userContextService.getCurrentUserId();
+        Long userId = userContextService.getCurrentUserIdAsLong();
         
         try {
             List<CalendarListEntry> calendars = googleCalendarService.getUserCalendars(userCredentialsJson);
@@ -60,7 +60,7 @@ public class CalendarSyncService {
      */
     @Transactional
     public void disconnectGoogleCalendar(String calendarId) {
-        Long userId = userContextService.getCurrentUserId();
+        Long userId = userContextService.getCurrentUserIdAsLong();
         
         try {
             calendarSyncSettingsRepository.deleteByUserIdAndGoogleCalendarId(userId, calendarId);
@@ -91,7 +91,7 @@ public class CalendarSyncService {
      */
     @Transactional
     public CalendarSyncStatusResponse performSync(String userCredentialsJson) {
-        Long userId = userContextService.getCurrentUserId();
+        Long userId = userContextService.getCurrentUserIdAsLong();
         
         try {
             List<CalendarSyncSettingsEntity> settings = 
@@ -195,7 +195,7 @@ public class CalendarSyncService {
             int syncedEvents = 0;
             int errorEvents = 0;
             
-            Long userId = userContextService.getCurrentUserId();
+            Long userId = userContextService.getCurrentUserIdAsLong();
             
             for (Event googleEvent : googleEvents) {
                 try {
@@ -324,7 +324,7 @@ public class CalendarSyncService {
      * Get sync status for user
      */
     public CalendarSyncStatusResponse getSyncStatus() {
-        Long userId = userContextService.getCurrentUserId();
+        Long userId = userContextService.getCurrentUserIdAsLong();
         
         List<CalendarSyncSettingsEntity> settings = calendarSyncSettingsRepository.findByUserId(userId);
         
