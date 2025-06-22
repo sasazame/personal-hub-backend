@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/calendar/sync")
@@ -82,7 +83,7 @@ public class CalendarSyncController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<CalendarSyncSettingsResponse>> getSyncSettings() {
         try {
-            Long userId = userContextService.getCurrentUserId();
+            UUID userId = userContextService.getCurrentUserId();
             List<CalendarSyncSettingsEntity> settings = calendarSyncSettingsRepository.findByUserId(userId);
             List<CalendarSyncSettingsResponse> responses = settings.stream()
                 .map(setting -> new CalendarSyncSettingsResponse(

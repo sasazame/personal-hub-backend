@@ -14,6 +14,7 @@ import org.springframework.security.access.AccessDeniedException;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -39,7 +40,7 @@ class TodoServiceToggleStatusTest {
     void testToggleTodoStatus_TodoToDone() {
         // Given
         Long todoId = 1L;
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         
         TodoEntity todoEntity = createTodoEntity(todoId, userId, TodoStatus.TODO, null);
         TodoEntity updatedEntity = createTodoEntity(todoId, userId, TodoStatus.DONE, null);
@@ -60,7 +61,7 @@ class TodoServiceToggleStatusTest {
     void testToggleTodoStatus_DoneToTodo() {
         // Given
         Long todoId = 1L;
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         
         TodoEntity todoEntity = createTodoEntity(todoId, userId, TodoStatus.DONE, null);
         TodoEntity updatedEntity = createTodoEntity(todoId, userId, TodoStatus.TODO, null);
@@ -81,7 +82,7 @@ class TodoServiceToggleStatusTest {
     void testToggleTodoStatus_InProgressToDone() {
         // Given
         Long todoId = 1L;
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         
         TodoEntity todoEntity = createTodoEntity(todoId, userId, TodoStatus.IN_PROGRESS, null);
         TodoEntity updatedEntity = createTodoEntity(todoId, userId, TodoStatus.DONE, null);
@@ -103,7 +104,7 @@ class TodoServiceToggleStatusTest {
         // Given
         Long todoId = 1L;
         Long originalTodoId = 2L;
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         
         TodoEntity repeatInstance = createTodoEntity(todoId, userId, TodoStatus.TODO, originalTodoId);
         TodoEntity originalTodo = createRepeatableTodoEntity(originalTodoId, userId);
@@ -140,8 +141,8 @@ class TodoServiceToggleStatusTest {
     void testToggleTodoStatus_AccessDenied() {
         // Given
         Long todoId = 1L;
-        Long currentUserId = 1L;
-        Long otherUserId = 2L;
+        UUID currentUserId = UUID.randomUUID();
+        UUID otherUserId = UUID.randomUUID();
         
         TodoEntity todoEntity = createTodoEntity(todoId, otherUserId, TodoStatus.TODO, null);
         
@@ -159,7 +160,7 @@ class TodoServiceToggleStatusTest {
         // Given
         Long todoId = 1L;
         Long originalTodoId = 2L;
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         
         TodoEntity repeatInstance = createTodoEntity(todoId, userId, TodoStatus.TODO, originalTodoId);
         TodoEntity updatedInstance = createTodoEntity(todoId, userId, TodoStatus.DONE, originalTodoId);
@@ -178,7 +179,7 @@ class TodoServiceToggleStatusTest {
         verify(todoRepository, times(1)).save(any(TodoEntity.class)); // Only update instance
     }
 
-    private TodoEntity createTodoEntity(Long id, Long userId, TodoStatus status, Long originalTodoId) {
+    private TodoEntity createTodoEntity(Long id, UUID userId, TodoStatus status, Long originalTodoId) {
         TodoEntity entity = new TodoEntity();
         entity.setId(id);
         entity.setTitle("Test TODO");
@@ -191,7 +192,7 @@ class TodoServiceToggleStatusTest {
         return entity;
     }
 
-    private TodoEntity createRepeatableTodoEntity(Long id, Long userId) {
+    private TodoEntity createRepeatableTodoEntity(Long id, UUID userId) {
         TodoEntity entity = createTodoEntity(id, userId, TodoStatus.TODO, null);
         entity.setIsRepeatable(true);
         return entity;

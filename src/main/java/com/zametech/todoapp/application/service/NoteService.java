@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -25,7 +26,7 @@ public class NoteService {
 
     @Transactional
     public Note createNote(CreateNoteRequest request) {
-        Long currentUserId = userContextService.getCurrentUserId();
+        UUID currentUserId = userContextService.getCurrentUserId();
         
         Note note = new Note();
         note.setTitle(request.title());
@@ -40,7 +41,7 @@ public class NoteService {
     }
 
     public Note getNoteById(Long noteId) {
-        Long currentUserId = userContextService.getCurrentUserId();
+        UUID currentUserId = userContextService.getCurrentUserId();
         
         Note note = noteRepository.findByIdAndUserId(noteId, currentUserId)
                 .orElseThrow(() -> new TodoNotFoundException("Note not found with id: " + noteId));
@@ -50,21 +51,21 @@ public class NoteService {
     }
 
     public Page<Note> getNotesByUser(Pageable pageable) {
-        Long currentUserId = userContextService.getCurrentUserId();
+        UUID currentUserId = userContextService.getCurrentUserId();
         
         log.info("Getting notes for user: {} with pageable: {}", currentUserId, pageable);
         return noteRepository.findByUserId(currentUserId, pageable);
     }
 
     public List<Note> searchNotes(String query) {
-        Long currentUserId = userContextService.getCurrentUserId();
+        UUID currentUserId = userContextService.getCurrentUserId();
         
         log.info("Searching notes for user: {} with query: {}", currentUserId, query);
         return noteRepository.searchByTitleOrContent(currentUserId, query);
     }
 
     public List<Note> getNotesByTag(String tag) {
-        Long currentUserId = userContextService.getCurrentUserId();
+        UUID currentUserId = userContextService.getCurrentUserId();
         
         log.info("Getting notes by tag: {} for user: {}", tag, currentUserId);
         return noteRepository.findByTag(currentUserId, tag);
@@ -72,7 +73,7 @@ public class NoteService {
 
     @Transactional
     public Note updateNote(Long noteId, UpdateNoteRequest request) {
-        Long currentUserId = userContextService.getCurrentUserId();
+        UUID currentUserId = userContextService.getCurrentUserId();
         
         Note note = noteRepository.findByIdAndUserId(noteId, currentUserId)
                 .orElseThrow(() -> new TodoNotFoundException("Note not found with id: " + noteId));
@@ -93,7 +94,7 @@ public class NoteService {
 
     @Transactional
     public void deleteNote(Long noteId) {
-        Long currentUserId = userContextService.getCurrentUserId();
+        UUID currentUserId = userContextService.getCurrentUserId();
         
         Note note = noteRepository.findByIdAndUserId(noteId, currentUserId)
                 .orElseThrow(() -> new TodoNotFoundException("Note not found with id: " + noteId));

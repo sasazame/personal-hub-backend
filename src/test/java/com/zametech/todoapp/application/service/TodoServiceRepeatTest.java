@@ -20,6 +20,7 @@ import org.springframework.security.access.AccessDeniedException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,7 +45,7 @@ class TodoServiceRepeatTest {
     @Test
     void testCreateTodo_WithRepeatConfig() {
         // Given
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         when(userContextService.getCurrentUserId()).thenReturn(userId);
 
         RepeatConfigRequest repeatConfig = new RepeatConfigRequest(
@@ -92,7 +93,7 @@ class TodoServiceRepeatTest {
     @Test
     void testCreateTodo_WithoutRepeatConfig() {
         // Given
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         when(userContextService.getCurrentUserId()).thenReturn(userId);
 
         CreateTodoRequest request = new CreateTodoRequest(
@@ -128,7 +129,7 @@ class TodoServiceRepeatTest {
     void testUpdateTodo_EnableRepeat() {
         // Given
         Long todoId = 1L;
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         when(userContextService.getCurrentUserId()).thenReturn(userId);
 
         TodoEntity existingTodo = new TodoEntity();
@@ -174,7 +175,7 @@ class TodoServiceRepeatTest {
     void testUpdateTodo_DisableRepeat() {
         // Given
         Long todoId = 1L;
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         when(userContextService.getCurrentUserId()).thenReturn(userId);
 
         TodoEntity existingTodo = new TodoEntity();
@@ -212,7 +213,7 @@ class TodoServiceRepeatTest {
     void testUpdateTodo_CompletionGeneratesNext() {
         // Given
         Long todoId = 1L;
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         when(userContextService.getCurrentUserId()).thenReturn(userId);
 
         TodoEntity existingTodo = new TodoEntity();
@@ -251,7 +252,7 @@ class TodoServiceRepeatTest {
     @Test
     void testGetRepeatableTodos() {
         // Given
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         when(userContextService.getCurrentUserId()).thenReturn(userId);
 
         TodoEntity repeatableTodo = new TodoEntity();
@@ -275,7 +276,7 @@ class TodoServiceRepeatTest {
     void testGetRepeatInstances() {
         // Given
         Long originalTodoId = 1L;
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         when(userContextService.getCurrentUserId()).thenReturn(userId);
 
         TodoEntity originalTodo = new TodoEntity();
@@ -304,8 +305,8 @@ class TodoServiceRepeatTest {
     void testGetRepeatInstances_AccessDenied() {
         // Given
         Long originalTodoId = 1L;
-        Long userId = 1L;
-        Long otherUserId = 2L;
+        UUID userId = UUID.randomUUID();
+        UUID otherUserId = UUID.randomUUID();
         when(userContextService.getCurrentUserId()).thenReturn(userId);
 
         TodoEntity originalTodo = new TodoEntity();
@@ -333,7 +334,7 @@ class TodoServiceRepeatTest {
     @Test
     void testGeneratePendingRepeatInstances() {
         // Given
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         when(userContextService.getCurrentUserId()).thenReturn(userId);
 
         TodoEntity newInstance = new TodoEntity();

@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import java.util.UUID;
+
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -33,11 +35,11 @@ class CalendarSyncIntegrationTest {
     @Autowired
     private EventRepository eventRepository;
 
-    private Long userId;
+    private UUID userId;
 
     @BeforeEach
     void setUp() {
-        userId = 1L;
+        userId = UUID.randomUUID();
         // Clean up any existing data
         calendarSyncSettingsRepository.deleteAll();
     }

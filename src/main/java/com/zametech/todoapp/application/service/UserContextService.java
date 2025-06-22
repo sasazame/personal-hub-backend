@@ -8,6 +8,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class UserContextService {
@@ -34,11 +36,18 @@ public class UserContextService {
                 .orElseThrow(() -> new RuntimeException("User not found: " + email));
     }
 
-    public Long getCurrentUserId() {
+    public UUID getCurrentUserId() {
         return getCurrentUser().getId();
     }
+    
+    // Temporary method for backward compatibility with Long-based repositories
+    public Long getCurrentUserIdAsLong() {
+        // This is a temporary workaround - in a real application, 
+        // all repositories should be migrated to use UUID
+        return getCurrentUser().getId().getMostSignificantBits();
+    }
 
-    public boolean isCurrentUser(Long userId) {
+    public boolean isCurrentUser(UUID userId) {
         return getCurrentUserId().equals(userId);
     }
 }

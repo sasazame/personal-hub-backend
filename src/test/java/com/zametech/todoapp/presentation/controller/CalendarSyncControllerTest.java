@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -54,7 +55,7 @@ class CalendarSyncControllerTest {
             true, LocalDateTime.now(), "SUCCESS", List.of(), stats
         );
         
-        when(userContextService.getCurrentUserId()).thenReturn(1L);
+        when(userContextService.getCurrentUserId()).thenReturn(UUID.randomUUID());
         when(calendarSyncService.getSyncStatus()).thenReturn(response);
 
         // When & Then
@@ -72,8 +73,9 @@ class CalendarSyncControllerTest {
     @WithMockUser(roles = "USER")
     void testGetSyncSettings_ReturnsEmptyList() throws Exception {
         // Given
-        when(userContextService.getCurrentUserId()).thenReturn(1L);
-        when(calendarSyncSettingsRepository.findByUserId(1L)).thenReturn(List.of());
+        UUID userId = UUID.randomUUID();
+        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        when(calendarSyncSettingsRepository.findByUserId(userId)).thenReturn(List.of());
         
         // When & Then
         mockMvc.perform(get("/api/v1/calendar/sync/settings"))

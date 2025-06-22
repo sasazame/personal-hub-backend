@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -26,7 +27,7 @@ public class EventService {
 
     @Transactional
     public Event createEvent(CreateEventRequest request) {
-        Long currentUserId = userContextService.getCurrentUserId();
+        UUID currentUserId = userContextService.getCurrentUserId();
         
         Event event = new Event();
         event.setTitle(request.title());
@@ -46,7 +47,7 @@ public class EventService {
     }
 
     public Event getEventById(Long eventId) {
-        Long currentUserId = userContextService.getCurrentUserId();
+        UUID currentUserId = userContextService.getCurrentUserId();
         
         Event event = eventRepository.findByIdAndUserId(eventId, currentUserId)
                 .orElseThrow(() -> new TodoNotFoundException("Event not found with id: " + eventId));
@@ -56,14 +57,14 @@ public class EventService {
     }
 
     public Page<Event> getEventsByUser(Pageable pageable) {
-        Long currentUserId = userContextService.getCurrentUserId();
+        UUID currentUserId = userContextService.getCurrentUserId();
         
         log.info("Getting events for user: {} with pageable: {}", currentUserId, pageable);
         return eventRepository.findByUserId(currentUserId, pageable);
     }
 
     public List<Event> getEventsByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
-        Long currentUserId = userContextService.getCurrentUserId();
+        UUID currentUserId = userContextService.getCurrentUserId();
         
         log.info("Getting events for user: {} between {} and {}", currentUserId, startDate, endDate);
         return eventRepository.findByUserIdAndDateRange(currentUserId, startDate, endDate);
@@ -71,7 +72,7 @@ public class EventService {
 
     @Transactional
     public Event updateEvent(Long eventId, UpdateEventRequest request) {
-        Long currentUserId = userContextService.getCurrentUserId();
+        UUID currentUserId = userContextService.getCurrentUserId();
         
         Event event = eventRepository.findByIdAndUserId(eventId, currentUserId)
                 .orElseThrow(() -> new TodoNotFoundException("Event not found with id: " + eventId));
@@ -107,7 +108,7 @@ public class EventService {
 
     @Transactional
     public void deleteEvent(Long eventId) {
-        Long currentUserId = userContextService.getCurrentUserId();
+        UUID currentUserId = userContextService.getCurrentUserId();
         
         Event event = eventRepository.findByIdAndUserId(eventId, currentUserId)
                 .orElseThrow(() -> new TodoNotFoundException("Event not found with id: " + eventId));

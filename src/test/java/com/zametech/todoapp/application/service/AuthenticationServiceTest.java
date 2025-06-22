@@ -21,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -62,11 +63,16 @@ class AuthenticationServiceTest {
         request.setUsername("testuser");
 
         User savedUser = new User(
-                1L,
+                UUID.randomUUID(),
                 "test@example.com",
                 "encoded-password",
                 "testuser",
                 true,
+                false,
+                null,
+                null,
+                null,
+                null,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
@@ -118,11 +124,16 @@ class AuthenticationServiceTest {
         request.setPassword("Password123!");
 
         User user = new User(
-                1L,
+                UUID.randomUUID(),
                 "test@example.com",
                 "encoded-password",
                 "testuser",
                 true,
+                false,
+                null,
+                null,
+                null,
+                null,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );

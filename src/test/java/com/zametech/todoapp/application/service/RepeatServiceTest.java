@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -31,7 +32,7 @@ class RepeatServiceTest {
     private TodoEntity createRepeatableTodo(RepeatType repeatType, Integer interval, String daysOfWeek, 
                                           Integer dayOfMonth, LocalDate dueDate, LocalDate endDate) {
         return new TodoEntity(
-            1L, // userId
+            UUID.randomUUID(), // userId
             "Test Repeatable TODO",
             "Test Description",
             TodoStatus.TODO,
@@ -239,7 +240,7 @@ class RepeatServiceTest {
     @Test
     void testGenerateAllPendingOccurrences() {
         // Given
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         TodoEntity repeatableTodo = createRepeatableTodo(
             RepeatType.DAILY, 1, null, null, 
             LocalDate.of(2025, 1, 1), null

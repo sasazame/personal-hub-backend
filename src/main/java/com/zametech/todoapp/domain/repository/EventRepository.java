@@ -7,18 +7,19 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface EventRepository {
     Event save(Event event);
     Optional<Event> findById(Long id);
-    Optional<Event> findByIdAndUserId(Long id, Long userId);
-    Page<Event> findByUserId(Long userId, Pageable pageable);
-    List<Event> findByUserIdAndDateRange(Long userId, LocalDateTime startDate, LocalDateTime endDate);
+    Optional<Event> findByIdAndUserId(Long id, UUID userId);
+    Page<Event> findByUserId(UUID userId, Pageable pageable);
+    List<Event> findByUserIdAndDateRange(UUID userId, LocalDateTime startDate, LocalDateTime endDate);
     void deleteById(Long id);
-    void deleteByUserId(Long userId);
+    void deleteByUserId(UUID userId);
     
     // Google Calendar sync methods
     Optional<Event> findByGoogleEventId(String googleEventId);
-    List<Event> findByUserIdAndSyncStatus(Long userId, String syncStatus);
-    List<Event> findByUserIdAndLastSyncedAtAfter(Long userId, LocalDateTime lastSyncedAt);
+    List<Event> findByUserIdAndSyncStatus(UUID userId, String syncStatus);
+    List<Event> findByUserIdAndLastSyncedAtAfter(UUID userId, LocalDateTime lastSyncedAt);
 }

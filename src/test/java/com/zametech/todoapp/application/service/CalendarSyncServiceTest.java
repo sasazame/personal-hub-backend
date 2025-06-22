@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -35,12 +36,12 @@ class CalendarSyncServiceTest {
     @InjectMocks
     private CalendarSyncService calendarSyncService;
 
-    private Long userId;
+    private UUID userId;
     private CalendarSyncSettingsEntity syncSettings;
 
     @BeforeEach
     void setUp() {
-        userId = 1L;
+        userId = UUID.randomUUID();
         syncSettings = new CalendarSyncSettingsEntity(
             userId,
             "primary",

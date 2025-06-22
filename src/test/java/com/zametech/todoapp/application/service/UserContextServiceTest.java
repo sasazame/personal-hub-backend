@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -45,11 +46,16 @@ class UserContextServiceTest {
     @Test
     void shouldReturnCurrentUserWhenAuthenticated() {
         User expectedUser = new User(
-                1L,
+                UUID.randomUUID(),
                 "test@example.com",
                 "password",
                 "testuser",
                 true,
+                false,
+                null,
+                null,
+                null,
+                null,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
@@ -112,11 +118,16 @@ class UserContextServiceTest {
     @Test
     void shouldReturnCurrentUserId() {
         User user = new User(
-                1L,
+                UUID.randomUUID(),
                 "test@example.com",
                 "password",
                 "testuser",
                 true,
+                false,
+                null,
+                null,
+                null,
+                null,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
@@ -127,19 +138,24 @@ class UserContextServiceTest {
         when(userDetails.getUsername()).thenReturn("test@example.com");
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
 
-        Long userId = userContextService.getCurrentUserId();
+        UUID userId = userContextService.getCurrentUserId();
 
-        assertEquals(1L, userId);
+        assertEquals(user.getId(), userId);
     }
 
     @Test
     void shouldReturnTrueWhenUserIsCurrentUser() {
         User user = new User(
-                1L,
+                UUID.randomUUID(),
                 "test@example.com",
                 "password",
                 "testuser",
                 true,
+                false,
+                null,
+                null,
+                null,
+                null,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
@@ -150,7 +166,7 @@ class UserContextServiceTest {
         when(userDetails.getUsername()).thenReturn("test@example.com");
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
 
-        boolean isCurrentUser = userContextService.isCurrentUser(1L);
+        boolean isCurrentUser = userContextService.isCurrentUser(user.getId());
 
         assertTrue(isCurrentUser);
     }
@@ -158,11 +174,16 @@ class UserContextServiceTest {
     @Test
     void shouldReturnFalseWhenUserIsNotCurrentUser() {
         User user = new User(
-                1L,
+                UUID.randomUUID(),
                 "test@example.com",
                 "password",
                 "testuser",
                 true,
+                false,
+                null,
+                null,
+                null,
+                null,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
@@ -173,7 +194,7 @@ class UserContextServiceTest {
         when(userDetails.getUsername()).thenReturn("test@example.com");
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
 
-        boolean isCurrentUser = userContextService.isCurrentUser(2L);
+        boolean isCurrentUser = userContextService.isCurrentUser(UUID.randomUUID());
 
         assertFalse(isCurrentUser);
     }

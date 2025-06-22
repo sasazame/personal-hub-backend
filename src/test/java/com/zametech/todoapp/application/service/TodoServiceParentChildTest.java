@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,10 +42,10 @@ class TodoServiceParentChildTest {
     @InjectMocks
     private TodoService todoService;
 
-    private static final Long USER_ID = 1L;
+    private static final UUID USER_ID = UUID.randomUUID();
     private static final Long PARENT_TODO_ID = 100L;
     private static final Long CHILD_TODO_ID = 200L;
-    private static final Long OTHER_USER_ID = 2L;
+    private static final UUID OTHER_USER_ID = UUID.randomUUID();
 
     private TodoEntity parentTodo;
     private TodoEntity childTodo;

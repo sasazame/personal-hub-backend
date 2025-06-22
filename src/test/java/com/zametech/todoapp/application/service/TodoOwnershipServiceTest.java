@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,7 +50,7 @@ class TodoOwnershipServiceTest {
 
     @Test
     void shouldCreateTodoWithCurrentUserAsOwner() {
-        Long currentUserId = 1L;
+        UUID currentUserId = UUID.randomUUID();
         CreateTodoRequest request = new CreateTodoRequest(
                 "Test Todo",
                 "Test Description",
@@ -87,7 +88,7 @@ class TodoOwnershipServiceTest {
     @Test
     void shouldGetTodoWhenUserIsOwner() {
         Long todoId = 1L;
-        Long currentUserId = 1L;
+        UUID currentUserId = UUID.randomUUID();
 
         TodoEntity todo = new TodoEntity(
                 currentUserId,
@@ -113,8 +114,8 @@ class TodoOwnershipServiceTest {
     @Test
     void shouldThrowAccessDeniedExceptionWhenUserIsNotOwner() {
         Long todoId = 1L;
-        Long todoOwnerId = 1L;
-        Long currentUserId = 2L;
+        UUID todoOwnerId = UUID.randomUUID();
+        UUID currentUserId = UUID.randomUUID();
 
         TodoEntity todo = new TodoEntity(
                 todoOwnerId,
@@ -139,7 +140,7 @@ class TodoOwnershipServiceTest {
 
     @Test
     void shouldGetTodosOnlyForCurrentUser() {
-        Long currentUserId = 1L;
+        UUID currentUserId = UUID.randomUUID();
         Pageable pageable = PageRequest.of(0, 10);
 
         TodoEntity todo1 = new TodoEntity(
@@ -179,7 +180,7 @@ class TodoOwnershipServiceTest {
 
     @Test
     void shouldGetTodosByStatusOnlyForCurrentUser() {
-        Long currentUserId = 1L;
+        UUID currentUserId = UUID.randomUUID();
         TodoStatus status = TodoStatus.TODO;
 
         TodoEntity todo = new TodoEntity(
@@ -207,7 +208,7 @@ class TodoOwnershipServiceTest {
     @Test
     void shouldUpdateTodoWhenUserIsOwner() {
         Long todoId = 1L;
-        Long currentUserId = 1L;
+        UUID currentUserId = UUID.randomUUID();
 
         TodoEntity existingTodo = new TodoEntity(
                 currentUserId,
@@ -245,8 +246,8 @@ class TodoOwnershipServiceTest {
     @Test
     void shouldThrowAccessDeniedExceptionWhenUpdatingTodoUserIsNotOwner() {
         Long todoId = 1L;
-        Long todoOwnerId = 1L;
-        Long currentUserId = 2L;
+        UUID todoOwnerId = UUID.randomUUID();
+        UUID currentUserId = UUID.randomUUID();
 
         TodoEntity existingTodo = new TodoEntity(
                 todoOwnerId,
@@ -284,7 +285,7 @@ class TodoOwnershipServiceTest {
     @Test
     void shouldDeleteTodoWhenUserIsOwner() {
         Long todoId = 1L;
-        Long currentUserId = 1L;
+        UUID currentUserId = UUID.randomUUID();
 
         TodoEntity existingTodo = new TodoEntity(
                 currentUserId,
@@ -309,8 +310,8 @@ class TodoOwnershipServiceTest {
     @Test
     void shouldThrowAccessDeniedExceptionWhenDeletingTodoUserIsNotOwner() {
         Long todoId = 1L;
-        Long todoOwnerId = 1L;
-        Long currentUserId = 2L;
+        UUID todoOwnerId = UUID.randomUUID();
+        UUID currentUserId = UUID.randomUUID();
 
         TodoEntity existingTodo = new TodoEntity(
                 todoOwnerId,

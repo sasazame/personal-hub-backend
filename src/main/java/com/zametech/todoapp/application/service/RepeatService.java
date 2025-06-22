@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -189,7 +190,7 @@ public class RepeatService {
      * Generate all pending repeat occurrences for a user
      */
     @Transactional
-    public List<TodoEntity> generateAllPendingOccurrences(Long userId) {
+    public List<TodoEntity> generateAllPendingOccurrences(UUID userId) {
         List<TodoEntity> repeatableTodos = todoRepository.findByUserIdAndIsRepeatableTrue(userId);
         
         return repeatableTodos.stream()

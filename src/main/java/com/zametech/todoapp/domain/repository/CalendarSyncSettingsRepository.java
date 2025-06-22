@@ -6,17 +6,18 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface CalendarSyncSettingsRepository extends JpaRepository<CalendarSyncSettingsEntity, Long> {
     
-    List<CalendarSyncSettingsEntity> findByUserId(Long userId);
+    List<CalendarSyncSettingsEntity> findByUserId(UUID userId);
     
-    List<CalendarSyncSettingsEntity> findByUserIdAndSyncEnabledTrue(Long userId);
+    List<CalendarSyncSettingsEntity> findByUserIdAndSyncEnabledTrue(UUID userId);
     
-    Optional<CalendarSyncSettingsEntity> findByUserIdAndGoogleCalendarId(Long userId, String googleCalendarId);
+    Optional<CalendarSyncSettingsEntity> findByUserIdAndGoogleCalendarId(UUID userId, String googleCalendarId);
     
-    boolean existsByUserIdAndGoogleCalendarId(Long userId, String googleCalendarId);
+    boolean existsByUserIdAndGoogleCalendarId(UUID userId, String googleCalendarId);
     
-    void deleteByUserIdAndGoogleCalendarId(Long userId, String googleCalendarId);
+    void deleteByUserIdAndGoogleCalendarId(UUID userId, String googleCalendarId);
 }

@@ -10,6 +10,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * TODOエンティティ
@@ -23,7 +24,7 @@ public class TodoEntity {
     private Long id;
 
     @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private UUID userId;
 
     @Column(nullable = false, length = 255)
     private String title;
@@ -87,7 +88,7 @@ public class TodoEntity {
     public TodoEntity() {
     }
 
-    public TodoEntity(Long userId, String title, String description, TodoStatus status, 
+    public TodoEntity(UUID userId, String title, String description, TodoStatus status, 
                       TodoPriority priority, LocalDate dueDate) {
         this.userId = userId;
         this.title = title;
@@ -97,13 +98,13 @@ public class TodoEntity {
         this.dueDate = dueDate;
     }
 
-    public TodoEntity(Long userId, String title, String description, TodoStatus status,
+    public TodoEntity(UUID userId, String title, String description, TodoStatus status,
                       TodoPriority priority, LocalDate dueDate, Long parentId) {
         this(userId, title, description, status, priority, dueDate);
         this.parentId = parentId;
     }
 
-    public TodoEntity(Long userId, String title, String description, TodoStatus status,
+    public TodoEntity(UUID userId, String title, String description, TodoStatus status,
                       TodoPriority priority, LocalDate dueDate, Long parentId,
                       Boolean isRepeatable, RepeatType repeatType, Integer repeatInterval,
                       String repeatDaysOfWeek, Integer repeatDayOfMonth, LocalDate repeatEndDate,
@@ -127,11 +128,11 @@ public class TodoEntity {
         this.id = id;
     }
 
-    public Long getUserId() {
+    public UUID getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(UUID userId) {
         this.userId = userId;
     }
 

@@ -8,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -21,7 +22,7 @@ public class CalendarSyncSettingsEntity {
     private Long id;
 
     @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private UUID userId;
 
     @Column(name = "google_calendar_id", nullable = false)
     private String googleCalendarId;
@@ -46,7 +47,7 @@ public class CalendarSyncSettingsEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public CalendarSyncSettingsEntity(Long userId, String googleCalendarId, String calendarName) {
+    public CalendarSyncSettingsEntity(UUID userId, String googleCalendarId, String calendarName) {
         this.userId = userId;
         this.googleCalendarId = googleCalendarId;
         this.calendarName = calendarName;
