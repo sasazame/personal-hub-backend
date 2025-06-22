@@ -187,7 +187,7 @@ class RepeatTodoIntegrationTest {
     void testGetRepeatableTodos() throws Exception {
         // Given - 繰り返し可能なTODOをいくつか作成
         TodoEntity repeatableTodo1 = new TodoEntity(
-            testUser.getId(),
+            testUser.getId().getMostSignificantBits(),
             "Daily Task",
             "Daily description",
             TodoStatus.TODO,
@@ -204,7 +204,7 @@ class RepeatTodoIntegrationTest {
         );
 
         TodoEntity repeatableTodo2 = new TodoEntity(
-            testUser.getId(),
+            testUser.getId().getMostSignificantBits(),
             "Weekly Task",
             "Weekly description",
             TodoStatus.TODO,
@@ -222,7 +222,7 @@ class RepeatTodoIntegrationTest {
 
         // 非繰り返しTODO
         TodoEntity normalTodo = new TodoEntity(
-            testUser.getId(),
+            testUser.getId().getMostSignificantBits(),
             "Normal Task",
             "Normal description",
             TodoStatus.TODO,
@@ -309,7 +309,7 @@ class RepeatTodoIntegrationTest {
     void testGeneratePendingRepeatInstances() throws Exception {
         // Given - 過去の期限のある繰り返しTODOを作成
         TodoEntity overdueTodo = new TodoEntity(
-            testUser.getId(),
+            testUser.getId().getMostSignificantBits(),
             "Overdue Task",
             "Should generate new instances",
             TodoStatus.TODO,
@@ -340,7 +340,7 @@ class RepeatTodoIntegrationTest {
     void testUpdateTodoDisableRepeat() throws Exception {
         // Given - 繰り返し可能なTODOを作成
         TodoEntity repeatableTodo = new TodoEntity(
-            testUser.getId(),
+            testUser.getId().getMostSignificantBits(),
             "Repeatable Task",
             "Initially repeatable",
             TodoStatus.TODO,

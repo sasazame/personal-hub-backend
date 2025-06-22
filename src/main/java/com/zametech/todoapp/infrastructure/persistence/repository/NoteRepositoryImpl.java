@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -31,19 +32,19 @@ public class NoteRepositoryImpl implements NoteRepository {
     }
 
     @Override
-    public Optional<Note> findByIdAndUserId(Long id, Long userId) {
+    public Optional<Note> findByIdAndUserId(Long id, UUID userId) {
         return noteJpaRepository.findByIdAndUserId(id, userId)
                 .map(this::toModel);
     }
 
     @Override
-    public Page<Note> findByUserId(Long userId, Pageable pageable) {
+    public Page<Note> findByUserId(UUID userId, Pageable pageable) {
         return noteJpaRepository.findByUserId(userId, pageable)
                 .map(this::toModel);
     }
 
     @Override
-    public List<Note> searchByTitleOrContent(Long userId, String query) {
+    public List<Note> searchByTitleOrContent(UUID userId, String query) {
         return noteJpaRepository.searchByTitleOrContent(userId, query)
                 .stream()
                 .map(this::toModel)
@@ -51,7 +52,7 @@ public class NoteRepositoryImpl implements NoteRepository {
     }
 
     @Override
-    public List<Note> findByTag(Long userId, String tag) {
+    public List<Note> findByTag(UUID userId, String tag) {
         return noteJpaRepository.findByTag(userId, tag)
                 .stream()
                 .map(this::toModel)
@@ -64,7 +65,7 @@ public class NoteRepositoryImpl implements NoteRepository {
     }
 
     @Override
-    public void deleteByUserId(Long userId) {
+    public void deleteByUserId(UUID userId) {
         noteJpaRepository.deleteByUserId(userId);
     }
 

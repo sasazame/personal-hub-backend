@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * TODOリポジトリ実装
@@ -63,17 +64,17 @@ public class TodoRepositoryImpl implements TodoRepository {
     }
 
     @Override
-    public Page<TodoEntity> findByUserId(Long userId, Pageable pageable) {
+    public Page<TodoEntity> findByUserId(UUID userId, Pageable pageable) {
         return todoJpaRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
     }
 
     @Override
-    public List<TodoEntity> findByUserIdAndStatus(Long userId, TodoStatus status) {
+    public List<TodoEntity> findByUserIdAndStatus(UUID userId, TodoStatus status) {
         return todoJpaRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, status);
     }
     
     @Override
-    public void deleteByUserId(Long userId) {
+    public void deleteByUserId(UUID userId) {
         todoJpaRepository.deleteByUserId(userId);
     }
     
@@ -88,7 +89,7 @@ public class TodoRepositoryImpl implements TodoRepository {
     }
     
     @Override
-    public List<TodoEntity> findByUserIdAndIsRepeatableTrue(Long userId) {
+    public List<TodoEntity> findByUserIdAndIsRepeatableTrue(UUID userId) {
         return todoJpaRepository.findByUserIdAndIsRepeatableTrueOrderByCreatedAtDesc(userId);
     }
     

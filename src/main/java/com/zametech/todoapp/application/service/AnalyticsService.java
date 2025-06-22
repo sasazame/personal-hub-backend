@@ -31,7 +31,7 @@ public class AnalyticsService {
     private final UserContextService userContextService;
 
     public DashboardResponse getDashboard() {
-        Long currentUserId = userContextService.getCurrentUserIdAsLong();
+        UUID currentUserId = userContextService.getCurrentUserId();
         
         log.info("Generating dashboard for user: {}", currentUserId);
         
@@ -44,7 +44,7 @@ public class AnalyticsService {
     }
 
     public TodoActivityResponse getTodoActivity() {
-        Long currentUserId = userContextService.getCurrentUserIdAsLong();
+        UUID currentUserId = userContextService.getCurrentUserId();
         
         log.info("Generating TODO activity for user: {}", currentUserId);
         
@@ -82,7 +82,7 @@ public class AnalyticsService {
         );
     }
 
-    private TodoStatsResponse generateTodoStats(Long userId) {
+    private TodoStatsResponse generateTodoStats(UUID userId) {
         List<TodoEntity> allTodos = todoRepository.findByUserId(userId, PageRequest.of(0, 1000)).getContent();
         
         long totalTodos = allTodos.size();
@@ -112,7 +112,7 @@ public class AnalyticsService {
         );
     }
 
-    private EventStatsResponse generateEventStats(Long userId) {
+    private EventStatsResponse generateEventStats(UUID userId) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
         LocalDateTime endOfDay = startOfDay.plusDays(1).minusSeconds(1);
@@ -133,7 +133,7 @@ public class AnalyticsService {
         return new EventStatsResponse(totalEvents, upcomingEvents, pastEvents, todayEvents);
     }
 
-    private NoteStatsResponse generateNoteStats(Long userId) {
+    private NoteStatsResponse generateNoteStats(UUID userId) {
         List<Note> allNotes = noteRepository.findByUserId(userId, PageRequest.of(0, 1000)).getContent();
         
         LocalDateTime weekAgo = LocalDateTime.now().minusWeeks(1);
@@ -154,7 +154,7 @@ public class AnalyticsService {
         return new NoteStatsResponse(totalNotes, notesThisWeek, notesThisMonth, uniqueTags.size());
     }
 
-    private ProductivityStatsResponse generateProductivityStats(Long userId) {
+    private ProductivityStatsResponse generateProductivityStats(UUID userId) {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(7);
         

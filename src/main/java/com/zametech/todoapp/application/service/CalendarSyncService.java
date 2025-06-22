@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +31,7 @@ public class CalendarSyncService {
      */
     @Transactional
     public List<CalendarListEntry> connectGoogleCalendar(String userCredentialsJson) {
-        Long userId = userContextService.getCurrentUserIdAsLong();
+        UUID userId = userContextService.getCurrentUserId();
         
         try {
             List<CalendarListEntry> calendars = googleCalendarService.getUserCalendars(userCredentialsJson);
@@ -60,7 +61,7 @@ public class CalendarSyncService {
      */
     @Transactional
     public void disconnectGoogleCalendar(String calendarId) {
-        Long userId = userContextService.getCurrentUserIdAsLong();
+        UUID userId = userContextService.getCurrentUserId();
         
         try {
             calendarSyncSettingsRepository.deleteByUserIdAndGoogleCalendarId(userId, calendarId);
@@ -91,7 +92,7 @@ public class CalendarSyncService {
      */
     @Transactional
     public CalendarSyncStatusResponse performSync(String userCredentialsJson) {
-        Long userId = userContextService.getCurrentUserIdAsLong();
+        UUID userId = userContextService.getCurrentUserId();
         
         try {
             List<CalendarSyncSettingsEntity> settings = 
@@ -195,7 +196,7 @@ public class CalendarSyncService {
             int syncedEvents = 0;
             int errorEvents = 0;
             
-            Long userId = userContextService.getCurrentUserIdAsLong();
+            UUID userId = userContextService.getCurrentUserId();
             
             for (Event googleEvent : googleEvents) {
                 try {
@@ -234,7 +235,7 @@ public class CalendarSyncService {
     /**
      * Sync events from Personal Hub to Google Calendar
      */
-    private SyncResult syncToGoogle(String userCredentialsJson, String calendarId, Long userId) {
+    private SyncResult syncToGoogle(String userCredentialsJson, String calendarId, UUID userId) {
         try {
             // Get events that need to be synced to Google
             List<com.zametech.todoapp.domain.model.Event> eventsToSync = 
@@ -324,7 +325,7 @@ public class CalendarSyncService {
      * Get sync status for user
      */
     public CalendarSyncStatusResponse getSyncStatus() {
-        Long userId = userContextService.getCurrentUserIdAsLong();
+        UUID userId = userContextService.getCurrentUserId();
         
         List<CalendarSyncSettingsEntity> settings = calendarSyncSettingsRepository.findByUserId(userId);
         

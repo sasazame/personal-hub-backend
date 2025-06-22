@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,7 +50,7 @@ class TodoOwnershipServiceTest {
 
     @Test
     void shouldCreateTodoWithCurrentUserAsOwner() {
-        Long currentUserId = 1L;
+        UUID currentUserId = UUID.randomUUID();
         CreateTodoRequest request = new CreateTodoRequest(
                 "Test Todo",
                 "Test Description",
@@ -61,7 +62,7 @@ class TodoOwnershipServiceTest {
         );
 
         TodoEntity savedTodo = new TodoEntity(
-                currentUserId,
+                currentUserId.getMostSignificantBits(),
                 "Test Todo",
                 "Test Description",
                 TodoStatus.TODO,
@@ -72,7 +73,7 @@ class TodoOwnershipServiceTest {
         savedTodo.setCreatedAt(ZonedDateTime.now());
         savedTodo.setUpdatedAt(ZonedDateTime.now());
 
-        when(userContextService.getCurrentUserId()).thenReturn(currentUserId);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(currentUserId.getMostSignificantBits());
         when(todoRepository.save(any(TodoEntity.class))).thenReturn(savedTodo);
 
         TodoResponse response = todoService.createTodo(request);
@@ -80,17 +81,17 @@ class TodoOwnershipServiceTest {
         assertNotNull(response);
         assertEquals("Test Todo", response.title());
         assertEquals(TodoStatus.TODO, response.status());
-        verify(userContextService).getCurrentUserId();
+        verify(userContextService).getCurrentUserIdAsLong();
         verify(todoRepository).save(any(TodoEntity.class));
     }
 
     @Test
     void shouldGetTodoWhenUserIsOwner() {
         Long todoId = 1L;
-        Long currentUserId = 1L;
+        UUID currentUserId = UUID.randomUUID();
 
         TodoEntity todo = new TodoEntity(
-                currentUserId,
+                currentUserId.getMostSignificantBits(),
                 "Test Todo",
                 "Test Description",
                 TodoStatus.TODO,
@@ -100,14 +101,14 @@ class TodoOwnershipServiceTest {
         todo.setId(todoId);
 
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(todo));
-        when(userContextService.getCurrentUserId()).thenReturn(currentUserId);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(currentUserId.getMostSignificantBits());
 
         TodoResponse response = todoService.getTodo(todoId);
 
         assertNotNull(response);
         assertEquals("Test Todo", response.title());
         verify(todoRepository).findById(todoId);
-        verify(userContextService).getCurrentUserId();
+        verify(userContextService).getCurrentUserIdAsLong();
     }
 
     @Test
@@ -127,23 +128,23 @@ class TodoOwnershipServiceTest {
         todo.setId(todoId);
 
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(todo));
-        when(userContextService.getCurrentUserId()).thenReturn(currentUserId);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(currentUserId);
 
         assertThrows(AccessDeniedException.class, () -> {
             todoService.getTodo(todoId);
         });
 
         verify(todoRepository).findById(todoId);
-        verify(userContextService).getCurrentUserId();
+        verify(userContextService).getCurrentUserIdAsLong();
     }
 
     @Test
     void shouldGetTodosOnlyForCurrentUser() {
-        Long currentUserId = 1L;
+        UUID currentUserId = UUID.randomUUID();
         Pageable pageable = PageRequest.of(0, 10);
 
         TodoEntity todo1 = new TodoEntity(
-                currentUserId,
+                currentUserId.getMostSignificantBits(),
                 "Todo 1",
                 "Description 1",
                 TodoStatus.TODO,
@@ -153,7 +154,7 @@ class TodoOwnershipServiceTest {
         todo1.setId(1L);
 
         TodoEntity todo2 = new TodoEntity(
-                currentUserId,
+                currentUserId.getMostSignificantBits(),
                 "Todo 2",
                 "Description 2",
                 TodoStatus.DONE,
@@ -164,8 +165,8 @@ class TodoOwnershipServiceTest {
 
         Page<TodoEntity> todoPage = new PageImpl<>(List.of(todo1, todo2), pageable, 2);
 
-        when(userContextService.getCurrentUserId()).thenReturn(currentUserId);
-        when(todoRepository.findByUserId(currentUserId, pageable)).thenReturn(todoPage);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(currentUserId.getMostSignificantBits());
+        when(todoRepository.findByUserId(currentUserId.getMostSignificantBits(), pageable)).thenReturn(todoPage);
 
         Page<TodoResponse> response = todoService.getTodos(pageable);
 
@@ -173,17 +174,17 @@ class TodoOwnershipServiceTest {
         assertEquals(2, response.getContent().size());
         assertEquals("Todo 1", response.getContent().get(0).title());
         assertEquals("Todo 2", response.getContent().get(1).title());
-        verify(userContextService).getCurrentUserId();
-        verify(todoRepository).findByUserId(currentUserId, pageable);
+        verify(userContextService).getCurrentUserIdAsLong();
+        verify(todoRepository).findByUserId(currentUserId.getMostSignificantBits(), pageable);
     }
 
     @Test
     void shouldGetTodosByStatusOnlyForCurrentUser() {
-        Long currentUserId = 1L;
+        UUID currentUserId = UUID.randomUUID();
         TodoStatus status = TodoStatus.TODO;
 
         TodoEntity todo = new TodoEntity(
-                currentUserId,
+                currentUserId.getMostSignificantBits(),
                 "Todo 1",
                 "Description 1",
                 TodoStatus.TODO,
@@ -192,25 +193,25 @@ class TodoOwnershipServiceTest {
         );
         todo.setId(1L);
 
-        when(userContextService.getCurrentUserId()).thenReturn(currentUserId);
-        when(todoRepository.findByUserIdAndStatus(currentUserId, status)).thenReturn(List.of(todo));
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(currentUserId.getMostSignificantBits());
+        when(todoRepository.findByUserIdAndStatus(currentUserId.getMostSignificantBits(), status)).thenReturn(List.of(todo));
 
         List<TodoResponse> response = todoService.getTodosByStatus(status);
 
         assertNotNull(response);
         assertEquals(1, response.size());
         assertEquals("Todo 1", response.get(0).title());
-        verify(userContextService).getCurrentUserId();
-        verify(todoRepository).findByUserIdAndStatus(currentUserId, status);
+        verify(userContextService).getCurrentUserIdAsLong();
+        verify(todoRepository).findByUserIdAndStatus(currentUserId.getMostSignificantBits(), status);
     }
 
     @Test
     void shouldUpdateTodoWhenUserIsOwner() {
         Long todoId = 1L;
-        Long currentUserId = 1L;
+        UUID currentUserId = UUID.randomUUID();
 
         TodoEntity existingTodo = new TodoEntity(
-                currentUserId,
+                currentUserId.getMostSignificantBits(),
                 "Old Title",
                 "Old Description",
                 TodoStatus.TODO,
@@ -231,14 +232,14 @@ class TodoOwnershipServiceTest {
         );
 
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(existingTodo));
-        when(userContextService.getCurrentUserId()).thenReturn(currentUserId);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(currentUserId.getMostSignificantBits());
         when(todoRepository.save(any(TodoEntity.class))).thenReturn(existingTodo);
 
         TodoResponse response = todoService.updateTodo(todoId, request);
 
         assertNotNull(response);
         verify(todoRepository).findById(todoId);
-        verify(userContextService).getCurrentUserId();
+        verify(userContextService).getCurrentUserIdAsLong();
         verify(todoRepository).save(any(TodoEntity.class));
     }
 
@@ -270,24 +271,24 @@ class TodoOwnershipServiceTest {
         );
 
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(existingTodo));
-        when(userContextService.getCurrentUserId()).thenReturn(currentUserId);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(currentUserId);
 
         assertThrows(AccessDeniedException.class, () -> {
             todoService.updateTodo(todoId, request);
         });
 
         verify(todoRepository).findById(todoId);
-        verify(userContextService).getCurrentUserId();
+        verify(userContextService).getCurrentUserIdAsLong();
         verify(todoRepository, never()).save(any(TodoEntity.class));
     }
 
     @Test
     void shouldDeleteTodoWhenUserIsOwner() {
         Long todoId = 1L;
-        Long currentUserId = 1L;
+        UUID currentUserId = UUID.randomUUID();
 
         TodoEntity existingTodo = new TodoEntity(
-                currentUserId,
+                currentUserId.getMostSignificantBits(),
                 "Title",
                 "Description",
                 TodoStatus.TODO,
@@ -297,12 +298,12 @@ class TodoOwnershipServiceTest {
         existingTodo.setId(todoId);
 
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(existingTodo));
-        when(userContextService.getCurrentUserId()).thenReturn(currentUserId);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(currentUserId.getMostSignificantBits());
 
         todoService.deleteTodo(todoId);
 
         verify(todoRepository).findById(todoId);
-        verify(userContextService).getCurrentUserId();
+        verify(userContextService).getCurrentUserIdAsLong();
         verify(todoRepository).deleteById(todoId);
     }
 
@@ -323,14 +324,14 @@ class TodoOwnershipServiceTest {
         existingTodo.setId(todoId);
 
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(existingTodo));
-        when(userContextService.getCurrentUserId()).thenReturn(currentUserId);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(currentUserId);
 
         assertThrows(AccessDeniedException.class, () -> {
             todoService.deleteTodo(todoId);
         });
 
         verify(todoRepository).findById(todoId);
-        verify(userContextService).getCurrentUserId();
+        verify(userContextService).getCurrentUserIdAsLong();
         verify(todoRepository, never()).deleteById(todoId);
     }
 }

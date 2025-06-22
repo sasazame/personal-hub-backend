@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -35,14 +36,14 @@ class CalendarSyncServiceTest {
     @InjectMocks
     private CalendarSyncService calendarSyncService;
 
-    private Long userId;
+    private UUID userId;
     private CalendarSyncSettingsEntity syncSettings;
 
     @BeforeEach
     void setUp() {
-        userId = 1L;
+        userId = UUID.randomUUID();
         syncSettings = new CalendarSyncSettingsEntity(
-            userId,
+            userId.getMostSignificantBits(),
             "primary",
             "Primary Calendar"
         );
@@ -53,8 +54,8 @@ class CalendarSyncServiceTest {
     @Test
     void testGetSyncStatus_WhenNoSettings_ReturnsNotConnected() {
         // Given
-        when(userContextService.getCurrentUserId()).thenReturn(userId);
-        when(calendarSyncSettingsRepository.findByUserId(userId)).thenReturn(List.of());
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId.getMostSignificantBits());
+        when(calendarSyncSettingsRepository.findByUserId(userId.getMostSignificantBits())).thenReturn(List.of());
 
         // When
         CalendarSyncStatusResponse response = calendarSyncService.getSyncStatus();
@@ -68,10 +69,10 @@ class CalendarSyncServiceTest {
     @Test
     void testGetSyncStatus_WhenSettingsExist_ReturnsConnected() {
         // Given
-        when(userContextService.getCurrentUserId()).thenReturn(userId);
-        when(calendarSyncSettingsRepository.findByUserId(userId)).thenReturn(List.of(syncSettings));
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId.getMostSignificantBits());
+        when(calendarSyncSettingsRepository.findByUserId(userId.getMostSignificantBits())).thenReturn(List.of(syncSettings));
         when(eventRepository.findByUserIdAndDateRange(
-            org.mockito.ArgumentMatchers.eq(userId),
+            org.mockito.ArgumentMatchers.eq(userId.getMostSignificantBits()),
             org.mockito.ArgumentMatchers.any(LocalDateTime.class),
             org.mockito.ArgumentMatchers.any(LocalDateTime.class)
         )).thenReturn(List.of());
@@ -89,8 +90,8 @@ class CalendarSyncServiceTest {
     @Test
     void testGetSyncStatus_CalculatesStatisticsCorrectly() {
         // Given
-        when(userContextService.getCurrentUserId()).thenReturn(userId);
-        when(calendarSyncSettingsRepository.findByUserId(userId)).thenReturn(List.of(syncSettings));
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId.getMostSignificantBits());
+        when(calendarSyncSettingsRepository.findByUserId(userId.getMostSignificantBits())).thenReturn(List.of(syncSettings));
         
         // Mock events with different sync statuses
         List<com.zametech.todoapp.domain.model.Event> events = List.of(
@@ -101,7 +102,7 @@ class CalendarSyncServiceTest {
         );
         
         when(eventRepository.findByUserIdAndDateRange(
-            org.mockito.ArgumentMatchers.eq(userId),
+            org.mockito.ArgumentMatchers.eq(userId.getMostSignificantBits()),
             org.mockito.ArgumentMatchers.any(LocalDateTime.class),
             org.mockito.ArgumentMatchers.any(LocalDateTime.class)
         )).thenReturn(events);
@@ -121,7 +122,7 @@ class CalendarSyncServiceTest {
         com.zametech.todoapp.domain.model.Event event = new com.zametech.todoapp.domain.model.Event();
         event.setId(1L);
         event.setTitle("Test Event");
-        event.setUserId(userId);
+        event.setUserId(userId.getMostSignificantBits());
         event.setSyncStatus(syncStatus);
         event.setStartDateTime(LocalDateTime.now());
         event.setEndDateTime(LocalDateTime.now().plusHours(1));

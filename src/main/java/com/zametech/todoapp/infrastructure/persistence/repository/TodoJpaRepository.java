@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * TODO JpaRepository
@@ -44,22 +45,22 @@ public interface TodoJpaRepository extends JpaRepository<TodoEntity, Long> {
     /**
      * ユーザーIDでTODOを検索する
      */
-    List<TodoEntity> findByUserIdOrderByCreatedAtDesc(Long userId);
+    List<TodoEntity> findByUserIdOrderByCreatedAtDesc(UUID userId);
     
     /**
      * ユーザーIDとステータスでTODOを検索する
      */
-    List<TodoEntity> findByUserIdAndStatusOrderByCreatedAtDesc(Long userId, TodoStatus status);
+    List<TodoEntity> findByUserIdAndStatusOrderByCreatedAtDesc(UUID userId, TodoStatus status);
     
     /**
      * ユーザーIDでTODOを検索する（ページング）
      */
-    Page<TodoEntity> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+    Page<TodoEntity> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
     
     /**
      * ユーザーIDですべてのTODOを削除する
      */
-    void deleteByUserId(Long userId);
+    void deleteByUserId(UUID userId);
     
     /**
      * 親タスクIDで子タスクを検索する
@@ -74,7 +75,7 @@ public interface TodoJpaRepository extends JpaRepository<TodoEntity, Long> {
     /**
      * ユーザーIDで繰り返し可能なTODOを検索する
      */
-    List<TodoEntity> findByUserIdAndIsRepeatableTrueOrderByCreatedAtDesc(Long userId);
+    List<TodoEntity> findByUserIdAndIsRepeatableTrueOrderByCreatedAtDesc(UUID userId);
     
     /**
      * 元TODOIDと期限日でTODOを検索する

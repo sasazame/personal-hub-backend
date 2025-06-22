@@ -20,6 +20,7 @@ import org.springframework.security.access.AccessDeniedException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,8 +45,8 @@ class TodoServiceRepeatTest {
     @Test
     void testCreateTodo_WithRepeatConfig() {
         // Given
-        Long userId = 1L;
-        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        UUID userId = UUID.randomUUID();
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId.getMostSignificantBits());
 
         RepeatConfigRequest repeatConfig = new RepeatConfigRequest(
             RepeatType.DAILY,
@@ -67,7 +68,7 @@ class TodoServiceRepeatTest {
 
         TodoEntity savedTodo = new TodoEntity();
         savedTodo.setId(1L);
-        savedTodo.setUserId(userId);
+        savedTodo.setUserId(userId.getMostSignificantBits());
         savedTodo.setTitle("Daily Task");
         savedTodo.setIsRepeatable(true);
         savedTodo.setRepeatType(RepeatType.DAILY);
@@ -92,8 +93,8 @@ class TodoServiceRepeatTest {
     @Test
     void testCreateTodo_WithoutRepeatConfig() {
         // Given
-        Long userId = 1L;
-        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        UUID userId = UUID.randomUUID();
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId.getMostSignificantBits());
 
         CreateTodoRequest request = new CreateTodoRequest(
             "Normal Task",
@@ -107,7 +108,7 @@ class TodoServiceRepeatTest {
 
         TodoEntity savedTodo = new TodoEntity();
         savedTodo.setId(1L);
-        savedTodo.setUserId(userId);
+        savedTodo.setUserId(userId.getMostSignificantBits());
         savedTodo.setTitle("Normal Task");
         savedTodo.setIsRepeatable(false);
 
@@ -128,12 +129,12 @@ class TodoServiceRepeatTest {
     void testUpdateTodo_EnableRepeat() {
         // Given
         Long todoId = 1L;
-        Long userId = 1L;
-        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        UUID userId = UUID.randomUUID();
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId.getMostSignificantBits());
 
         TodoEntity existingTodo = new TodoEntity();
         existingTodo.setId(todoId);
-        existingTodo.setUserId(userId);
+        existingTodo.setUserId(userId.getMostSignificantBits());
         existingTodo.setTitle("Task");
         existingTodo.setIsRepeatable(false);
 
@@ -174,12 +175,12 @@ class TodoServiceRepeatTest {
     void testUpdateTodo_DisableRepeat() {
         // Given
         Long todoId = 1L;
-        Long userId = 1L;
-        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        UUID userId = UUID.randomUUID();
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId.getMostSignificantBits());
 
         TodoEntity existingTodo = new TodoEntity();
         existingTodo.setId(todoId);
-        existingTodo.setUserId(userId);
+        existingTodo.setUserId(userId.getMostSignificantBits());
         existingTodo.setTitle("Task");
         existingTodo.setIsRepeatable(true);
         existingTodo.setRepeatType(RepeatType.DAILY);
@@ -212,12 +213,12 @@ class TodoServiceRepeatTest {
     void testUpdateTodo_CompletionGeneratesNext() {
         // Given
         Long todoId = 1L;
-        Long userId = 1L;
-        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        UUID userId = UUID.randomUUID();
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId.getMostSignificantBits());
 
         TodoEntity existingTodo = new TodoEntity();
         existingTodo.setId(todoId);
-        existingTodo.setUserId(userId);
+        existingTodo.setUserId(userId.getMostSignificantBits());
         existingTodo.setTitle("Repeatable Task");
         existingTodo.setIsRepeatable(true);
         existingTodo.setRepeatType(RepeatType.DAILY);
@@ -251,16 +252,16 @@ class TodoServiceRepeatTest {
     @Test
     void testGetRepeatableTodos() {
         // Given
-        Long userId = 1L;
-        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        UUID userId = UUID.randomUUID();
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId.getMostSignificantBits());
 
         TodoEntity repeatableTodo = new TodoEntity();
         repeatableTodo.setId(1L);
-        repeatableTodo.setUserId(userId);
+        repeatableTodo.setUserId(userId.getMostSignificantBits());
         repeatableTodo.setTitle("Repeatable Task");
         repeatableTodo.setIsRepeatable(true);
 
-        when(todoRepository.findByUserIdAndIsRepeatableTrue(userId)).thenReturn(List.of(repeatableTodo));
+        when(todoRepository.findByUserIdAndIsRepeatableTrue(userId.getMostSignificantBits())).thenReturn(List.of(repeatableTodo));
 
         // When
         List<TodoResponse> responses = todoService.getRepeatableTodos();
@@ -275,17 +276,17 @@ class TodoServiceRepeatTest {
     void testGetRepeatInstances() {
         // Given
         Long originalTodoId = 1L;
-        Long userId = 1L;
-        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        UUID userId = UUID.randomUUID();
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId.getMostSignificantBits());
 
         TodoEntity originalTodo = new TodoEntity();
         originalTodo.setId(originalTodoId);
-        originalTodo.setUserId(userId);
+        originalTodo.setUserId(userId.getMostSignificantBits());
         originalTodo.setTitle("Original Task");
 
         TodoEntity instance1 = new TodoEntity();
         instance1.setId(2L);
-        instance1.setUserId(userId);
+        instance1.setUserId(userId.getMostSignificantBits());
         instance1.setTitle("Original Task");
         instance1.setOriginalTodoId(originalTodoId);
 
@@ -306,7 +307,7 @@ class TodoServiceRepeatTest {
         Long originalTodoId = 1L;
         Long userId = 1L;
         Long otherUserId = 2L;
-        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId);
 
         TodoEntity originalTodo = new TodoEntity();
         originalTodo.setId(originalTodoId);
@@ -333,15 +334,15 @@ class TodoServiceRepeatTest {
     @Test
     void testGeneratePendingRepeatInstances() {
         // Given
-        Long userId = 1L;
-        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        UUID userId = UUID.randomUUID();
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId.getMostSignificantBits());
 
         TodoEntity newInstance = new TodoEntity();
         newInstance.setId(2L);
-        newInstance.setUserId(userId);
+        newInstance.setUserId(userId.getMostSignificantBits());
         newInstance.setTitle("Generated Instance");
 
-        when(repeatService.generateAllPendingOccurrences(userId)).thenReturn(List.of(newInstance));
+        when(repeatService.generateAllPendingOccurrences(userId.getMostSignificantBits())).thenReturn(List.of(newInstance));
         when(todoRepository.save(newInstance)).thenReturn(newInstance);
 
         // When
@@ -350,7 +351,7 @@ class TodoServiceRepeatTest {
         // Then
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).title()).isEqualTo("Generated Instance");
-        verify(repeatService).generateAllPendingOccurrences(userId);
+        verify(repeatService).generateAllPendingOccurrences(userId.getMostSignificantBits());
         verify(todoRepository).save(newInstance);
     }
 }

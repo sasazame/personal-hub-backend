@@ -30,6 +30,7 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -219,7 +220,7 @@ public class GoogleCalendarService {
     /**
      * Convert Google Calendar Event to Personal Hub Event
      */
-    public com.zametech.todoapp.domain.model.Event convertFromGoogleEvent(Event googleEvent, Long userId) {
+    public com.zametech.todoapp.domain.model.Event convertFromGoogleEvent(Event googleEvent, UUID userId) {
         com.zametech.todoapp.domain.model.Event personalHubEvent = new com.zametech.todoapp.domain.model.Event();
         
         personalHubEvent.setTitle(googleEvent.getSummary());

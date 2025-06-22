@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,10 +42,10 @@ class TodoServiceParentChildTest {
     @InjectMocks
     private TodoService todoService;
 
-    private static final Long USER_ID = 1L;
+    private static final UUID USER_ID = UUID.randomUUID();
     private static final Long PARENT_TODO_ID = 100L;
     private static final Long CHILD_TODO_ID = 200L;
-    private static final Long OTHER_USER_ID = 2L;
+    private static final UUID OTHER_USER_ID = UUID.randomUUID();
 
     private TodoEntity parentTodo;
     private TodoEntity childTodo;
@@ -53,14 +54,14 @@ class TodoServiceParentChildTest {
     void setUp() {
         parentTodo = new TodoEntity();
         parentTodo.setId(PARENT_TODO_ID);
-        parentTodo.setUserId(USER_ID);
+        parentTodo.setUserId(USER_ID.getMostSignificantBits());
         parentTodo.setTitle("Parent Task");
         parentTodo.setStatus(TodoStatus.TODO);
         parentTodo.setPriority(TodoPriority.HIGH);
 
         childTodo = new TodoEntity();
         childTodo.setId(CHILD_TODO_ID);
-        childTodo.setUserId(USER_ID);
+        childTodo.setUserId(USER_ID.getMostSignificantBits());
         childTodo.setTitle("Child Task");
         childTodo.setStatus(TodoStatus.TODO);
         childTodo.setPriority(TodoPriority.MEDIUM);
@@ -80,7 +81,7 @@ class TodoServiceParentChildTest {
                 null
         );
 
-        when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(USER_ID.getMostSignificantBits());
         when(todoRepository.findById(PARENT_TODO_ID)).thenReturn(Optional.of(parentTodo));
         when(todoRepository.save(any(TodoEntity.class))).thenAnswer(invocation -> {
             TodoEntity saved = invocation.getArgument(0);
@@ -114,7 +115,7 @@ class TodoServiceParentChildTest {
                 null
         );
 
-        when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(USER_ID.getMostSignificantBits());
         when(todoRepository.findById(999L)).thenReturn(Optional.empty());
 
         // When & Then
@@ -125,7 +126,7 @@ class TodoServiceParentChildTest {
     @Test
     void createTodo_WithParentId_AccessDenied() {
         // Given
-        parentTodo.setUserId(OTHER_USER_ID);
+        parentTodo.setUserId(OTHER_USER_ID.getMostSignificantBits());
         CreateTodoRequest request = new CreateTodoRequest(
                 "New Child Task",
                 "Description",
@@ -136,7 +137,7 @@ class TodoServiceParentChildTest {
                 null
         );
 
-        when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(USER_ID.getMostSignificantBits());
         when(todoRepository.findById(PARENT_TODO_ID)).thenReturn(Optional.of(parentTodo));
 
         // When & Then
@@ -159,7 +160,7 @@ class TodoServiceParentChildTest {
                 null
         );
 
-        when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(USER_ID.getMostSignificantBits());
         when(todoRepository.findById(CHILD_TODO_ID)).thenReturn(Optional.of(childTodo));
         when(todoRepository.findById(PARENT_TODO_ID)).thenReturn(Optional.of(parentTodo));
         when(todoRepository.save(any(TodoEntity.class))).thenReturn(childTodo);
@@ -187,7 +188,7 @@ class TodoServiceParentChildTest {
                 null
         );
 
-        when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(USER_ID.getMostSignificantBits());
         when(todoRepository.findById(CHILD_TODO_ID)).thenReturn(Optional.of(childTodo));
 
         // When & Then
@@ -201,19 +202,19 @@ class TodoServiceParentChildTest {
         // Given
         TodoEntity child1 = new TodoEntity();
         child1.setId(201L);
-        child1.setUserId(USER_ID);
+        child1.setUserId(USER_ID.getMostSignificantBits());
         child1.setTitle("Child Task 1");
         child1.setParentId(PARENT_TODO_ID);
 
         TodoEntity child2 = new TodoEntity();
         child2.setId(202L);
-        child2.setUserId(USER_ID);
+        child2.setUserId(USER_ID.getMostSignificantBits());
         child2.setTitle("Child Task 2");
         child2.setParentId(PARENT_TODO_ID);
 
         List<TodoEntity> children = Arrays.asList(child1, child2);
 
-        when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(USER_ID.getMostSignificantBits());
         when(todoRepository.findById(PARENT_TODO_ID)).thenReturn(Optional.of(parentTodo));
         when(todoRepository.findByParentId(PARENT_TODO_ID)).thenReturn(children);
 
@@ -229,9 +230,9 @@ class TodoServiceParentChildTest {
     @Test
     void getChildTasks_AccessDenied() {
         // Given
-        parentTodo.setUserId(OTHER_USER_ID);
+        parentTodo.setUserId(OTHER_USER_ID.getMostSignificantBits());
 
-        when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(USER_ID.getMostSignificantBits());
         when(todoRepository.findById(PARENT_TODO_ID)).thenReturn(Optional.of(parentTodo));
 
         // When & Then

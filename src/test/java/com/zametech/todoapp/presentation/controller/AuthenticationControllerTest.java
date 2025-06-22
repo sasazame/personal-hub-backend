@@ -17,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -52,7 +53,7 @@ class AuthenticationControllerTest {
         request.setUsername("testuser");
         
         UserResponse userResponse = new UserResponse(
-                1L,
+                UUID.randomUUID(),
                 "testuser",
                 "test@example.com",
                 LocalDateTime.now(),
@@ -99,7 +100,7 @@ class AuthenticationControllerTest {
         request.setPassword("Password123!");
         
         UserResponse userResponse = new UserResponse(
-                1L,
+                UUID.randomUUID(),
                 "testuser",
                 "test@example.com",
                 LocalDateTime.now(),
@@ -140,7 +141,7 @@ class AuthenticationControllerTest {
     @Test
     void shouldGetCurrentUser() throws Exception {
         User currentUser = new User();
-        currentUser.setId(1L);
+        currentUser.setId(UUID.randomUUID());
         currentUser.setEmail("test@example.com");
         currentUser.setUsername("testuser");
         currentUser.setCreatedAt(LocalDateTime.now());

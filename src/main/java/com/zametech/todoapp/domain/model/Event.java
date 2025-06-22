@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -19,7 +20,7 @@ public class Event {
     private boolean allDay;
     private Integer reminderMinutes;
     private String color;
-    private Long userId;
+    private UUID userId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     

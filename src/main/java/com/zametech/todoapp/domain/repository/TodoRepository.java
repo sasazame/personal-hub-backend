@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * TODOリポジトリインターフェース
@@ -58,17 +59,17 @@ public interface TodoRepository {
     /**
      * ユーザーIDでTODOを検索する（ページング）
      */
-    Page<TodoEntity> findByUserId(Long userId, Pageable pageable);
+    Page<TodoEntity> findByUserId(UUID userId, Pageable pageable);
     
     /**
      * ユーザーIDとステータスでTODOを検索する
      */
-    List<TodoEntity> findByUserIdAndStatus(Long userId, TodoStatus status);
+    List<TodoEntity> findByUserIdAndStatus(UUID userId, TodoStatus status);
     
     /**
      * ユーザーIDですべてのTODOを削除する
      */
-    void deleteByUserId(Long userId);
+    void deleteByUserId(UUID userId);
     
     /**
      * 親タスクIDで子タスクを検索する
@@ -83,7 +84,7 @@ public interface TodoRepository {
     /**
      * ユーザーIDで繰り返し可能なTODOを検索する
      */
-    List<TodoEntity> findByUserIdAndIsRepeatableTrue(Long userId);
+    List<TodoEntity> findByUserIdAndIsRepeatableTrue(UUID userId);
     
     /**
      * 元TODOIDと期限日でTODOを検索する（繰り返しインスタンス検索用）

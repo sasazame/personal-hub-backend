@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -43,8 +44,8 @@ class UserServiceTest {
     private UserService userService;
 
     private User testUser;
-    private static final Long USER_ID = 1L;
-    private static final Long OTHER_USER_ID = 2L;
+    private static final UUID USER_ID = UUID.randomUUID();
+    private static final UUID OTHER_USER_ID = UUID.randomUUID();
     private static final String CURRENT_PASSWORD = "currentPassword123!";
     private static final String NEW_PASSWORD = "newPassword123!";
     private static final String ENCODED_PASSWORD = "encodedPassword";
@@ -176,7 +177,7 @@ class UserServiceTest {
         userService.deleteUser(USER_ID);
 
         // Then
-        verify(todoRepository).deleteByUserId(USER_ID);
+        verify(todoRepository).deleteByUserId(USER_ID.getMostSignificantBits());
         verify(userRepository).deleteById(USER_ID);
     }
 

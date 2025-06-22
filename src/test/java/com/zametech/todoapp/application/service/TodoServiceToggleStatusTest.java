@@ -14,6 +14,7 @@ import org.springframework.security.access.AccessDeniedException;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -39,12 +40,12 @@ class TodoServiceToggleStatusTest {
     void testToggleTodoStatus_TodoToDone() {
         // Given
         Long todoId = 1L;
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         
-        TodoEntity todoEntity = createTodoEntity(todoId, userId, TodoStatus.TODO, null);
-        TodoEntity updatedEntity = createTodoEntity(todoId, userId, TodoStatus.DONE, null);
+        TodoEntity todoEntity = createTodoEntity(todoId, userId.getMostSignificantBits(), TodoStatus.TODO, null);
+        TodoEntity updatedEntity = createTodoEntity(todoId, userId.getMostSignificantBits(), TodoStatus.DONE, null);
         
-        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId.getMostSignificantBits());
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(todoEntity));
         when(todoRepository.save(any(TodoEntity.class))).thenReturn(updatedEntity);
 
@@ -65,7 +66,7 @@ class TodoServiceToggleStatusTest {
         TodoEntity todoEntity = createTodoEntity(todoId, userId, TodoStatus.DONE, null);
         TodoEntity updatedEntity = createTodoEntity(todoId, userId, TodoStatus.TODO, null);
         
-        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId);
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(todoEntity));
         when(todoRepository.save(any(TodoEntity.class))).thenReturn(updatedEntity);
 
@@ -86,7 +87,7 @@ class TodoServiceToggleStatusTest {
         TodoEntity todoEntity = createTodoEntity(todoId, userId, TodoStatus.IN_PROGRESS, null);
         TodoEntity updatedEntity = createTodoEntity(todoId, userId, TodoStatus.DONE, null);
         
-        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId);
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(todoEntity));
         when(todoRepository.save(any(TodoEntity.class))).thenReturn(updatedEntity);
 
@@ -110,7 +111,7 @@ class TodoServiceToggleStatusTest {
         TodoEntity updatedInstance = createTodoEntity(todoId, userId, TodoStatus.DONE, originalTodoId);
         TodoEntity nextInstance = createTodoEntity(3L, userId, TodoStatus.TODO, originalTodoId);
         
-        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId);
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(repeatInstance));
         when(todoRepository.findById(originalTodoId)).thenReturn(Optional.of(originalTodo));
         when(todoRepository.save(any(TodoEntity.class))).thenReturn(updatedInstance);
@@ -145,7 +146,7 @@ class TodoServiceToggleStatusTest {
         
         TodoEntity todoEntity = createTodoEntity(todoId, otherUserId, TodoStatus.TODO, null);
         
-        when(userContextService.getCurrentUserId()).thenReturn(currentUserId);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(currentUserId);
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(todoEntity));
 
         // When & Then
@@ -164,7 +165,7 @@ class TodoServiceToggleStatusTest {
         TodoEntity repeatInstance = createTodoEntity(todoId, userId, TodoStatus.TODO, originalTodoId);
         TodoEntity updatedInstance = createTodoEntity(todoId, userId, TodoStatus.DONE, originalTodoId);
         
-        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId);
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(repeatInstance));
         when(todoRepository.findById(originalTodoId)).thenReturn(Optional.empty()); // Original not found
         when(todoRepository.save(any(TodoEntity.class))).thenReturn(updatedInstance);

@@ -6,14 +6,15 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface NoteRepository {
     Note save(Note note);
     Optional<Note> findById(Long id);
-    Optional<Note> findByIdAndUserId(Long id, Long userId);
-    Page<Note> findByUserId(Long userId, Pageable pageable);
-    List<Note> searchByTitleOrContent(Long userId, String query);
-    List<Note> findByTag(Long userId, String tag);
+    Optional<Note> findByIdAndUserId(Long id, UUID userId);
+    Page<Note> findByUserId(UUID userId, Pageable pageable);
+    List<Note> searchByTitleOrContent(UUID userId, String query);
+    List<Note> findByTag(UUID userId, String tag);
     void deleteById(Long id);
-    void deleteByUserId(Long userId);
+    void deleteByUserId(UUID userId);
 }

@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -16,7 +17,7 @@ public class Note {
     private String title;
     private String content;
     private String tags;
-    private Long userId;
+    private UUID userId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

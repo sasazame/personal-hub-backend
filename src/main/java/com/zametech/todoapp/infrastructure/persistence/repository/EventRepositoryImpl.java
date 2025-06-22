@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -32,19 +33,19 @@ public class EventRepositoryImpl implements EventRepository {
     }
 
     @Override
-    public Optional<Event> findByIdAndUserId(Long id, Long userId) {
+    public Optional<Event> findByIdAndUserId(Long id, UUID userId) {
         return eventJpaRepository.findByIdAndUserId(id, userId)
                 .map(this::toModel);
     }
 
     @Override
-    public Page<Event> findByUserId(Long userId, Pageable pageable) {
+    public Page<Event> findByUserId(UUID userId, Pageable pageable) {
         return eventJpaRepository.findByUserId(userId, pageable)
                 .map(this::toModel);
     }
 
     @Override
-    public List<Event> findByUserIdAndDateRange(Long userId, LocalDateTime startDate, LocalDateTime endDate) {
+    public List<Event> findByUserIdAndDateRange(UUID userId, LocalDateTime startDate, LocalDateTime endDate) {
         return eventJpaRepository.findByUserIdAndDateRange(userId, startDate, endDate)
                 .stream()
                 .map(this::toModel)
@@ -57,7 +58,7 @@ public class EventRepositoryImpl implements EventRepository {
     }
 
     @Override
-    public void deleteByUserId(Long userId) {
+    public void deleteByUserId(UUID userId) {
         eventJpaRepository.deleteByUserId(userId);
     }
 
@@ -68,7 +69,7 @@ public class EventRepositoryImpl implements EventRepository {
     }
 
     @Override
-    public List<Event> findByUserIdAndSyncStatus(Long userId, String syncStatus) {
+    public List<Event> findByUserIdAndSyncStatus(UUID userId, String syncStatus) {
         return eventJpaRepository.findByUserIdAndSyncStatus(userId, syncStatus)
                 .stream()
                 .map(this::toModel)
@@ -76,7 +77,7 @@ public class EventRepositoryImpl implements EventRepository {
     }
 
     @Override
-    public List<Event> findByUserIdAndLastSyncedAtAfter(Long userId, LocalDateTime lastSyncedAt) {
+    public List<Event> findByUserIdAndLastSyncedAtAfter(UUID userId, LocalDateTime lastSyncedAt) {
         return eventJpaRepository.findByUserIdAndLastSyncedAtAfter(userId, lastSyncedAt)
                 .stream()
                 .map(this::toModel)
