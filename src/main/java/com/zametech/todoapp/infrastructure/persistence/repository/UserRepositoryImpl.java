@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -32,7 +33,7 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public Optional<User> findById(Long id) {
+    public Optional<User> findById(UUID id) {
         return userJpaRepository.findById(id).map(this::toModel);
     }
 
@@ -42,7 +43,7 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public void deleteById(Long id) {
+    public void deleteById(UUID id) {
         userJpaRepository.deleteById(id);
     }
 
@@ -52,15 +53,20 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     private User toModel(UserEntity entity) {
-        return new User(
-                entity.getId(),
-                entity.getEmail(),
-                entity.getPassword(),
-                entity.getUsername(),
-                entity.isEnabled(),
-                entity.getCreatedAt(),
-                entity.getUpdatedAt()
-        );
+        User user = new User();
+        user.setId(entity.getId());
+        user.setEmail(entity.getEmail());
+        user.setPassword(entity.getPassword());
+        user.setUsername(entity.getUsername());
+        user.setEnabled(entity.isEnabled());
+        user.setEmailVerified(entity.getEmailVerified());
+        user.setProfilePictureUrl(entity.getProfilePictureUrl());
+        user.setGivenName(entity.getGivenName());
+        user.setFamilyName(entity.getFamilyName());
+        user.setLocale(entity.getLocale());
+        user.setCreatedAt(entity.getCreatedAt());
+        user.setUpdatedAt(entity.getUpdatedAt());
+        return user;
     }
 
     private UserEntity toEntity(User user) {
@@ -70,6 +76,11 @@ public class UserRepositoryImpl implements UserRepository {
         entity.setPassword(user.getPassword());
         entity.setUsername(user.getUsername());
         entity.setEnabled(user.isEnabled());
+        entity.setEmailVerified(user.getEmailVerified());
+        entity.setProfilePictureUrl(user.getProfilePictureUrl());
+        entity.setGivenName(user.getGivenName());
+        entity.setFamilyName(user.getFamilyName());
+        entity.setLocale(user.getLocale());
         entity.setCreatedAt(user.getCreatedAt());
         entity.setUpdatedAt(user.getUpdatedAt());
         return entity;

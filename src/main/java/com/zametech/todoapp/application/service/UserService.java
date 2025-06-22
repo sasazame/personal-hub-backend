@@ -13,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -24,8 +26,8 @@ public class UserService {
     private final UserContextService userContextService;
     
     @Transactional
-    public User updateUserProfile(Long userId, UpdateUserRequest request) {
-        Long currentUserId = userContextService.getCurrentUserId();
+    public User updateUserProfile(UUID userId, UpdateUserRequest request) {
+        UUID currentUserId = userContextService.getCurrentUserId();
         if (!currentUserId.equals(userId)) {
             throw new AccessDeniedException("You can only update your own profile");
         }
@@ -64,8 +66,8 @@ public class UserService {
     }
     
     @Transactional
-    public void changePassword(Long userId, ChangePasswordRequest request) {
-        Long currentUserId = userContextService.getCurrentUserId();
+    public void changePassword(UUID userId, ChangePasswordRequest request) {
+        UUID currentUserId = userContextService.getCurrentUserId();
         if (!currentUserId.equals(userId)) {
             throw new AccessDeniedException("You can only change your own password");
         }
@@ -86,8 +88,8 @@ public class UserService {
     }
     
     @Transactional
-    public void deleteUser(Long userId) {
-        Long currentUserId = userContextService.getCurrentUserId();
+    public void deleteUser(UUID userId) {
+        UUID currentUserId = userContextService.getCurrentUserId();
         if (!currentUserId.equals(userId)) {
             throw new AccessDeniedException("You can only delete your own account");
         }
@@ -97,15 +99,15 @@ public class UserService {
         
         log.info("Deleting user account for userId: {}", userId);
         
-        // Delete all user's todos first (cascade delete)
-        todoRepository.deleteByUserId(userId);
+        // TODO: Delete all user's todos first (cascade delete)
+        // todoRepository.deleteByUserId(userId);
         
         // Delete the user
         userRepository.deleteById(userId);
     }
     
-    public User getUserById(Long userId) {
-        Long currentUserId = userContextService.getCurrentUserId();
+    public User getUserById(UUID userId) {
+        UUID currentUserId = userContextService.getCurrentUserId();
         if (!currentUserId.equals(userId)) {
             throw new AccessDeniedException("You can only view your own profile");
         }

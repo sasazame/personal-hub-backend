@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/users")
@@ -21,7 +23,7 @@ public class UserController {
     private final UserService userService;
     
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUserProfile(@PathVariable Long id) {
+    public ResponseEntity<UserResponse> getUserProfile(@PathVariable UUID id) {
         log.info("Getting user profile for id: {}", id);
         User user = userService.getUserById(id);
         if (user == null) {
@@ -33,7 +35,7 @@ public class UserController {
     
     @PutMapping("/{id}")
     public ResponseEntity<UserResponse> updateUserProfile(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody UpdateUserRequest request) {
         log.info("Updating user profile for id: {}", id);
         User updatedUser = userService.updateUserProfile(id, request);
@@ -43,7 +45,7 @@ public class UserController {
     
     @PutMapping("/{id}/password")
     public ResponseEntity<Void> changePassword(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody ChangePasswordRequest request) {
         log.info("Changing password for user id: {}", id);
         userService.changePassword(id, request);
@@ -51,7 +53,7 @@ public class UserController {
     }
     
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
         log.info("Deleting user account for id: {}", id);
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
