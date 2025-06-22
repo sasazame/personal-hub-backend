@@ -1,5 +1,6 @@
 package com.zametech.todoapp.presentation.controller;
 
+import com.zametech.todoapp.application.service.GitHubOAuthService;
 import com.zametech.todoapp.application.service.GoogleOidcService;
 import com.zametech.todoapp.presentation.dto.request.OidcCallbackRequest;
 import com.zametech.todoapp.presentation.dto.response.AuthenticationResponse;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class OidcController {
 
     private final GoogleOidcService googleOidcService;
+    private final GitHubOAuthService gitHubOAuthService;
 
     /**
      * Google OIDC認証開始
@@ -62,6 +64,50 @@ public class OidcController {
         String userAgent = httpRequest.getHeader("User-Agent");
         
         AuthenticationResponse response = googleOidcService.handleCallback(request, ipAddress, userAgent);
+        
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * GitHub OAuth認証開始
+     */
+    @GetMapping("/github/authorize")
+    public ResponseEntity<OidcAuthorizationResponse> initiateGitHubAuth() {
+        String state = UUID.randomUUID().toString();
+        
+        // TODO: stateをセッションまたはキャッシュに保存
+        
+        String authorizationUrl = gitHubOAuthService.generateAuthorizationUrl(state);
+        
+        log.info("Initiating GitHub OAuth authentication with state: {}", state);
+        
+        return ResponseEntity.ok(new OidcAuthorizationResponse(
+                authorizationUrl,
+                state,
+                "github"
+        ));
+    }
+
+    /**
+     * GitHub OAuthコールバック
+     */
+    @PostMapping("/github/callback")
+    public ResponseEntity<AuthenticationResponse> handleGitHubCallback(
+            @Valid @RequestBody OidcCallbackRequest request,
+            HttpServletRequest httpRequest) {
+        
+        // エラーチェック
+        if (request.error() != null) {
+            log.error("GitHub OAuth callback error: {} - {}", request.error(), request.errorDescription());
+            return ResponseEntity.badRequest().build();
+        }
+        
+        // TODO: stateパラメータの検証
+        
+        String ipAddress = getClientIpAddress(httpRequest);
+        String userAgent = httpRequest.getHeader("User-Agent");
+        
+        AuthenticationResponse response = gitHubOAuthService.handleCallback(request, ipAddress, userAgent);
         
         return ResponseEntity.ok(response);
     }
