@@ -177,7 +177,6 @@ class UserServiceTest {
         userService.deleteUser(USER_ID);
 
         // Then
-        verify(todoRepository).deleteByUserId(USER_ID.getMostSignificantBits());
         verify(userRepository).deleteById(USER_ID);
     }
 

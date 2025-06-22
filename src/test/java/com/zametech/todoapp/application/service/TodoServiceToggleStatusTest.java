@@ -42,10 +42,10 @@ class TodoServiceToggleStatusTest {
         Long todoId = 1L;
         UUID userId = UUID.randomUUID();
         
-        TodoEntity todoEntity = createTodoEntity(todoId, userId.getMostSignificantBits(), TodoStatus.TODO, null);
-        TodoEntity updatedEntity = createTodoEntity(todoId, userId.getMostSignificantBits(), TodoStatus.DONE, null);
+        TodoEntity todoEntity = createTodoEntity(todoId, userId, TodoStatus.TODO, null);
+        TodoEntity updatedEntity = createTodoEntity(todoId, userId, TodoStatus.DONE, null);
         
-        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId.getMostSignificantBits());
+        when(userContextService.getCurrentUserId()).thenReturn(userId);
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(todoEntity));
         when(todoRepository.save(any(TodoEntity.class))).thenReturn(updatedEntity);
 
@@ -61,12 +61,12 @@ class TodoServiceToggleStatusTest {
     void testToggleTodoStatus_DoneToTodo() {
         // Given
         Long todoId = 1L;
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         
         TodoEntity todoEntity = createTodoEntity(todoId, userId, TodoStatus.DONE, null);
         TodoEntity updatedEntity = createTodoEntity(todoId, userId, TodoStatus.TODO, null);
         
-        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId);
+        when(userContextService.getCurrentUserId()).thenReturn(userId);
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(todoEntity));
         when(todoRepository.save(any(TodoEntity.class))).thenReturn(updatedEntity);
 
@@ -82,12 +82,12 @@ class TodoServiceToggleStatusTest {
     void testToggleTodoStatus_InProgressToDone() {
         // Given
         Long todoId = 1L;
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         
         TodoEntity todoEntity = createTodoEntity(todoId, userId, TodoStatus.IN_PROGRESS, null);
         TodoEntity updatedEntity = createTodoEntity(todoId, userId, TodoStatus.DONE, null);
         
-        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId);
+        when(userContextService.getCurrentUserId()).thenReturn(userId);
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(todoEntity));
         when(todoRepository.save(any(TodoEntity.class))).thenReturn(updatedEntity);
 
@@ -104,14 +104,14 @@ class TodoServiceToggleStatusTest {
         // Given
         Long todoId = 1L;
         Long originalTodoId = 2L;
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         
         TodoEntity repeatInstance = createTodoEntity(todoId, userId, TodoStatus.TODO, originalTodoId);
         TodoEntity originalTodo = createRepeatableTodoEntity(originalTodoId, userId);
         TodoEntity updatedInstance = createTodoEntity(todoId, userId, TodoStatus.DONE, originalTodoId);
         TodoEntity nextInstance = createTodoEntity(3L, userId, TodoStatus.TODO, originalTodoId);
         
-        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId);
+        when(userContextService.getCurrentUserId()).thenReturn(userId);
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(repeatInstance));
         when(todoRepository.findById(originalTodoId)).thenReturn(Optional.of(originalTodo));
         when(todoRepository.save(any(TodoEntity.class))).thenReturn(updatedInstance);
@@ -141,12 +141,12 @@ class TodoServiceToggleStatusTest {
     void testToggleTodoStatus_AccessDenied() {
         // Given
         Long todoId = 1L;
-        Long currentUserId = 1L;
-        Long otherUserId = 2L;
+        UUID currentUserId = UUID.randomUUID();
+        UUID otherUserId = UUID.randomUUID();
         
         TodoEntity todoEntity = createTodoEntity(todoId, otherUserId, TodoStatus.TODO, null);
         
-        when(userContextService.getCurrentUserIdAsLong()).thenReturn(currentUserId);
+        when(userContextService.getCurrentUserId()).thenReturn(currentUserId);
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(todoEntity));
 
         // When & Then
@@ -160,12 +160,12 @@ class TodoServiceToggleStatusTest {
         // Given
         Long todoId = 1L;
         Long originalTodoId = 2L;
-        Long userId = 1L;
+        UUID userId = UUID.randomUUID();
         
         TodoEntity repeatInstance = createTodoEntity(todoId, userId, TodoStatus.TODO, originalTodoId);
         TodoEntity updatedInstance = createTodoEntity(todoId, userId, TodoStatus.DONE, originalTodoId);
         
-        when(userContextService.getCurrentUserIdAsLong()).thenReturn(userId);
+        when(userContextService.getCurrentUserId()).thenReturn(userId);
         when(todoRepository.findById(todoId)).thenReturn(Optional.of(repeatInstance));
         when(todoRepository.findById(originalTodoId)).thenReturn(Optional.empty()); // Original not found
         when(todoRepository.save(any(TodoEntity.class))).thenReturn(updatedInstance);
@@ -179,7 +179,7 @@ class TodoServiceToggleStatusTest {
         verify(todoRepository, times(1)).save(any(TodoEntity.class)); // Only update instance
     }
 
-    private TodoEntity createTodoEntity(Long id, Long userId, TodoStatus status, Long originalTodoId) {
+    private TodoEntity createTodoEntity(Long id, UUID userId, TodoStatus status, Long originalTodoId) {
         TodoEntity entity = new TodoEntity();
         entity.setId(id);
         entity.setTitle("Test TODO");
@@ -192,7 +192,7 @@ class TodoServiceToggleStatusTest {
         return entity;
     }
 
-    private TodoEntity createRepeatableTodoEntity(Long id, Long userId) {
+    private TodoEntity createRepeatableTodoEntity(Long id, UUID userId) {
         TodoEntity entity = createTodoEntity(id, userId, TodoStatus.TODO, null);
         entity.setIsRepeatable(true);
         return entity;

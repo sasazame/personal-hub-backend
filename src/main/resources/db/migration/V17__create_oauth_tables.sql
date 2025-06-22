@@ -85,7 +85,7 @@ CREATE TABLE security_events (
     event_type VARCHAR(50) NOT NULL,
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     client_id VARCHAR(255),
-    ip_address INET NOT NULL,
+    ip_address VARCHAR(255) NOT NULL,
     user_agent TEXT,
     success BOOLEAN NOT NULL,
     error_code VARCHAR(50),
