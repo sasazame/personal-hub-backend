@@ -20,8 +20,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -43,10 +41,6 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // Create CSRF token handler
-        CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
-        requestHandler.setCsrfRequestAttributeName("_csrf");
-        
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
@@ -58,7 +52,6 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/oidc/**").permitAll()
                 .requestMatchers("/api/v1/.well-known/**").permitAll()
                 .requestMatchers("/api/v1/oauth2/jwks").permitAll()
-                .requestMatchers("/api/v1/csrf").permitAll()
                 .requestMatchers("/api/v1/auth/me").authenticated()
                 .requestMatchers("/api/v1/oauth2/userinfo").authenticated()
                 .requestMatchers("/api/v1/todos/**").authenticated()
@@ -77,14 +70,6 @@ public class SecurityConfig {
         return http.build();
     }
     
-    @Bean
-    public CookieCsrfTokenRepository cookieCsrfTokenRepository() {
-        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
-        repository.setCookieName("XSRF-TOKEN");
-        repository.setHeaderName("X-XSRF-TOKEN");
-        repository.setCookiePath("/");
-        return repository;
-    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
