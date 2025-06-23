@@ -68,7 +68,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
-        log.warn("HTTP message not readable: {}", e.getMessage());
+        log.error("HTTP message not readable: {}", e.getMessage());
+        log.error("Root cause: ", e.getRootCause());
+        log.error("Full exception: ", e);
         
         // DTOコンストラクタでのIllegalArgumentExceptionかチェック
         Throwable rootCause = e.getRootCause();
