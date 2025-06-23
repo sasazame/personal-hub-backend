@@ -3,6 +3,7 @@ package com.zametech.todoapp.application.service;
 import com.zametech.todoapp.domain.model.User;
 import com.zametech.todoapp.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserContextService {
@@ -37,7 +39,10 @@ public class UserContextService {
     }
 
     public UUID getCurrentUserId() {
-        return getCurrentUser().getId();
+        User currentUser = getCurrentUser();
+        UUID userId = currentUser.getId();
+        log.debug("DEBUG: getCurrentUserId - email: {}, userId: {}", currentUser.getEmail(), userId);
+        return userId;
     }
     
     // Temporary method for backward compatibility with Long-based repositories

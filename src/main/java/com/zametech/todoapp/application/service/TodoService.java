@@ -88,6 +88,8 @@ public class TodoService {
         
         TodoEntity saved = todoRepository.save(todo);
         log.info("Created TODO with id: {} for user: {}", saved.getId(), currentUserId);
+        log.info("DEBUG: createTodo - saved.getUserId(): {}, currentUserId: {}", 
+                saved.getUserId(), currentUserId);
         
         return TodoResponse.from(saved);
     }
@@ -102,7 +104,10 @@ public class TodoService {
             .orElseThrow(() -> new TodoNotFoundException(id));
         
         UUID currentUserId = userContextService.getCurrentUserId();
+        
         if (!todo.getUserId().equals(currentUserId)) {
+            log.error("Access denied - User {} tried to access TODO {} owned by {}", 
+                     currentUserId, id, todo.getUserId());
             throw new AccessDeniedException("Access denied to TODO with id: " + id);
         }
             

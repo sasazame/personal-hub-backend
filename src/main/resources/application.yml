@@ -57,17 +57,17 @@ app:
   security:
     jwt:
       secret-key: ${JWT_SECRET_KEY:your-secret-key-that-is-at-least-256-bits-long-for-HS256-algorithm-security}
-      expiration: ${JWT_EXPIRATION:900000} # 15 minutes in milliseconds (reduced from 24 hours)
+      expiration: ${JWT_EXPIRATION:3600000} # 1 hour in milliseconds (increased for development)
       key-id: ${JWT_KEY_ID:default-key}
     
     rate-limit:
       auth:
-        capacity: ${RATE_LIMIT_AUTH_CAPACITY:10} # Max 10 requests per IP
-        refill-tokens: ${RATE_LIMIT_AUTH_REFILL:10}
-        refill-period-minutes: ${RATE_LIMIT_AUTH_PERIOD:15} # Refill every 15 minutes
+        capacity: ${RATE_LIMIT_AUTH_CAPACITY:1000} # Max 1000 requests per IP (increased for testing)
+        refill-tokens: ${RATE_LIMIT_AUTH_REFILL:1000}
+        refill-period-minutes: ${RATE_LIMIT_AUTH_PERIOD:1} # Refill every minute (faster for testing)
       general:
-        capacity: ${RATE_LIMIT_GENERAL_CAPACITY:100} # Max 100 requests per IP
-        refill-tokens: ${RATE_LIMIT_GENERAL_REFILL:100}
+        capacity: ${RATE_LIMIT_GENERAL_CAPACITY:1000} # Max 1000 requests per IP
+        refill-tokens: ${RATE_LIMIT_GENERAL_REFILL:1000}
         refill-period-minutes: ${RATE_LIMIT_GENERAL_PERIOD:1} # Refill every minute
   
   oidc:
@@ -124,6 +124,9 @@ logging:
     root: INFO
     com.zametech.todoapp: DEBUG
     org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.security.web: DEBUG
+    org.springframework.security.access: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
   pattern:

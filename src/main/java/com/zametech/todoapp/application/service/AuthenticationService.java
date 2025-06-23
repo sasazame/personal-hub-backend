@@ -11,12 +11,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -47,7 +49,7 @@ public class AuthenticationService {
         UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
                 .username(savedUser.getEmail())
                 .password(savedUser.getPassword())
-                .authorities(new ArrayList<>())
+                .authorities(createDefaultAuthorities())
                 .build();
 
         String accessToken = jwtService.generateToken(userDetails);
@@ -80,7 +82,7 @@ public class AuthenticationService {
         UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
                 .password(user.getPassword())
-                .authorities(new ArrayList<>())
+                .authorities(createDefaultAuthorities())
                 .build();
 
         String accessToken = jwtService.generateToken(userDetails);
@@ -95,5 +97,56 @@ public class AuthenticationService {
         );
 
         return new AuthenticationResponse(accessToken, refreshToken, userResponse);
+    }
+
+    public AuthenticationResponse refreshToken(String refreshTokenString) {
+        try {
+            // Extract username from refresh token
+            String username = jwtService.extractUsername(refreshTokenString);
+            
+            if (username != null) {
+                User user = userRepository.findByEmail(username)
+                        .orElseThrow(() -> new RuntimeException("User not found"));
+
+                // Validate refresh token
+                UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
+                        .username(user.getEmail())
+                        .password(user.getPassword() != null ? user.getPassword() : "")
+                        .authorities(createDefaultAuthorities())
+                        .build();
+
+                if (jwtService.isTokenValid(refreshTokenString, userDetails)) {
+                    // Generate new tokens
+                    String newAccessToken = jwtService.generateToken(userDetails);
+                    String newRefreshToken = jwtService.generateRefreshToken(userDetails);
+
+                    UserResponse userResponse = new UserResponse(
+                            user.getId(),
+                            user.getUsername(),
+                            user.getEmail(),
+                            user.getCreatedAt(),
+                            user.getUpdatedAt()
+                    );
+
+                    log.info("Token refreshed for user: {}", user.getEmail());
+
+                    return new AuthenticationResponse(newAccessToken, newRefreshToken, userResponse);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to refresh token", e);
+            throw new RuntimeException("Invalid refresh token");
+        }
+
+        throw new RuntimeException("Invalid refresh token");
+    }
+
+    /**
+     * Creates default authorities for users
+     */
+    private List<SimpleGrantedAuthority> createDefaultAuthorities() {
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+        return authorities;
     }
 }

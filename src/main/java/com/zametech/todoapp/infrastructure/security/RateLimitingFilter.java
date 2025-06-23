@@ -54,6 +54,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         String clientIp = getClientIp(request);
         String path = request.getRequestURI();
         
+        log.debug("Processing rate limit for: {} from IP: {}", path, clientIp);
+        
         // Different rate limits for authentication endpoints
         boolean isAuthEndpoint = path.startsWith("/api/v1/auth/");
         
@@ -61,6 +63,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         Bucket bucket = buckets.computeIfAbsent(bucketKey, k -> createBucket(isAuthEndpoint));
         
         if (bucket.tryConsume(1)) {
+            log.debug("Rate limit check passed");
             filterChain.doFilter(request, response);
         } else {
             log.warn("Rate limit exceeded for IP: {} on path: {}", clientIp, path);

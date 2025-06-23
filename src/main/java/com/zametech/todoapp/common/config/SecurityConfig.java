@@ -10,6 +10,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -32,6 +33,7 @@ import java.util.Arrays;
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -47,27 +49,18 @@ public class SecurityConfig {
         
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf
-                .csrfTokenRepository(cookieCsrfTokenRepository())
-                .csrfTokenRequestHandler(requestHandler)
-                // Disable CSRF for OAuth/OIDC callback endpoints and public APIs
-                .ignoringRequestMatchers(
-                    "/api/v1/auth/login",
-                    "/api/v1/auth/register",
-                    "/api/v1/auth/oidc/*/callback",
-                    "/api/v1/.well-known/**",
-                    "/api/v1/oauth2/jwks"
-                )
-            )
+            .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .maximumSessions(1)
-                .maxSessionsPreventsLogin(true)
             )
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/v1/auth/**").permitAll()
+                .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
+                .requestMatchers("/api/v1/auth/oidc/**").permitAll()
                 .requestMatchers("/api/v1/.well-known/**").permitAll()
                 .requestMatchers("/api/v1/oauth2/jwks").permitAll()
+                .requestMatchers("/api/v1/csrf").permitAll()
+                .requestMatchers("/api/v1/auth/me").authenticated()
+                .requestMatchers("/api/v1/oauth2/userinfo").authenticated()
                 .requestMatchers("/api/v1/todos/**").authenticated()
                 .requestMatchers("/api/v1/users/**").authenticated()
                 .requestMatchers("/api/v1/calendar/**").authenticated()
@@ -114,10 +107,19 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "X-XSRF-TOKEN"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization"));
+        // Allow multiple frontend development ports
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://localhost:3000",
+            "http://localhost:3001", 
+            "http://localhost:5173",  // Vite default
+            "http://localhost:4173",  // Vite preview
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:3001",
+            "http://127.0.0.1:5173"
+        ));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "X-XSRF-TOKEN", "X-Requested-With"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
         
