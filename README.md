@@ -3,73 +3,75 @@
 [![CI Pipeline](https://github.com/sasazame/personal-hub-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/sasazame/personal-hub-backend/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/sasazame/personal-hub-backend/branch/main/graph/badge.svg)](https://codecov.io/gh/sasazame/personal-hub-backend)
 
-Spring Boot + PostgreSQL で構築された統合型個人管理システムのバックエンドAPI
+A comprehensive personal management system backend API built with Spring Boot + PostgreSQL
 
-## 🚀 プロジェクト概要
+## 🚀 Project Overview
 
-### 技術スタック
+### Technology Stack
 - **Java**: 21 (OpenJDK)
-- **フレームワーク**: Spring Boot 3.3.7
-- **データベース**: PostgreSQL 16+
-- **ビルドツール**: Maven 3.8+
-- **アーキテクチャ**: ヘキサゴナルアーキテクチャ（ポート&アダプター）
+- **Framework**: Spring Boot 3.3.7
+- **Database**: PostgreSQL 16+
+- **Build Tool**: Maven 3.8+
+- **Architecture**: Hexagonal Architecture (Ports & Adapters)
 
-### 主な機能
-- ✅ **認証・認可**: JWT ベースの認証システム
-- ✅ **ユーザー管理**: ユーザー登録・ログイン機能
-- ✅ **TODO管理**: CRUD 操作、親子タスク関係、ステータス・優先度管理
-- ✅ **カレンダー機能**: イベント管理、リマインダー設定
-- ✅ **ノート機能**: マークダウン対応ノート、タグ管理
-- ✅ **分析機能**: 生産性ダッシュボード、アクティビティ統計
-- ✅ **アクセス制御**: ユーザーは自分のデータのみアクセス可能
-- ✅ **ページネーション**: 大量データの効率的な取得
-- ✅ **セキュリティ**: エンドポイント別アクセス制御・CORS設定
-- ✅ **RESTful API**: 標準的なHTTPメソッドとステータスコード
-- ✅ **バリデーション**: 入力データの検証
-- ✅ **グローバル例外ハンドリング**: 統一されたエラーレスポンス
+### Key Features
+- ✅ **Authentication & Authorization**: JWT-based authentication system with OAuth2 support
+- ✅ **User Management**: User registration, login, and profile management
+- ✅ **TODO Management**: Full CRUD operations, parent-child task relationships, status & priority management
+- ✅ **Calendar Features**: Event management with reminder settings
+- ✅ **Note Management**: Markdown-supported notes with tag management
+- ✅ **Analytics**: Productivity dashboard and activity statistics
+- ✅ **Access Control**: Users can only access their own data
+- ✅ **Pagination**: Efficient handling of large datasets
+- ✅ **Security**: Endpoint-based access control and CORS configuration
+- ✅ **RESTful API**: Standard HTTP methods and status codes
+- ✅ **Validation**: Comprehensive input data validation
+- ✅ **Global Exception Handling**: Unified error response format
+- ✅ **Multi-Environment Support**: CORS configured for various development setups
 
-## 📋 目次
-1. [クイックスタート](#クイックスタート)
-2. [プロジェクト構造](#プロジェクト構造)
-3. [環境構築](#環境構築)
-4. [API 仕様](#api-仕様)
-5. [開発ガイド](#開発ガイド)
-6. [テスト](#テスト)
-7. [設計資料](#設計資料)
+## 📋 Table of Contents
+1. [Quick Start](#quick-start)
+2. [Project Structure](#project-structure)
+3. [Environment Setup](#environment-setup)
+4. [API Specification](#api-specification)
+5. [Development Guide](#development-guide)
+6. [Testing](#testing)
+7. [Documentation](#documentation)
+8. [Recent Security Fixes](#recent-security-fixes)
 
-## ⚡ クイックスタート
+## ⚡ Quick Start
 
-### 前提条件
+### Prerequisites
 - Java 21+
 - Maven 3.8+
 - PostgreSQL 16+
 
-### 起動手順
+### Setup Instructions
 ```bash
-# 1. リポジトリをクローン
+# 1. Clone the repository
 git clone https://github.com/sasazame/personal-hub-backend.git
 cd personal-hub-backend
 
-# 2. データベース設定
+# 2. Database setup
 sudo -u postgres psql -c "CREATE DATABASE personalhub;"
 sudo -u postgres psql -c "CREATE USER personalhub WITH ENCRYPTED PASSWORD 'personalhub';"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE personalhub TO personalhub;"
 
-# 3. 環境変数設定（.env.exampleをコピーして編集）
+# 3. Environment configuration (copy .env.example and edit)
 cp .env.example .env
-# .envファイルを編集してGoogle/GitHub OAuth認証情報を設定
+# Edit .env file to configure Google/GitHub OAuth credentials
 
-# 4. アプリケーション起動
+# 4. Run the application
 # Linux/Mac
 ./run.sh
 
 # Windows
 run.bat
 
-# または環境変数を直接指定
+# Or directly with Maven
 mvn spring-boot:run
 
-# 5. 動作確認（ユーザー登録）
+# 5. Verify installation (user registration)
 curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
@@ -78,7 +80,7 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
     "username": "testuser"
   }'
 
-# 6. ログインしてJWTトークン取得
+# 6. Login to get JWT token
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
@@ -87,41 +89,41 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
   }'
 ```
 
-アプリケーションは http://localhost:8080 で起動します。
+The application will start at http://localhost:8080
 
-## 🏗️ プロジェクト構造
+## 🏗️ Project Structure
 
-本プロジェクトは **ヘキサゴナルアーキテクチャ** に基づいて設計されています。
+This project follows **Hexagonal Architecture** principles for clean separation of concerns.
 
 ```
-src/main/java/com/zametech/personalhub/
-├── common/           # 共通コンポーネント
-├── domain/           # ドメイン層（ビジネスルール）
-├── application/      # アプリケーション層（ユースケース）
-├── infrastructure/   # インフラ層（外部システム連携）
-└── presentation/     # プレゼンテーション層（API）
+src/main/java/com/zametech/todoapp/
+├── common/           # Shared components
+├── domain/           # Domain layer (business rules)
+├── application/      # Application layer (use cases)
+├── infrastructure/   # Infrastructure layer (external system integration)
+└── presentation/     # Presentation layer (API)
 ```
 
-### 📚 詳細ドキュメント
-- **[📁 フォルダ構成](docs/FOLDER_STRUCTURE.md)** - 各フォルダの目的と使用例
-- **[🏛️ アーキテクチャ](docs/ARCHITECTURE.md)** - 設計思想とレイヤー構成
-- **[📖 API仕様](docs/API.md)** - REST APIの詳細仕様
+### 📚 Detailed Documentation
+- **[📁 Folder Structure](docs/FOLDER_STRUCTURE.md)** - Purpose and usage of each folder
+- **[🏛️ Architecture](docs/ARCHITECTURE.md)** - Design philosophy and layer structure
+- **[📖 API Specification](docs/API.md)** - Detailed REST API documentation
 
-### 主な特徴
-- **依存性の制御**: 各層の責務が明確に分離
-- **拡張性**: 新機能追加時の影響範囲を最小化
-- **テストしやすさ**: 各層を独立してテスト可能
-- **保守性**: ビジネスロジックとインフラの分離
+### Key Characteristics
+- **Dependency Control**: Clear separation of responsibilities across layers
+- **Extensibility**: Minimal impact when adding new features
+- **Testability**: Each layer can be tested independently
+- **Maintainability**: Separation of business logic and infrastructure
 
-## 🛠️ 環境構築
+## 🛠️ Environment Setup
 
-### データベースセットアップ
+### Database Setup
 ```bash
-# PostgreSQL インストール（Ubuntu/Debian）
+# Install PostgreSQL (Ubuntu/Debian)
 sudo apt update
 sudo apt install postgresql postgresql-contrib
 
-# データベース・ユーザー作成
+# Create database and user
 sudo -u postgres psql << EOF
 CREATE DATABASE personalhub;
 CREATE USER personalhub WITH ENCRYPTED PASSWORD 'personalhub';
@@ -131,8 +133,8 @@ ALTER DATABASE personalhub OWNER TO personalhub;
 EOF
 ```
 
-### 設定ファイル
-主要な設定は `src/main/resources/application.yml` に記載:
+### Configuration Files
+Main configuration is in `src/main/resources/application.yml`:
 
 ```yaml
 spring:
@@ -147,71 +149,73 @@ spring:
     enabled: true
 ```
 
-## 📡 API 仕様
+## 📡 API Specification
 
-### ベース URL
+### Base URL
 ```
 http://localhost:8080/api/v1
 ```
 
-### 主要エンドポイント
+### Main Endpoints
 
-#### 認証エンドポイント（認証不要）
-| メソッド | エンドポイント | 説明 |
-|---------|---------------|------|
-| POST | `/auth/register` | ユーザー登録 |
-| POST | `/auth/login` | ログイン |
+#### Authentication Endpoints (No Authentication Required)
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| POST | `/auth/register` | User registration |
+| POST | `/auth/login` | User login |
+| POST | `/auth/refresh` | Refresh JWT token |
 
-#### TODOエンドポイント（認証必須）
-| メソッド | エンドポイント | 説明 |
-|---------|---------------|------|
-| POST | `/todos` | TODO作成 |
-| GET | `/todos` | TODO一覧取得（ページング） |
-| GET | `/todos/{id}` | TODO取得（ID指定） |
-| GET | `/todos/status/{status}` | ステータス別TODO取得 |
-| PUT | `/todos/{id}` | TODO更新 |
-| DELETE | `/todos/{id}` | TODO削除 |
-| GET | `/todos/{id}/children` | 子タスク一覧取得 |
+#### TODO Endpoints (Authentication Required)
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| POST | `/todos` | Create TODO |
+| GET | `/todos` | Get TODO list (paginated) |
+| GET | `/todos/{id}` | Get TODO by ID |
+| GET | `/todos/status/{status}` | Get TODOs by status |
+| PUT | `/todos/{id}` | Update TODO |
+| DELETE | `/todos/{id}` | Delete TODO |
+| GET | `/todos/{id}/children` | Get child tasks |
+| POST | `/todos/{id}/toggle-status` | Toggle TODO status |
 
-#### カレンダーエンドポイント（認証必須）
-| メソッド | エンドポイント | 説明 |
-|---------|---------------|------|
-| POST | `/calendar/events` | イベント作成 |
-| GET | `/calendar/events` | イベント一覧取得 |
-| GET | `/calendar/events/{id}` | イベント取得 |
-| PUT | `/calendar/events/{id}` | イベント更新 |
-| DELETE | `/calendar/events/{id}` | イベント削除 |
+#### Calendar Endpoints (Authentication Required)
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| POST | `/calendar/events` | Create event |
+| GET | `/calendar/events` | Get events list |
+| GET | `/calendar/events/{id}` | Get event |
+| PUT | `/calendar/events/{id}` | Update event |
+| DELETE | `/calendar/events/{id}` | Delete event |
 
-#### ノートエンドポイント（認証必須）
-| メソッド | エンドポイント | 説明 |
-|---------|---------------|------|
-| POST | `/notes` | ノート作成 |
-| GET | `/notes` | ノート一覧取得 |
-| GET | `/notes/{id}` | ノート取得 |
-| PUT | `/notes/{id}` | ノート更新 |
-| DELETE | `/notes/{id}` | ノート削除 |
-| GET | `/notes/search` | ノート検索 |
+#### Note Endpoints (Authentication Required)
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| POST | `/notes` | Create note |
+| GET | `/notes` | Get notes list |
+| GET | `/notes/{id}` | Get note |
+| PUT | `/notes/{id}` | Update note |
+| DELETE | `/notes/{id}` | Delete note |
+| GET | `/notes/search` | Search notes |
 
-#### 分析エンドポイント（認証必須）
-| メソッド | エンドポイント | 説明 |
-|---------|---------------|------|
-| GET | `/analytics/dashboard` | 生産性ダッシュボード |
-| GET | `/analytics/todos/activity` | TODOアクティビティ統計 |
+#### Analytics Endpoints (Authentication Required)
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/analytics/dashboard` | Productivity dashboard |
+| GET | `/analytics/todos/activity` | TODO activity statistics |
 
-**注意**: 認証必須エンドポイントにアクセスするには、Authorizationヘッダーに`Bearer {token}`形式でJWTトークンを含める必要があります。
+**Note**: Authentication-required endpoints need a JWT token in the Authorization header as `Bearer {token}`.
 
-### リクエスト例
+### Request Examples
 ```bash
-# 1. ユーザー登録
+# 1. User registration
 curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
     "password": "SecurePass123!",
-    "username": "yamada_taro"
+    "username": "john_doe"
   }'
 
-# 2. ログイン（レスポンスからaccessTokenを取得）
+# 2. Login (get accessToken from response)
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
@@ -219,163 +223,183 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
     "password": "SecurePass123!"
   }'
 
-# 3. TODO作成（認証必須）
+# 3. Create TODO (authentication required)
 curl -X POST http://localhost:8080/api/v1/todos \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{
-    "title": "プロジェクト完了",
-    "description": "最終レビューと提出",
+    "title": "Complete project",
+    "description": "Final review and submission",
     "priority": "HIGH",
     "dueDate": "2024-12-31"
   }'
 
-# 4. TODO一覧取得（認証必須）
+# 4. Get TODO list (authentication required)
 curl "http://localhost:8080/api/v1/todos?page=0&size=10&sort=createdAt,desc" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
-詳細なAPI仕様は [docs/API.md](docs/API.md) を参照してください。
+For detailed API specifications, see [docs/API.md](docs/API.md).
 
-## 👨‍💻 開発ガイド
+## 👨‍💻 Development Guide
 
-### ブランチ戦略
+### Branch Strategy
 ```bash
-# 新機能開発
+# New feature development
 git checkout -b feat/feature-name
-# 実装・テスト・コミット
-git commit -m "feat: 新機能の説明"
-# プルリクエスト作成
+# Implementation, testing, commit
+git commit -m "feat: description of new feature"
+# Create pull request
 git push origin feat/feature-name
 gh pr create --assignee sasazame
 ```
 
-### コーディング規約
+### Coding Standards
 - **Java**: Google Java Style Guide
-- **コミットメッセージ**: Conventional Commits
-- **テスト**: JUnit 5 + Mockito
+- **Commit Messages**: Conventional Commits
+- **Testing**: JUnit 5 + Mockito
 
-### プロジェクト構造
+### Project Structure
 ```
-src/main/java/com/zametech/personalhub/
-├── common/              # 共通コンポーネント
-│   ├── config/         # 設定クラス（SecurityConfig等）
-│   ├── exception/      # 例外ハンドリング
-│   ├── util/           # ユーティリティ
-│   └── validation/     # バリデーションロジック
-├── domain/              # ドメイン層
-│   ├── model/          # ドメインモデル（Todo, User等）
-│   └── repository/     # リポジトリインターフェース
-├── application/         # アプリケーション層
-│   ├── dto/            # アプリケーション層DTO
-│   └── service/        # ビジネスロジック
-├── infrastructure/      # インフラストラクチャ層
-│   ├── persistence/    # データアクセス（JPA実装）
-│   └── security/       # セキュリティ関連（JWT処理等）
-└── presentation/        # プレゼンテーション層
-    ├── controller/     # REST コントローラー
-    ├── dto/            # API リクエスト/レスポンス DTO
-    └── mapper/         # DTO ↔ ドメインモデル変換
+src/main/java/com/zametech/todoapp/
+├── common/              # Shared components
+│   ├── config/         # Configuration classes (SecurityConfig, etc.)
+│   ├── exception/      # Exception handling
+│   ├── util/           # Utilities
+│   └── validation/     # Validation logic
+├── domain/              # Domain layer
+│   ├── model/          # Domain models (Todo, User, etc.)
+│   └── repository/     # Repository interfaces
+├── application/         # Application layer
+│   ├── dto/            # Application layer DTOs
+│   └── service/        # Business logic
+├── infrastructure/      # Infrastructure layer
+│   ├── persistence/    # Data access (JPA implementation)
+│   └── security/       # Security-related (JWT processing, etc.)
+└── presentation/        # Presentation layer
+    ├── controller/     # REST controllers
+    ├── dto/            # API request/response DTOs
+    └── mapper/         # DTO ↔ Domain model conversion
 ```
 
-## 🧪 テスト
+## 🧪 Testing
 
-### テスト実行
+### Running Tests
 ```bash
-# 全テスト実行
+# Run all tests
 mvn test
 
-# 統合テスト実行
+# Run integration tests
 mvn verify
 
-# カバレッジレポート生成
+# Generate coverage report
 mvn test jacoco:report
 ```
 
-### テスト構成
-- **単体テスト**: Service 層のビジネスロジック（JUnit 5 + Mockito）
-- **統合テスト**: 認証・認可を含む E2E テスト（SpringBootTest）
-- **API テスト**: Controller 層のエンドポイント（MockMvc）
-- **セキュリティテスト**: JWT認証・アクセス制御のテスト
+### Test Configuration
+- **Unit Tests**: Service layer business logic (JUnit 5 + Mockito)
+- **Integration Tests**: E2E tests including authentication and authorization (SpringBootTest)
+- **API Tests**: Controller layer endpoints (MockMvc)
+- **Security Tests**: JWT authentication and access control tests
 
-### テスト環境
-- **データベース**: H2 In-Memory（テスト専用）
-- **設定**: `application-test.yml`での専用設定
-- **マイグレーション**: テスト用Flywayスクリプト
+### Test Environment
+- **Database**: H2 In-Memory (test-specific)
+- **Configuration**: Dedicated settings in `application-test.yml`
+- **Migration**: Test-specific Flyway scripts
 
-## 📚 設計資料
+## 📚 Documentation
 
-### 詳細ドキュメント
-- **[🏛️ アーキテクチャ設計](docs/ARCHITECTURE.md)** - システム全体の設計思想とレイヤー構成
-- **[📁 フォルダ構成](docs/FOLDER_STRUCTURE.md)** - プロジェクト構造と各フォルダの目的
-- **[📖 API仕様書](docs/API.md)** - REST APIの詳細仕様
-- **[🗄️ データベース設計](docs/DATABASE.md)** - DB スキーマと設計方針
+### Detailed Documentation
+- **[🏛️ Architecture Design](docs/ARCHITECTURE.md)** - System design philosophy and layer structure
+- **[📁 Folder Structure](docs/FOLDER_STRUCTURE.md)** - Project structure and folder purposes
+- **[📖 API Specification](docs/API.md)** - Detailed REST API documentation
+- **[🗄️ Database Design](docs/DATABASE.md)** - DB schema and design principles
+- **[🔐 Security Fixes (June 2025)](docs/SECURITY_FIXES_2025_06.md)** - Recent security improvements
 
-### アーキテクチャ概要
+### OAuth Integration Guides
+- **[🔑 Google OAuth Setup](docs/GOOGLE_OAUTH_SETUP.md)** - Google OAuth configuration
+- **[🐙 GitHub OAuth Setup](docs/GITHUB_OAUTH_SETUP.md)** - GitHub OAuth configuration
+- **[🔄 Frontend OAuth Implementation](docs/OAUTH_FRONTEND_REDIRECT_IMPLEMENTATION.md)** - Frontend integration guide
+
+### Architecture Overview
 ```
 ┌─────────────────┐
 │ Presentation    │ ← REST API, DTO
 ├─────────────────┤
-│ Application     │ ← ビジネスロジック
+│ Application     │ ← Business logic
 ├─────────────────┤
-│ Domain          │ ← ドメインモデル
+│ Domain          │ ← Domain models
 ├─────────────────┤
-│ Infrastructure  │ ← データアクセス, 外部連携
+│ Infrastructure  │ ← Data access, external integration
 └─────────────────┘
 ```
 
-## 🔧 ツール・ライブラリ
+## 🚨 Recent Security Fixes
 
-### 主要依存関係
+### June 2025 Critical Fixes
+We recently resolved critical 403 authorization errors that were blocking frontend E2E testing:
+
+1. **Session Management Conflicts**: Removed conflicting session limits that prevented consecutive JWT requests
+2. **CORS Configuration Issues**: Fixed hardcoded CORS annotations that blocked multi-environment development
+3. **Missing User Authorities**: Implemented proper `ROLE_USER` assignment for method-level security
+4. **OAuth2 Endpoint Issues**: Fixed userinfo endpoint paths for frontend compatibility
+
+**Result**: All consecutive CRUD operations now work correctly, and the application supports multiple development environments.
+
+For detailed information, see [Security Fixes Documentation](docs/SECURITY_FIXES_2025_06.md).
+
+## 🔧 Tools & Libraries
+
+### Main Dependencies
 - **Spring Boot Starter Web** - REST API
-- **Spring Boot Starter Data JPA** - データアクセス
-- **Spring Boot Starter Security** - セキュリティ・認証
-- **Spring Boot Starter Validation** - バリデーション
-- **PostgreSQL Driver** - データベース接続
-- **Flyway** - データベースマイグレーション
-- **JJWT** - JWT トークン処理
-- **Lombok** - ボイラープレートコード削減
-- **H2 Database** - テスト用インメモリDB
+- **Spring Boot Starter Data JPA** - Data access
+- **Spring Boot Starter Security** - Security and authentication
+- **Spring Boot Starter Validation** - Validation
+- **PostgreSQL Driver** - Database connection
+- **Flyway** - Database migration
+- **JJWT** - JWT token processing
+- **Lombok** - Boilerplate code reduction
+- **H2 Database** - In-memory DB for testing
 
-### 開発ツール
-- **Spring Boot DevTools** - ホットリロード
-- **Spring Boot Actuator** - 監視・メトリクス
+### Development Tools
+- **Spring Boot DevTools** - Hot reload
+- **Spring Boot Actuator** - Monitoring and metrics
 
-## 🚧 今後の開発予定
+## 🚧 Future Development Plans
 
-### 近期予定
-- [ ] イベント管理機能の完全実装
-- [ ] ノート機能の完全実装
-- [ ] 分析機能の完全実装
-- [ ] 統合検索機能
-- [ ] ファイル添付機能
+### Near-term Plans
+- [ ] Complete implementation of event management features
+- [ ] Complete implementation of note features
+- [ ] Complete implementation of analytics features
+- [ ] Integrated search functionality
+- [ ] File attachment features
 
-### 中長期予定
-- [ ] 通知・リマインダー機能
-- [ ] キャッシュ機能（Redis）
-- [ ] 一括操作 API
-- [ ] OpenAPI ドキュメント自動生成
-- [ ] パフォーマンス監視・メトリクス
-- [ ] コラボレーション機能
-- [ ] AI提案機能
+### Medium to Long-term Plans
+- [ ] Notification and reminder features
+- [ ] Caching functionality (Redis)
+- [ ] Batch operation APIs
+- [ ] Automatic OpenAPI documentation generation
+- [ ] Performance monitoring and metrics
+- [ ] Collaboration features
+- [ ] AI-powered suggestion features
 
-## 📝 ライセンス
+## 📝 License
 
-このプロジェクトは MIT ライセンスの下で公開されています。
+This project is published under the MIT License.
 
-## 🤝 貢献
+## 🤝 Contributing
 
-1. このリポジトリをフォーク
-2. feature ブランチを作成 (`git checkout -b feat/amazing-feature`)
-3. 変更をコミット (`git commit -m 'feat: 素晴らしい機能を追加'`)
-4. ブランチにプッシュ (`git push origin feat/amazing-feature`)
-5. プルリクエストを作成
+1. Fork this repository
+2. Create a feature branch (`git checkout -b feat/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feat/amazing-feature`)
+5. Create a Pull Request
 
-## 📞 サポート
+## 📞 Support
 
-質問や問題がある場合は、[Issues](https://github.com/sasazame/personal-hub-backend/issues) を作成してください。
+If you have questions or issues, please create an [Issue](https://github.com/sasazame/personal-hub-backend/issues).
 
 ---
 
-**開発者**: sasazame  
-**最終更新**: 2025年5月
+**Developer**: sasazame  
+**Last Updated**: June 2025

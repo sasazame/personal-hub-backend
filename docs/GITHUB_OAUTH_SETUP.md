@@ -1,28 +1,28 @@
-# GitHub OAuth セットアップガイド
+# GitHub OAuth Setup Guide
 
-## 概要
-Personal Hub バックエンドでGitHub OAuth認証を使用するための設定手順です。
+## Overview
+Setup instructions for using GitHub OAuth authentication in the Personal Hub backend.
 
-## 前提条件
-- GitHubアカウント
-- GitHub OAuthアプリケーション
+## Prerequisites
+- GitHub account
+- GitHub OAuth application
 
-## セットアップ手順
+## Setup Instructions
 
-### 1. GitHub OAuthアプリケーション作成
-1. GitHubにログイン
-2. Settings → Developer settings → OAuth Appsに移動
-3. 「New OAuth App」または「Register a new application」をクリック
-4. 以下の情報を入力：
+### 1. Create GitHub OAuth Application
+1. Log in to GitHub
+2. Go to Settings → Developer settings → OAuth Apps
+3. Click "New OAuth App" or "Register a new application"
+4. Enter the following information:
    - **Application name**: Personal Hub Backend
    - **Homepage URL**: http://localhost:8080
    - **Application description**: Personal Hub OAuth authentication
    - **Authorization callback URL**: http://localhost:8080/api/v1/auth/oidc/github/callback
-5. 「Register application」をクリック
-6. Client IDとClient Secretをメモ（Client Secretは「Generate a new client secret」で生成）
+5. Click "Register application"
+6. Note the Client ID and Client Secret (generate Client Secret with "Generate a new client secret")
 
-### 2. 環境変数の設定
-プロジェクトルートの`.env`ファイルに以下を追加：
+### 2. Environment Variable Configuration
+Add the following to the `.env` file in the project root:
 
 ```bash
 # GitHub OAuth Configuration
@@ -31,20 +31,20 @@ GITHUB_CLIENT_SECRET=your_github_client_secret_here
 GITHUB_REDIRECT_URI=http://localhost:8080/api/v1/auth/oidc/github/callback
 ```
 
-### 3. アプリケーション起動
+### 3. Start Application
 ```bash
-# 環境変数を読み込んで起動
+# Load environment variables and start
 source .env && mvn spring-boot:run
 ```
 
-## 認証フロー
+## Authentication Flow
 
-### 1. 認証開始
+### 1. Initiate Authentication
 ```
 GET /api/v1/auth/oidc/github/authorize
 ```
 
-レスポンス:
+Response:
 ```json
 {
   "authorizationUrl": "https://github.com/login/oauth/authorize?...",
@@ -53,11 +53,11 @@ GET /api/v1/auth/oidc/github/authorize
 }
 ```
 
-### 2. GitHubログイン
-ユーザーをauthorizationUrlにリダイレクトし、GitHubアカウントでログイン
+### 2. GitHub Login
+Redirect user to authorizationUrl to log in with GitHub account
 
-### 3. コールバック処理
-GitHubからのリダイレクト後:
+### 3. Callback Processing
+After GitHub redirect:
 ```
 POST /api/v1/auth/oidc/github/callback
 Content-Type: application/json
@@ -68,7 +68,7 @@ Content-Type: application/json
 }
 ```
 
-レスポンス:
+Response:
 ```json
 {
   "accessToken": "jwt-token",
@@ -83,55 +83,55 @@ Content-Type: application/json
 }
 ```
 
-## GitHub OAuthで取得される情報
+## Information Retrieved from GitHub OAuth
 
-### ユーザー基本情報
-- GitHubユーザーID
-- ユーザー名（login）
-- 名前（フルネーム）
-- メールアドレス（プライマリ＋検証済み）
-- アバター画像URL
+### Basic User Information
+- GitHub user ID
+- Username (login)
+- Full name
+- Email address (primary + verified)
+- Avatar image URL
 
-### 追加プロフィール情報（保存のみ）
-- 会社名
-- ブログURL
-- 所在地
-- 自己紹介（bio）
-- パブリックリポジトリ数
-- フォロワー数
-- フォロー数
+### Additional Profile Information (stored only)
+- Company name
+- Blog URL
+- Location
+- Bio
+- Public repository count
+- Follower count
+- Following count
 
-## トラブルシューティング
+## Troubleshooting
 
-### エラー: redirect_uri_mismatch
-- GitHubアプリケーション設定の「Authorization callback URL」が正確に一致していることを確認
-- プロトコル（http/https）、ポート番号、パスが完全に一致している必要があります
+### Error: redirect_uri_mismatch
+- Verify that the "Authorization callback URL" in GitHub application settings matches exactly
+- Protocol (http/https), port number, and path must match completely
 
-### エラー: bad_verification_code
-- 認可コードの有効期限切れ（10分）
-- 認可コードが既に使用済み
-- 不正な認可コード
+### Error: bad_verification_code
+- Authorization code expired (10 minutes)
+- Authorization code already used
+- Invalid authorization code
 
-### エラー: incorrect_client_credentials
-- CLIENT_IDとCLIENT_SECRETが正しく設定されていることを確認
-- 環境変数が正しく読み込まれていることを確認
+### Error: incorrect_client_credentials
+- Verify CLIENT_ID and CLIENT_SECRET are configured correctly
+- Verify environment variables are loaded correctly
 
-## セキュリティ注意事項
-- `.env`ファイルは絶対にGitにコミットしないでください
-- 本番環境では必ずHTTPSを使用してください
-- CLIENT_SECRETは安全に管理し、フロントエンドには公開しないでください
-- GitHubアプリケーションの設定で適切なスコープのみを要求してください
+## Security Considerations
+- **Never commit** the `.env` file to Git
+- **Always use HTTPS** in production environments
+- Keep CLIENT_SECRET secure and **never expose** to frontend
+- Request only necessary scopes in GitHub application settings
 
-## 開発環境と本番環境の設定
+## Development vs Production Environment Configuration
 
-### 開発環境
+### Development Environment
 ```
 Authorization callback URL: http://localhost:8080/api/v1/auth/oidc/github/callback
 ```
 
-### 本番環境
+### Production Environment
 ```
 Authorization callback URL: https://yourdomain.com/api/v1/auth/oidc/github/callback
 ```
 
-複数の環境で使用する場合は、環境ごとに別のGitHub OAuthアプリケーションを作成することを推奨します。
+For multiple environments, it's recommended to create separate GitHub OAuth applications for each environment.
