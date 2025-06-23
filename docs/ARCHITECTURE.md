@@ -1,9 +1,9 @@
-# アーキテクチャ設計書
+# Architecture Design Document
 
-## 概要
-本プロジェクトは、ヘキサゴナルアーキテクチャ（ポート&アダプターパターン）を採用したSpring Boot製Personal Hub統合アプリケーションです。TODO管理、カレンダー、ノート、分析機能を統合的に提供します。
+## Overview
+This project is a Personal Hub integrated application built with Spring Boot, adopting Hexagonal Architecture (Ports & Adapters pattern). It provides integrated management of TODO tasks, calendar, notes, and analytics features.
 
-## アーキテクチャ図
+## Architecture Diagram
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                  Presentation Layer                     │
@@ -30,161 +30,304 @@
 └─────────────────────┬───────────────────────────────────┘
                       │
 ┌─────────────────────┴───────────────────────────────────┐
-│                   Domain Layer                          │
+│                 Domain Layer                            │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────────┐    │
-│  │ Model       │ │ Repository  │ │ Domain Service  │    │
-│  │ (User,Todo, │ │ Interface   │ │                 │    │
-│  │ Event,Note) │ │             │ │                 │    │
+│  │ Entity      │ │ Repository  │ │ Business Logic  │    │
+│  │             │ │ Interface   │ │                 │    │
 │  └─────────────┘ └─────────────┘ └─────────────────┘    │
 └─────────────────────┬───────────────────────────────────┘
                       │
 ┌─────────────────────┴───────────────────────────────────┐
-│               Infrastructure Layer                      │
+│              Infrastructure Layer                       │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────────┐    │
-│  │ Entity      │ │ Repository  │ │ Security Config │    │
-│  │ (JPA)       │ │ Impl        │ │                 │    │
+│  │ Repository  │ │ External    │ │ Security        │    │
+│  │ Impl        │ │ Service     │ │ Impl            │    │
 │  └─────────────┘ └─────────────┘ └─────────────────┘    │
-└─────────────────────────────────────────────────────────┘
+└─────────────────────┬───────────────────────────────────┘
+                      │
+              ┌───────┴───────┐
+              │   Database    │
+              │   PostgreSQL  │
+              └───────────────┘
 ```
 
-## レイヤー詳細
+## Core Design Principles
 
-> 📁 **詳細なフォルダ構成**: [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) を参照
+### 1. Hexagonal Architecture (Ports & Adapters)
+- **Domain-Centric**: Business logic is at the center, isolated from external concerns
+- **Dependency Inversion**: External layers depend on internal layers, not vice versa
+- **Port-Adapter Pattern**: Clear interfaces (ports) with pluggable implementations (adapters)
 
-### 1. Presentation Layer
-**責務**: 外部とのインターフェース
-- HTTP リクエスト/レスポンス処理
-- DTO による データ転送
-- 入力バリデーション
+### 2. Separation of Concerns
+Each layer has distinct responsibilities:
+- **Presentation**: HTTP/REST interface handling
+- **Application**: Use case orchestration and business workflows
+- **Domain**: Core business rules and entities
+- **Infrastructure**: External system integration and technical implementation
 
-### 2. Security Layer  
-**責務**: 認証・認可、セキュリティ制御
-- JWT トークン検証・生成
-- セキュリティコンテキスト管理
-- アクセス制御
-
-### 3. Application Layer
-**責務**: ビジネスロジック、ユースケース実行
-- ビジネスルール実装
-- トランザクション管理
-- ドメインサービスの調整
-
-### 4. Domain Layer
-**責務**: 核となるビジネスルール（他の層に依存しない）
-- ビジネス概念のモデリング
-- ドメインルールの実装
-- データアクセスの抽象化
-
-### 5. Infrastructure Layer
-**責務**: 外部システムとの連携
-- データベースアクセス実装
-- 外部API連携
-- 技術的な設定
-
-**主要コンポーネント**:
-- `TodoEntity`, `UserEntity`, `EventEntity`, `NoteEntity`: JPA エンティティ
-- `TodoRepositoryImpl`, `UserRepositoryImpl`, `EventRepositoryImpl`, `NoteRepositoryImpl`: リポジトリ実装
-- `TodoJpaRepository`, `UserJpaRepository`, `EventJpaRepository`, `NoteJpaRepository`: Spring Data JPA
-- `SecurityConfig`: セキュリティ設定
-- Flyway マイグレーション: データベーススキーマ管理
-
-## 依存関係のルール
-1. **内側の層は外側の層に依存しない**
-2. **依存の方向**: Presentation → Security → Application → Domain ← Infrastructure
-3. **Domain層は最も独立性が高い**
-4. **Security層はPresentation層とApplication層の間で認証・認可を担当**
-
-## データフロー
+### 3. Clean Dependency Rules
 ```
-HTTP Request → Security Filter → Controller → Service → Repository Interface
-       ↓              ↓               ↓           ↓              ↓
-   JWT Token → Authentication → Response DTO ← Business Logic ← Repository Impl → Database
+Presentation → Application → Domain ← Infrastructure
 ```
+- Dependencies flow inward only
+- Domain layer has no outward dependencies
+- Infrastructure implements domain interfaces
 
-## セキュリティアーキテクチャ
+## Layer Details
 
-### 認証フロー
-```
-1. ユーザー登録/ログイン → AuthenticationController
-2. パスワード検証 → AuthenticationService  
-3. JWT生成 → JwtService
-4. トークン返却 → クライアント
-```
+### Domain Layer (Core)
+**Purpose**: Contains business entities, rules, and interfaces
 
-### 認可フロー
-```
-1. APIリクエスト + JWT → JwtAuthenticationFilter
-2. トークン検証 → JwtService
-3. ユーザー情報設定 → SecurityContext
-4. アクセス制御 → 各Service (所有者チェック)
-   - TodoService: TODO所有者チェック
-   - EventService: イベント所有者チェック
-   - NoteService: ノート所有者チェック
-   - AnalyticsService: ユーザーデータのみ集計
+**Components**:
+- **Entities**: `User`, `Todo`, `CalendarEvent`, `Note`, `Analytics`
+- **Repository Interfaces**: Data access contracts
+- **Business Rules**: Domain validation and business logic
+
+**Key Principles**:
+- Framework-independent
+- No external dependencies
+- Pure business logic
+- Immutable where possible
+
+**Example**:
+```java
+// Domain Entity
+public class Todo {
+    private UUID id;
+    private String title;
+    private TodoStatus status;
+    
+    // Business logic methods
+    public void markAsCompleted() {
+        if (this.status == TodoStatus.DONE) {
+            throw new IllegalStateException("Todo is already completed");
+        }
+        this.status = TodoStatus.DONE;
+    }
+}
+
+// Repository Interface (Port)
+public interface TodoRepository {
+    Optional<Todo> findById(UUID id);
+    List<Todo> findByUserId(UUID userId);
+    Todo save(Todo todo);
+}
 ```
 
-## 設計原則
-1. **依存性逆転の原則**: ドメイン層がインフラ層の詳細に依存しない
-2. **単一責任の原則**: 各クラスは一つの責務のみ
-3. **開放閉鎖の原則**: 拡張に開いていて、変更に閉じている
+### Application Layer (Use Cases)
+**Purpose**: Orchestrates business operations and implements use cases
 
-## テスト戦略
+**Components**:
+- **Services**: `TodoService`, `AuthenticationService`, `UserContextService`
+- **DTOs**: Internal data transfer objects
+- **Use Case Implementations**: Business workflow coordination
 
-### テストピラミッド
+**Key Responsibilities**:
+- Transaction management
+- Use case orchestration
+- Domain object coordination
+- Business rule enforcement
+
+**Example**:
+```java
+@Service
+@Transactional
+public class TodoService {
+    private final TodoRepository todoRepository;
+    private final UserContextService userContext;
+    
+    public TodoResponse createTodo(CreateTodoRequest request) {
+        UUID currentUserId = userContext.getCurrentUserId();
+        
+        Todo todo = new Todo(
+            currentUserId,
+            request.title(),
+            request.description(),
+            TodoStatus.TODO
+        );
+        
+        Todo saved = todoRepository.save(todo);
+        return TodoResponse.from(saved);
+    }
+}
 ```
-        ┌─────────────────┐
-        │ E2E/Integration │ ← 少数・高価値
-        │      Tests      │
-        ├─────────────────┤
-        │  Integration    │ ← 中程度・API/DB
-        │     Tests       │
-        ├─────────────────┤
-        │   Unit Tests    │ ← 多数・高速・安価
-        │                 │
-        └─────────────────┘
+
+### Infrastructure Layer (Technical Implementation)
+**Purpose**: Implements domain interfaces and handles external systems
+
+**Components**:
+- **Repository Implementations**: JPA-based data access
+- **Security Implementation**: JWT processing, authentication
+- **External Service Integration**: OAuth providers, calendar APIs
+
+**Key Responsibilities**:
+- Database access implementation
+- External API integration
+- Security mechanism implementation
+- Configuration management
+
+**Example**:
+```java
+// Repository Implementation (Adapter)
+@Repository
+public class JpaTodoRepository implements TodoRepository {
+    private final JpaRepository<TodoEntity, UUID> jpaRepository;
+    
+    @Override
+    public Optional<Todo> findById(UUID id) {
+        return jpaRepository.findById(id)
+            .map(TodoMapper::toDomain);
+    }
+}
 ```
 
-### テスト分類
+### Presentation Layer (External Interface)
+**Purpose**: Handles HTTP requests and responses
 
-#### 1. 単体テスト (Unit Tests)
-- **対象**: Service層のビジネスロジック
-- **ツール**: JUnit 5 + Mockito
-- **カバレッジ目標**: 90%以上
-- **例**: `TodoServiceTest`, `AuthenticationServiceTest`
+**Components**:
+- **Controllers**: REST API endpoints
+- **DTOs**: Request/Response data structures
+- **Mappers**: DTO ↔ Domain conversion
+- **Validation**: Input validation and sanitization
 
-#### 2. 統合テスト (Integration Tests)
-- **対象**: エンドツーエンドのAPI動作
-- **ツール**: SpringBootTest + MockMvc + H2
-- **テスト内容**:
-  - 認証・認可フロー
-  - TODO/カレンダー/ノート CRUD操作とアクセス制御
-  - HTTPステータスコード検証
-  - 分析機能のデータ集計検証
-- **例**: `AuthenticationIntegrationTest`, `TodoIntegrationTest`, `CalendarIntegrationTest`, `NoteIntegrationTest`
+**Key Responsibilities**:
+- HTTP request/response handling
+- Input validation
+- Output formatting
+- Error response generation
 
-#### 3. セキュリティテスト
-- **対象**: 認証・認可機能
-- **テスト内容**:
-  - JWT トークン検証
-  - アクセス制御 (403 Forbidden)
-  - 認証なしアクセス (401 Unauthorized)
+**Example**:
+```java
+@RestController
+@RequestMapping("/api/v1/todos")
+public class TodoController {
+    private final TodoService todoService;
+    
+    @PostMapping
+    public ResponseEntity<TodoResponse> createTodo(
+            @Valid @RequestBody CreateTodoRequest request) {
+        TodoResponse response = todoService.createTodo(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+}
+```
 
-#### 4. データベーステスト
-- **対象**: Repository層のデータアクセス
-- **ツール**: @DataJpaTest + H2
-- **テスト内容**: CRUD操作、クエリ検証
+## Security Architecture
 
-### テスト環境設定
-- **データベース**: H2 In-Memory (テスト専用)
-- **設定ファイル**: `application-test.yml`
-- **マイグレーション**: 専用テスト用Flywayスクリプト
-- **並列実行**: 各テストクラスが独立して実行可能
+### Authentication & Authorization Flow
+```
+1. Client Request → 2. CORS Filter → 3. Rate Limiting → 4. JWT Filter
+                                                            ↓
+8. Response ← 7. Controller ← 6. Authorization ← 5. Security Context
+```
 
-## 今後の拡張予定
-1. **キャッシュ**: Redis, Spring Cache（分析データのキャッシュ）
-2. **メッセージング**: RabbitMQ, Spring AMQP（リマインダー通知）
-3. **監視**: Spring Boot Actuator, Micrometer
-4. **検索**: Elasticsearch（全文検索）
-5. **API仕様**: OpenAPI/Swagger
-6. **ファイルストレージ**: S3互換ストレージ（ノート添付ファイル）
-7. **バッチ処理**: Spring Batch（定期タスク生成、統計集計）
+### Security Components
+- **JWT Authentication**: Stateless token-based authentication
+- **Method-Level Security**: `@PreAuthorize` annotations for fine-grained access control
+- **Rate Limiting**: Protection against brute force attacks
+- **CORS Configuration**: Multi-environment development support
+
+### Security Features
+- **User Isolation**: Users can only access their own data
+- **Role-Based Access**: Default `ROLE_USER` with extensible role system
+- **OAuth2 Integration**: Google and GitHub OAuth providers
+- **Token Management**: JWT with refresh token capability
+
+## Data Flow
+
+### Typical Request Flow
+```
+HTTP Request → Controller → Service → Repository → Database
+     ↓              ↓           ↓          ↓          ↓
+ Validation    Use Case    Business    Data       Storage
+              Orchestration  Logic    Access
+```
+
+### Response Flow
+```
+Database → Repository → Service → Controller → HTTP Response
+    ↓          ↓          ↓          ↓           ↓
+  Storage   Domain     Business   Response    Client
+           Objects     Processing  Formatting
+```
+
+## Database Design
+
+### Entity Relationships
+```
+User (1) ──────── (N) Todo
+              ╱       ╲
+     CalendarEvent   Note
+```
+
+### Key Features
+- **Flyway Migration**: Version-controlled database schema
+- **JPA/Hibernate**: Object-relational mapping
+- **PostgreSQL**: Production database
+- **H2**: In-memory testing database
+
+## Testing Strategy
+
+### Testing Pyramid
+```
+                 ╭─────────╮
+                ╱    E2E    ╲     ← Full application tests
+               ╱_____________╲
+              ╱               ╲
+             ╱   Integration   ╲   ← Service + Repository tests
+            ╱___________________╲
+           ╱                     ╲
+          ╱        Unit           ╲ ← Domain logic tests
+         ╱_________________________╲
+```
+
+### Test Types
+- **Unit Tests**: Domain logic and business rules
+- **Integration Tests**: Service layer with database
+- **API Tests**: Controller endpoints with MockMvc
+- **Security Tests**: Authentication and authorization
+- **E2E Tests**: Complete user workflows
+
+## Configuration Management
+
+### Environment-Based Configuration
+- **Development**: Local PostgreSQL, extended JWT expiration, debug logging
+- **Testing**: H2 in-memory database, test-specific configuration
+- **Production**: Optimized security settings, monitoring enabled
+
+### Key Configuration Areas
+- **Database**: Connection pooling, migration settings
+- **Security**: JWT expiration, rate limiting, CORS origins
+- **Logging**: Level configuration for different packages
+- **External Services**: OAuth provider settings
+
+## Scalability Considerations
+
+### Current Implementation
+- **Stateless Design**: JWT-based authentication enables horizontal scaling
+- **Clean Architecture**: Easy to extract microservices if needed
+- **Repository Pattern**: Database abstraction for easy switching
+
+### Future Scaling Options
+- **Caching Layer**: Redis for session management and data caching
+- **Message Queues**: Asynchronous processing for heavy operations
+- **Microservices**: Split by domain boundaries (Todo, Calendar, Notes)
+- **API Gateway**: Centralized routing and cross-cutting concerns
+
+## Development Guidelines
+
+### Adding New Features
+1. **Domain First**: Start with entities and business rules
+2. **Define Contracts**: Create repository interfaces
+3. **Implement Use Cases**: Add application services
+4. **Infrastructure**: Implement data access and external integration
+5. **API Layer**: Create controllers and DTOs
+6. **Testing**: Add comprehensive test coverage
+
+### Code Quality Standards
+- **Google Java Style**: Consistent code formatting
+- **Conventional Commits**: Structured commit messages
+- **Test Coverage**: Minimum 80% overall, 90% service layer
+- **Documentation**: Comprehensive API and architecture documentation
+
+This architecture ensures the application remains maintainable, testable, and adaptable to changing business requirements while following industry best practices for enterprise-grade applications.

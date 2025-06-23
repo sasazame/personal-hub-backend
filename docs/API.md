@@ -1,244 +1,234 @@
-# API仕様書
+# API Specification
 
-## 概要
-Personal Hub アプリケーションのRESTful API仕様
-統合型個人管理システムで、TODO、カレンダー、ノート、分析機能を提供
+## Overview
+RESTful API specification for Personal Hub application
+Integrated personal management system providing TODO, calendar, note, and analytics features
 
-## ベース情報
-- **ベースURL**: `http://localhost:8080/api/v1`
-- **データ形式**: JSON
-- **文字エンコーディング**: UTF-8
-- **認証**: JWT Bearer Token（一部エンドポイントを除く）
+## Base Information
+- **Base URL**: `http://localhost:8080/api/v1`
+- **Data Format**: JSON
+- **Character Encoding**: UTF-8
+- **Authentication**: JWT Bearer Token (except for certain endpoints)
 
-## 共通仕様
+## Common Specifications
 
-### HTTPステータスコード
-| コード | 説明 |
-|--------|------|
-| 200 | OK - 成功 |
-| 201 | Created - 作成成功 |
-| 204 | No Content - 削除成功 |
-| 400 | Bad Request - リクエストエラー |
-| 401 | Unauthorized - 認証が必要 |
-| 403 | Forbidden - アクセス権限なし |
-| 404 | Not Found - リソースが見つからない |
-| 409 | Conflict - データ競合エラー |
-| 500 | Internal Server Error - サーバーエラー |
+### HTTP Status Codes
+| Code | Description |
+|------|-------------|
+| 200 | OK - Success |
+| 201 | Created - Creation successful |
+| 204 | No Content - Deletion successful |
+| 400 | Bad Request - Request error |
+| 401 | Unauthorized - Authentication required |
+| 403 | Forbidden - Access denied |
+| 404 | Not Found - Resource not found |
+| 409 | Conflict - Data conflict error |
+| 500 | Internal Server Error - Server error |
 
-### 認証ヘッダー
-認証が必要なエンドポイントでは、以下のヘッダーを含める必要があります：
+### Authentication Header
+For endpoints requiring authentication, include the following header:
 ```
-Authorization: Bearer <JWT_TOKEN>
+Authorization: Bearer {JWT_TOKEN}
 ```
 
-### エラーレスポンス形式
+### Error Response Format
 ```json
 {
-  "code": "ERROR_CODE",
-  "message": "エラーメッセージ",
-  "details": {
-    "field": "詳細情報"
-  },
-  "timestamp": "2024-01-01T00:00:00Z"
+  "timestamp": "2025-06-23T12:34:56.789Z",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Validation failed",
+  "path": "/api/v1/todos"
 }
 ```
 
-## エンドポイント一覧
-
-## 🔓 認証エンドポイント（認証不要）
-
-### 1. ユーザー登録
+### Pagination Parameters
+For paginated endpoints:
 ```
-POST /api/v1/auth/register
+?page=0&size=20&sort=createdAt,desc
 ```
 
-**リクエストボディ**:
+## Authentication Endpoints
+
+### User Registration
+**Endpoint**: `POST /auth/register`
+**Authentication**: Not required
+
+**Request Body**:
 ```json
 {
-  "email": "user@example.com",
-  "password": "SecurePass123!",
-  "username": "testuser"
+  "username": "john_doe",
+  "email": "john@example.com",
+  "password": "SecurePass123!"
 }
 ```
 
-**レスポンス** (201 Created):
+**Response** (201 Created):
 ```json
 {
   "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "user": {
-    "id": 1,
-    "username": "testuser",
-    "email": "user@example.com",
-    "createdAt": "2024-01-01T09:00:00+09:00",
-    "updatedAt": "2024-01-01T09:00:00+09:00"
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "john_doe",
+    "email": "john@example.com",
+    "createdAt": "2025-06-23T12:34:56.789Z",
+    "updatedAt": "2025-06-23T12:34:56.789Z"
   }
 }
 ```
 
-**エラーレスポンス** (409 Conflict - ユーザーが既に存在):
+### User Login
+**Endpoint**: `POST /auth/login`
+**Authentication**: Not required
+
+**Request Body**:
 ```json
 {
-  "code": "USER_ALREADY_EXISTS",
-  "message": "User already exists with email: user@example.com",
-  "timestamp": "2025-05-30T12:00:00Z"
+  "email": "john@example.com",
+  "password": "SecurePass123!"
 }
 ```
 
-### 2. ログイン
-```
-POST /api/v1/auth/login
-```
-
-**リクエストボディ**:
-```json
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-**レスポンス** (200 OK):
+**Response** (200 OK):
 ```json
 {
   "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "user": {
-    "id": 1,
-    "username": "testuser",
-    "email": "user@example.com",
-    "createdAt": "2024-01-01T09:00:00+09:00",
-    "updatedAt": "2024-01-01T09:00:00+09:00"
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "john_doe",
+    "email": "john@example.com",
+    "createdAt": "2025-06-23T12:34:56.789Z",
+    "updatedAt": "2025-06-23T12:34:56.789Z"
   }
 }
 ```
 
-**エラーレスポンス** (401 Unauthorized - 認証失敗):
+### Token Refresh
+**Endpoint**: `POST /auth/refresh`
+**Authentication**: Not required
+
+**Request Body**:
 ```json
 {
-  "code": "AUTHENTICATION_FAILED",
-  "message": "Invalid email or password",
-  "timestamp": "2025-05-30T12:00:00Z"
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
 
-### 3. 現在のユーザー情報取得
-```
-GET /api/v1/auth/me
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**レスポンス** (200 OK):
+**Response** (200 OK):
 ```json
 {
-  "id": 1,
-  "username": "testuser",
-  "email": "user@example.com",
-  "createdAt": "2024-01-01T09:00:00+09:00",
-  "updatedAt": "2024-01-01T09:00:00+09:00"
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "john_doe",
+    "email": "john@example.com",
+    "createdAt": "2025-06-23T12:34:56.789Z",
+    "updatedAt": "2025-06-23T12:34:56.789Z"
+  }
 }
 ```
 
-## 🔒 TODOエンドポイント（認証必須）
+### Get Current User
+**Endpoint**: `GET /auth/me`
+**Authentication**: Required
 
-### 4. TODO作成
-```
-POST /api/v1/todos
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**リクエストボディ**:
+**Response** (200 OK):
 ```json
 {
-  "title": "サンプルTODO",
-  "description": "詳細説明（任意）",
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "username": "john_doe",
+  "email": "john@example.com",
+  "createdAt": "2025-06-23T12:34:56.789Z",
+  "updatedAt": "2025-06-23T12:34:56.789Z"
+}
+```
+
+## OAuth2 Endpoints
+
+### OAuth2 UserInfo
+**Endpoint**: `GET /oauth2/userinfo`
+**Authentication**: Required
+
+**Response** (200 OK):
+```json
+{
+  "sub": "550e8400-e29b-41d4-a716-446655440000",
+  "email": "john@example.com",
+  "email_verified": true,
+  "name": "John Doe",
+  "given_name": "John",
+  "family_name": "Doe",
+  "picture": "https://example.com/avatar.jpg",
+  "locale": "en"
+}
+```
+
+## TODO Endpoints
+
+### Create TODO
+**Endpoint**: `POST /todos`
+**Authentication**: Required
+
+**Request Body**:
+```json
+{
+  "title": "Complete project documentation",
+  "description": "Write comprehensive API documentation",
   "priority": "HIGH",
-  "dueDate": "2024-12-31",
+  "dueDate": "2025-06-30",
   "parentId": null,
   "isRepeatable": false,
   "repeatConfig": null
 }
 ```
 
-**レスポンス** (201 Created):
+**Response** (201 Created):
 ```json
 {
-  "id": 1,
-  "title": "サンプルTODO",
-  "description": "詳細説明（任意）",
+  "id": 123,
+  "title": "Complete project documentation",
+  "description": "Write comprehensive API documentation",
   "status": "TODO",
   "priority": "HIGH",
-  "dueDate": "2024-12-31",
+  "dueDate": "2025-06-30",
   "parentId": null,
   "isRepeatable": false,
   "repeatConfig": null,
   "originalTodoId": null,
-  "createdAt": "2024-01-01T09:00:00+09:00",
-  "updatedAt": "2024-01-01T09:00:00+09:00"
+  "createdAt": "2025-06-23T12:34:56.789Z",
+  "updatedAt": "2025-06-23T12:34:56.789Z"
 }
 ```
 
-**注意**: 作成されたTODOは認証済みユーザーに自動的に関連付けられます。
+### Get TODO List (Paginated)
+**Endpoint**: `GET /todos`
+**Authentication**: Required
 
-### 5. TODO取得（ID指定）
-```
-GET /api/v1/todos/{id}
-Authorization: Bearer <JWT_TOKEN>
-```
+**Query Parameters**:
+- `page` (optional): Page number (default: 0)
+- `size` (optional): Page size (default: 20)
+- `sort` (optional): Sort criteria (default: createdAt,desc)
 
-**パスパラメータ**:
-- `id`: TODO ID (Long)
-
-**レスポンス** (200 OK):
-```json
-{
-  "id": 1,
-  "title": "サンプルTODO",
-  "description": "詳細説明",
-  "status": "TODO",
-  "priority": "HIGH",
-  "dueDate": "2024-12-31",
-  "parentId": null,
-  "createdAt": "2024-01-01T09:00:00+09:00",
-  "updatedAt": "2024-01-01T09:00:00+09:00"
-}
-```
-
-**エラーレスポンス** (403 Forbidden - 他のユーザーのTODO):
-```json
-{
-  "code": "ACCESS_DENIED",
-  "message": "Access denied to TODO with id: 1",
-  "timestamp": "2025-05-30T12:00:00Z"
-}
-```
-
-### 6. TODO一覧取得
-```
-GET /api/v1/todos
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**クエリパラメータ**:
-- `page`: ページ番号（デフォルト: 0）
-- `size`: 1ページあたりの件数（デフォルト: 20）
-- `sort`: ソート条件（デフォルト: createdAt,desc）
-
-**レスポンス** (200 OK):
-認証済みユーザーのTODOのみが返されます。
+**Response** (200 OK):
 ```json
 {
   "content": [
     {
-      "id": 1,
-      "title": "サンプルTODO",
-      "description": "詳細説明",
+      "id": 123,
+      "title": "Complete project documentation",
+      "description": "Write comprehensive API documentation",
       "status": "TODO",
       "priority": "HIGH",
-      "dueDate": "2024-12-31",
+      "dueDate": "2025-06-30",
       "parentId": null,
-      "createdAt": "2024-01-01T09:00:00+09:00",
-      "updatedAt": "2024-01-01T09:00:00+09:00"
+      "isRepeatable": false,
+      "repeatConfig": null,
+      "originalTodoId": null,
+      "createdAt": "2025-06-23T12:34:56.789Z",
+      "updatedAt": "2025-06-23T12:34:56.789Z"
     }
   ],
   "pageable": {
@@ -246,245 +236,172 @@ Authorization: Bearer <JWT_TOKEN>
     "pageSize": 20,
     "sort": {
       "sorted": true,
-      "orderBy": "createdAt",
-      "direction": "DESC"
+      "unsorted": false,
+      "empty": false
     }
   },
-  "totalElements": 1,
   "totalPages": 1,
+  "totalElements": 1,
+  "last": true,
   "first": true,
-  "last": true
+  "size": 20,
+  "number": 0,
+  "numberOfElements": 1,
+  "empty": false
 }
 ```
 
-### 7. ステータス別TODO取得
-```
-GET /api/v1/todos/status/{status}
-Authorization: Bearer <JWT_TOKEN>
-```
+### Get TODO by ID
+**Endpoint**: `GET /todos/{id}`
+**Authentication**: Required
 
-**パスパラメータ**:
-- `status`: TODO, IN_PROGRESS, DONE
-
-**レスポンス** (200 OK):
-認証済みユーザーの指定ステータスのTODOのみが返されます。
-```json
-[
-  {
-    "id": 1,
-    "title": "進行中のTODO",
-    "description": "詳細説明",
-    "status": "IN_PROGRESS",
-    "priority": "HIGH",
-    "dueDate": "2024-12-31",
-    "parentId": null,
-    "createdAt": "2024-01-01T09:00:00+09:00",
-    "updatedAt": "2024-01-01T10:00:00+09:00"
-  }
-]
-```
-
-### 8. TODO更新
-```
-PUT /api/v1/todos/{id}
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**パスパラメータ**:
-- `id`: TODO ID (Long)
-
-**リクエストボディ**:
+**Response** (200 OK):
 ```json
 {
-  "title": "更新されたTODO",
-  "description": "更新された詳細説明",
-  "status": "IN_PROGRESS",
-  "priority": "MEDIUM",
-  "dueDate": "2024-12-25"
-}
-```
-
-**レスポンス** (200 OK):
-```json
-{
-  "id": 1,
-  "title": "更新されたTODO",
-  "description": "更新された詳細説明",
-  "status": "IN_PROGRESS",
-  "priority": "MEDIUM",
-  "dueDate": "2024-12-25",
+  "id": 123,
+  "title": "Complete project documentation",
+  "description": "Write comprehensive API documentation",
+  "status": "TODO",
+  "priority": "HIGH",
+  "dueDate": "2025-06-30",
   "parentId": null,
-  "createdAt": "2024-01-01T09:00:00+09:00",
-  "updatedAt": "2024-01-01T11:00:00+09:00"
+  "isRepeatable": false,
+  "repeatConfig": null,
+  "originalTodoId": null,
+  "createdAt": "2025-06-23T12:34:56.789Z",
+  "updatedAt": "2025-06-23T12:34:56.789Z"
 }
 ```
 
-**エラーレスポンス** (403 Forbidden - 他のユーザーのTODO):
+### Update TODO
+**Endpoint**: `PUT /todos/{id}`
+**Authentication**: Required
+
+**Request Body**:
 ```json
 {
-  "code": "ACCESS_DENIED",
-  "message": "Access denied to update TODO with id: 1",
-  "timestamp": "2025-05-30T12:00:00Z"
+  "title": "Complete project documentation (Updated)",
+  "description": "Write comprehensive API documentation with examples",
+  "status": "IN_PROGRESS",
+  "priority": "HIGH",
+  "dueDate": "2025-06-30",
+  "parentId": null,
+  "isRepeatable": false,
+  "repeatConfig": null
 }
 ```
 
-### 9. TODO削除
-```
-DELETE /api/v1/todos/{id}
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**パスパラメータ**:
-- `id`: TODO ID (Long)
-
-**レスポンス** (204 No Content):
-レスポンスボディなし
-
-**エラーレスポンス** (403 Forbidden - 他のユーザーのTODO):
+**Response** (200 OK):
 ```json
 {
-  "code": "ACCESS_DENIED",
-  "message": "Access denied to delete TODO with id: 1",
-  "timestamp": "2025-05-30T12:00:00Z"
+  "id": 123,
+  "title": "Complete project documentation (Updated)",
+  "description": "Write comprehensive API documentation with examples",
+  "status": "IN_PROGRESS",
+  "priority": "HIGH",
+  "dueDate": "2025-06-30",
+  "parentId": null,
+  "isRepeatable": false,
+  "repeatConfig": null,
+  "originalTodoId": null,
+  "createdAt": "2025-06-23T12:34:56.789Z",
+  "updatedAt": "2025-06-23T13:45:12.456Z"
 }
 ```
 
-### 10. 子タスク一覧取得
-```
-GET /api/v1/todos/{parentId}/children
-Authorization: Bearer <JWT_TOKEN>
-```
+### Delete TODO
+**Endpoint**: `DELETE /todos/{id}`
+**Authentication**: Required
 
-**パスパラメータ**:
-- `parentId`: 親TODO ID (Long)
+**Response** (204 No Content)
 
-**レスポンス** (200 OK):
-認証済みユーザーの指定された親TODOの子タスクが返されます。
+### Get TODOs by Status
+**Endpoint**: `GET /todos/status/{status}`
+**Authentication**: Required
+
+**Path Parameters**:
+- `status`: TODO, IN_PROGRESS, or DONE
+
+**Response** (200 OK):
 ```json
 [
   {
-    "id": 2,
-    "title": "子タスク1",
-    "description": "詳細説明",
+    "id": 123,
+    "title": "Complete project documentation",
+    "description": "Write comprehensive API documentation",
     "status": "TODO",
-    "priority": "MEDIUM",
-    "dueDate": "2024-12-31",
-    "parentId": 1,
+    "priority": "HIGH",
+    "dueDate": "2025-06-30",
+    "parentId": null,
     "isRepeatable": false,
     "repeatConfig": null,
     "originalTodoId": null,
-    "createdAt": "2024-01-01T09:30:00+09:00",
-    "updatedAt": "2024-01-01T09:30:00+09:00"
+    "createdAt": "2025-06-23T12:34:56.789Z",
+    "updatedAt": "2025-06-23T12:34:56.789Z"
   }
 ]
 ```
 
-## 🔒 繰り返しTODOエンドポイント（認証必須）
+### Get Child Tasks
+**Endpoint**: `GET /todos/{parentId}/children`
+**Authentication**: Required
 
-### 11. 繰り返しTODO作成
-```
-POST /api/v1/todos
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**リクエストボディ（毎日繰り返し）**:
-```json
-{
-  "title": "毎日の運動",
-  "description": "30分間のウォーキング",
-  "priority": "HIGH",
-  "dueDate": "2025-01-01",
-  "parentId": null,
-  "isRepeatable": true,
-  "repeatConfig": {
-    "repeatType": "DAILY",
-    "interval": 1,
-    "daysOfWeek": null,
-    "dayOfMonth": null,
-    "endDate": null
-  }
-}
-```
-
-**リクエストボディ（週次繰り返し）**:
-```json
-{
-  "title": "ジム通い",
-  "description": "筋力トレーニング",
-  "priority": "MEDIUM",
-  "dueDate": "2025-01-06",
-  "parentId": null,
-  "isRepeatable": true,
-  "repeatConfig": {
-    "repeatType": "WEEKLY",
-    "interval": 1,
-    "daysOfWeek": [1, 3, 5],
-    "dayOfMonth": null,
-    "endDate": null
-  }
-}
-```
-
-**リクエストボディ（月次繰り返し）**:
-```json
-{
-  "title": "月次レポート",
-  "description": "月末のレポート作成",
-  "priority": "HIGH",
-  "dueDate": "2025-01-31",
-  "parentId": null,
-  "isRepeatable": true,
-  "repeatConfig": {
-    "repeatType": "MONTHLY",
-    "interval": 1,
-    "daysOfWeek": null,
-    "dayOfMonth": 31,
-    "endDate": "2025-12-31"
-  }
-}
-```
-
-**レスポンス** (201 Created):
-```json
-{
-  "id": 1,
-  "title": "毎日の運動",
-  "description": "30分間のウォーキング",
-  "status": "TODO",
-  "priority": "HIGH",
-  "dueDate": "2025-01-01",
-  "parentId": null,
-  "isRepeatable": true,
-  "repeatConfig": {
-    "repeatType": "DAILY",
-    "interval": 1,
-    "daysOfWeek": null,
-    "dayOfMonth": null,
-    "endDate": null
-  },
-  "originalTodoId": null,
-  "createdAt": "2025-01-01T09:00:00+09:00",
-  "updatedAt": "2025-01-01T09:00:00+09:00"
-}
-```
-
-### 12. 繰り返し可能なTODO一覧取得
-```
-GET /api/v1/todos/repeatable
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**レスポンス** (200 OK):
-認証済みユーザーの繰り返し設定が有効なTODOのみが返されます。
+**Response** (200 OK):
 ```json
 [
   {
-    "id": 1,
-    "title": "毎日の運動",
-    "description": "30分間のウォーキング",
+    "id": 124,
+    "title": "Write API endpoint documentation",
+    "description": "Document all REST endpoints",
     "status": "TODO",
-    "priority": "HIGH",
-    "dueDate": "2025-01-01",
+    "priority": "MEDIUM",
+    "dueDate": "2025-06-28",
+    "parentId": 123,
+    "isRepeatable": false,
+    "repeatConfig": null,
+    "originalTodoId": null,
+    "createdAt": "2025-06-23T12:34:56.789Z",
+    "updatedAt": "2025-06-23T12:34:56.789Z"
+  }
+]
+```
+
+### Toggle TODO Status
+**Endpoint**: `POST /todos/{id}/toggle-status`
+**Authentication**: Required
+
+**Response** (200 OK):
+```json
+{
+  "id": 123,
+  "title": "Complete project documentation",
+  "description": "Write comprehensive API documentation",
+  "status": "DONE",
+  "priority": "HIGH",
+  "dueDate": "2025-06-30",
+  "parentId": null,
+  "isRepeatable": false,
+  "repeatConfig": null,
+  "originalTodoId": null,
+  "createdAt": "2025-06-23T12:34:56.789Z",
+  "updatedAt": "2025-06-23T13:45:12.456Z"
+}
+```
+
+### Get Repeatable TODOs
+**Endpoint**: `GET /todos/repeatable`
+**Authentication**: Required
+
+**Response** (200 OK):
+```json
+[
+  {
+    "id": 125,
+    "title": "Daily standup meeting",
+    "description": "Team synchronization meeting",
+    "status": "TODO",
+    "priority": "MEDIUM",
+    "dueDate": null,
     "parentId": null,
     "isRepeatable": true,
     "repeatConfig": {
@@ -495,1022 +412,356 @@ Authorization: Bearer <JWT_TOKEN>
       "endDate": null
     },
     "originalTodoId": null,
-    "createdAt": "2025-01-01T09:00:00+09:00",
-    "updatedAt": "2025-01-01T09:00:00+09:00"
+    "createdAt": "2025-06-23T12:34:56.789Z",
+    "updatedAt": "2025-06-23T12:34:56.789Z"
   }
 ]
 ```
 
-### 13. 繰り返しTODOのインスタンス一覧取得
-```
-GET /api/v1/todos/{originalTodoId}/instances
-Authorization: Bearer <JWT_TOKEN>
-```
+### Generate Pending Repeat Instances
+**Endpoint**: `POST /todos/repeat/generate`
+**Authentication**: Required
 
-**パスパラメータ**:
-- `originalTodoId`: 元の繰り返しTODO ID (Long)
-
-**レスポンス** (200 OK):
-指定された繰り返しTODOから自動生成されたインスタンス一覧が返されます。
+**Response** (201 Created):
 ```json
 [
   {
-    "id": 2,
-    "title": "毎日の運動",
-    "description": "30分間のウォーキング",
+    "id": 126,
+    "title": "Daily standup meeting",
+    "description": "Team synchronization meeting",
     "status": "TODO",
-    "priority": "HIGH",
-    "dueDate": "2025-01-02",
-    "parentId": null,
-    "isRepeatable": false,
-    "repeatConfig": null,
-    "originalTodoId": 1,
-    "createdAt": "2025-01-02T00:00:00+09:00",
-    "updatedAt": "2025-01-02T00:00:00+09:00"
-  },
-  {
-    "id": 3,
-    "title": "毎日の運動",
-    "description": "30分間のウォーキング",
-    "status": "DONE",
-    "priority": "HIGH",
-    "dueDate": "2025-01-03",
-    "parentId": null,
-    "isRepeatable": false,
-    "repeatConfig": null,
-    "originalTodoId": 1,
-    "createdAt": "2025-01-03T00:00:00+09:00",
-    "updatedAt": "2025-01-03T08:30:00+09:00"
-  }
-]
-```
-
-### 14. 期限到来した繰り返しTODOのインスタンス生成
-```
-POST /api/v1/todos/repeat/generate
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**レスポンス** (201 Created):
-新しく生成されたTODOインスタンス一覧が返されます。
-```json
-[
-  {
-    "id": 4,
-    "title": "毎日の運動",
-    "description": "30分間のウォーキング",
-    "status": "TODO",
-    "priority": "HIGH",
-    "dueDate": "2025-01-04",
-    "parentId": null,
-    "isRepeatable": false,
-    "repeatConfig": null,
-    "originalTodoId": 1,
-    "createdAt": "2025-01-04T00:00:00+09:00",
-    "updatedAt": "2025-01-04T00:00:00+09:00"
-  }
-]
-```
-
-## 🔒 ユーザー管理エンドポイント（認証必須）
-
-### 15. ユーザー情報取得
-```
-GET /api/v1/users/{id}
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**パスパラメータ**:
-- `id`: ユーザー ID (Long)
-
-**レスポンス** (200 OK):
-```json
-{
-  "id": 1,
-  "username": "testuser",
-  "email": "user@example.com",
-  "createdAt": "2024-01-01T09:00:00+09:00",
-  "updatedAt": "2024-01-01T09:00:00+09:00"
-}
-```
-
-### 16. ユーザー情報更新
-```
-PUT /api/v1/users/{id}
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**パスパラメータ**:
-- `id`: ユーザー ID (Long)
-
-**リクエストボディ**:
-```json
-{
-  "username": "newusername",
-  "email": "newemail@example.com",
-  "currentPassword": "currentPassword",
-  "newPassword": "NewSecurePass123!"
-}
-```
-
-**レスポンス** (200 OK):
-```json
-{
-  "id": 1,
-  "username": "newusername",
-  "email": "newemail@example.com",
-  "createdAt": "2024-01-01T09:00:00+09:00",
-  "updatedAt": "2024-01-01T12:00:00+09:00"
-}
-```
-
-### 17. パスワード変更
-```
-PUT /api/v1/users/{id}/password
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**パスパラメータ**:
-- `id`: ユーザー ID (Long)
-
-**リクエストボディ**:
-```json
-{
-  "currentPassword": "currentPassword",
-  "newPassword": "NewSecurePass123!"
-}
-```
-
-**レスポンス** (204 No Content):
-レスポンスボディなし
-
-### 18. ユーザーアカウント削除
-```
-DELETE /api/v1/users/{id}
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**パスパラメータ**:
-- `id`: ユーザー ID (Long)
-
-**レスポンス** (204 No Content):
-レスポンスボディなし
-
-## データモデル
-
-### TodoStatus (Enum)
-- `TODO`: 未着手
-- `IN_PROGRESS`: 進行中
-- `DONE`: 完了
-
-### TodoPriority (Enum)
-- `HIGH`: 高
-- `MEDIUM`: 中
-- `LOW`: 低
-
-## バリデーション
-
-### RegisterRequest
-- `email`: 必須、有効なメールアドレス形式
-- `password`: 必須、強力なパスワード（8文字以上、大文字・小文字・数字・特殊文字を含む）
-- `username`: 必須、3-20文字
-
-### LoginRequest
-- `email`: 必須、有効なメールアドレス形式
-- `password`: 必須
-
-### CreateTodoRequest
-- `title`: 必須、最大255文字
-- `description`: 任意、最大1000文字
-- `priority`: 任意（デフォルト: MEDIUM）
-- `dueDate`: 任意
-- `parentId`: 任意、親TODO ID
-- `isRepeatable`: 任意（デフォルト: false）
-- `repeatConfig`: 任意、繰り返し設定オブジェクト
-
-### UpdateTodoRequest
-- `title`: 必須、最大255文字
-- `description`: 任意、最大1000文字
-- `status`: 必須
-- `priority`: 必須
-- `dueDate`: 任意
-- `parentId`: 任意、親TODO ID
-- `isRepeatable`: 任意（デフォルト: false）
-- `repeatConfig`: 任意、繰り返し設定オブジェクト
-
-### UpdateUserRequest
-- `username`: 任意、3-20文字
-- `email`: 任意、有効なメールアドレス形式
-- `currentPassword`: 必須（パスワード変更時）
-- `newPassword`: 任意、強力なパスワード
-
-### ChangePasswordRequest
-- `currentPassword`: 必須
-- `newPassword`: 必須、強力なパスワード
-
-### RepeatConfigRequest
-- `repeatType`: 必須、DAILY/WEEKLY/MONTHLY/YEARLY/ONCE
-- `interval`: 任意（デフォルト: 1）、1以上の整数
-- `daysOfWeek`: 任意、1-7の整数配列（WEEKLY時のみ）
-- `dayOfMonth`: 任意、1-31の整数（MONTHLY時のみ）
-- `endDate`: 任意、終了日（YYYY-MM-DD形式）
-
-## セキュリティ設定
-
-### 認証・認可
-- **認証方式**: JWT Bearer Token
-- **トークン有効期限**: 24時間（デフォルト）
-- **アクセス制御**: ユーザーは自分のTODOのみアクセス可能
-
-### CORS設定
-- **許可オリジン**: `http://localhost:3000`
-- **許可メソッド**: GET, POST, PUT, DELETE, OPTIONS
-- **許可ヘッダー**: Authorization, Content-Type, Accept
-- **資格情報**: 許可
-
-## 使用例
-
-### cURLサンプル
-
-#### 1. ユーザー登録
-```bash
-curl -X POST http://localhost:8080/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "password": "SecurePass123!",
-    "username": "testuser"
-  }'
-```
-
-#### 2. ログイン
-```bash
-curl -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "password": "password123"
-  }'
-```
-
-#### 3. TODO作成（要認証）
-```bash
-curl -X POST http://localhost:8080/api/v1/todos \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{
-    "title": "テストTODO",
-    "description": "テスト用のTODO",
-    "priority": "HIGH",
-    "dueDate": "2024-12-31"
-  }'
-```
-
-#### 4. TODO一覧取得（要認証）
-```bash
-curl -X GET "http://localhost:8080/api/v1/todos?page=0&size=10&sort=createdAt,desc" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-#### 5. TODO更新（要認証）
-```bash
-curl -X PUT http://localhost:8080/api/v1/todos/1 \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{
-    "title": "更新されたTODO",
-    "description": "更新された説明",
-    "status": "DONE",
-    "priority": "LOW",
-    "dueDate": "2024-12-25"
-  }'
-```
-
-#### 6. 現在のユーザー情報取得（要認証）
-```bash
-curl -X GET http://localhost:8080/api/v1/auth/me \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-#### 7. 子タスク一覧取得（要認証）
-```bash
-curl -X GET http://localhost:8080/api/v1/todos/1/children \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-#### 8. ステータス別TODO取得（要認証）
-```bash
-curl -X GET http://localhost:8080/api/v1/todos/status/IN_PROGRESS \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-#### 9. パスワード変更（要認証）
-```bash
-curl -X PUT http://localhost:8080/api/v1/users/1/password \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{
-    "currentPassword": "SecurePass123!",
-    "newPassword": "NewSecurePass456!"
-  }'
-```
-
-## 🔒 Google Calendar連携エンドポイント（認証必須）
-
-### カレンダー同期機能
-Personal HubのイベントとGoogleカレンダーの双方向同期機能
-
-#### 32. Google Calendar接続
-```
-POST /api/v1/calendar/sync/connect
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**リクエストボディ**:
-```json
-{
-  "type": "service_account",
-  "project_id": "your-project-id",
-  "private_key_id": "key-id",
-  "private_key": "-----BEGIN PRIVATE KEY-----\n...",
-  "client_email": "service-account@project.iam.gserviceaccount.com",
-  "client_id": "client-id",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token"
-}
-```
-
-**レスポンス** (200 OK):
-```json
-[
-  {
-    "id": "primary",
-    "summary": "Primary Calendar",
-    "description": "Your primary calendar",
-    "timeZone": "Asia/Tokyo",
-    "accessRole": "owner"
-  },
-  {
-    "id": "work@company.com",
-    "summary": "Work Calendar", 
-    "description": "Work events calendar",
-    "timeZone": "Asia/Tokyo",
-    "accessRole": "writer"
-  }
-]
-```
-
-#### 33. Calendar同期設定取得
-```
-GET /api/v1/calendar/sync/settings
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**レスポンス** (200 OK):
-```json
-[
-  {
-    "id": 1,
-    "googleCalendarId": "primary",
-    "calendarName": "Primary Calendar",
-    "syncEnabled": true,
-    "lastSyncAt": "2025-01-01T10:00:00+09:00",
-    "syncDirection": "BIDIRECTIONAL",
-    "createdAt": "2025-01-01T09:00:00+09:00",
-    "updatedAt": "2025-01-01T10:00:00+09:00"
-  }
-]
-```
-
-#### 34. 同期設定更新
-```
-PUT /api/v1/calendar/sync/settings/{calendarId}
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**リクエストボディ**:
-```json
-{
-  "googleCalendarId": "primary",
-  "calendarName": "Updated Calendar Name", 
-  "syncEnabled": true,
-  "syncDirection": "TO_GOOGLE"
-}
-```
-
-**レスポンス** (200 OK):
-```json
-{
-  "id": 1,
-  "googleCalendarId": "primary", 
-  "calendarName": "Updated Calendar Name",
-  "syncEnabled": true,
-  "lastSyncAt": "2025-01-01T10:00:00+09:00",
-  "syncDirection": "TO_GOOGLE",
-  "createdAt": "2025-01-01T09:00:00+09:00",
-  "updatedAt": "2025-01-01T11:00:00+09:00"
-}
-```
-
-#### 35. 手動同期実行
-```
-POST /api/v1/calendar/sync/manual
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**リクエストボディ**:
-```json
-{
-  "type": "service_account",
-  "project_id": "your-project-id",
-  ...
-}
-```
-
-**レスポンス** (200 OK):
-```json
-{
-  "connected": true,
-  "lastSyncAt": "2025-01-01T11:00:00+09:00",
-  "syncStatus": "SUCCESS",
-  "connectedCalendars": [
-    {
-      "id": 1,
-      "googleCalendarId": "primary",
-      "calendarName": "Primary Calendar",
-      "syncEnabled": true,
-      "lastSyncAt": "2025-01-01T11:00:00+09:00", 
-      "syncDirection": "BIDIRECTIONAL",
-      "createdAt": "2025-01-01T09:00:00+09:00",
-      "updatedAt": "2025-01-01T11:00:00+09:00"
-    }
-  ],
-  "syncStatistics": {
-    "totalEvents": 25,
-    "syncedEvents": 23,
-    "pendingEvents": 1,
-    "errorEvents": 1,
-    "lastSuccessfulSync": "2025-01-01T11:00:00+09:00"
-  }
-}
-```
-
-#### 36. 同期状況取得
-```
-GET /api/v1/calendar/sync/status
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**レスポンス** (200 OK):
-```json
-{
-  "connected": true,
-  "lastSyncAt": "2025-01-01T11:00:00+09:00",
-  "syncStatus": "SUCCESS",
-  "connectedCalendars": [...],
-  "syncStatistics": {
-    "totalEvents": 25,
-    "syncedEvents": 23, 
-    "pendingEvents": 1,
-    "errorEvents": 1,
-    "lastSuccessfulSync": "2025-01-01T11:00:00+09:00"
-  }
-}
-```
-
-#### 37. Calendar連携解除
-```
-DELETE /api/v1/calendar/sync/disconnect/{calendarId}
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**パスパラメータ**:
-- `calendarId`: Google Calendar ID
-
-**レスポンス** (204 No Content):
-レスポンスボディなし
-
-#### 38. OAuth認証URL取得
-```
-POST /api/v1/calendar/sync/auth/url
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**レスポンス** (200 OK):
-```
-https://accounts.google.com/oauth2/auth?client_id=...&redirect_uri=...&scope=https://www.googleapis.com/auth/calendar&response_type=code&access_type=offline
-```
-
-#### 39. OAuth認証コールバック
-```
-POST /api/v1/calendar/sync/auth/callback?code={authCode}&state={state}
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**クエリパラメータ**:
-- `code`: OAuth認証コード
-- `state`: CSRF保護用のstate値
-
-**レスポンス** (200 OK):
-```
-Authorization successful
-```
-
-#### 40. 接続テスト
-```
-POST /api/v1/calendar/sync/test
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**リクエストボディ**:
-```json
-{
-  "type": "service_account",
-  ...
-}
-```
-
-**レスポンス** (200 OK):
-```
-Connection successful. Found 3 calendars.
-```
-
-### 同期の仕組み
-
-#### 双方向同期
-- **Personal Hub → Google**: 新規作成・更新されたイベントをGoogleカレンダーに送信
-- **Google → Personal Hub**: Googleカレンダーの変更をPersonal Hubに反映
-- **競合解決**: 最新更新時刻を優先
-
-#### 同期ステータス
-- `NONE`: 同期対象外
-- `SYNCED`: 同期済み  
-- `SYNC_PENDING`: 同期待ち
-- `SYNC_ERROR`: 同期エラー
-- `SYNC_CONFLICT`: 同期競合
-
-#### 同期方向設定
-- `BIDIRECTIONAL`: 双方向同期（デフォルト）
-- `TO_GOOGLE`: Personal Hub → Googleのみ
-- `FROM_GOOGLE`: Google → Personal Hubのみ
-
-### セキュリティ考慮事項
-- OAuth 2.0による安全な認証
-- 最小権限スコープの設定
-- 認証情報の暗号化保存
-- API使用量制限の考慮
-
-#### 10. 繰り返しTODO作成（要認証）
-```bash
-# 毎日繰り返しTODO
-curl -X POST http://localhost:8080/api/v1/todos \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{
-    "title": "毎日の運動",
-    "description": "30分間のウォーキング",
-    "priority": "HIGH",
-    "dueDate": "2025-01-01",
-    "isRepeatable": true,
-    "repeatConfig": {
-      "repeatType": "DAILY",
-      "interval": 1
-    }
-  }'
-
-# 週次繰り返しTODO（月・水・金）
-curl -X POST http://localhost:8080/api/v1/todos \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{
-    "title": "ジム通い",
-    "description": "筋力トレーニング",
     "priority": "MEDIUM",
-    "dueDate": "2025-01-06",
-    "isRepeatable": true,
-    "repeatConfig": {
-      "repeatType": "WEEKLY",
-      "interval": 1,
-      "daysOfWeek": [1, 3, 5]
-    }
-  }'
-
-# 月次繰り返しTODO
-curl -X POST http://localhost:8080/api/v1/todos \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{
-    "title": "月次レポート",
-    "description": "月末のレポート作成",
-    "priority": "HIGH",
-    "dueDate": "2025-01-31",
-    "isRepeatable": true,
-    "repeatConfig": {
-      "repeatType": "MONTHLY",
-      "interval": 1,
-      "dayOfMonth": 31,
-      "endDate": "2025-12-31"
-    }
-  }'
+    "dueDate": "2025-06-24",
+    "parentId": null,
+    "isRepeatable": false,
+    "repeatConfig": null,
+    "originalTodoId": 125,
+    "createdAt": "2025-06-23T12:34:56.789Z",
+    "updatedAt": "2025-06-23T12:34:56.789Z"
+  }
+]
 ```
 
-## 🔒 イベント（カレンダー）エンドポイント（認証必須）
+## Calendar Endpoints
 
-### 19. イベント作成
-```
-POST /api/v1/events
-Authorization: Bearer <JWT_TOKEN>
-```
+### Create Event
+**Endpoint**: `POST /calendar/events`
+**Authentication**: Required
 
-**リクエストボディ**:
+**Request Body**:
 ```json
 {
-  "title": "会議",
-  "description": "定例会議",
-  "startDateTime": "2024-12-31T10:00:00",
-  "endDateTime": "2024-12-31T11:00:00",
-  "location": "会議室A",
+  "title": "Team Meeting",
+  "description": "Weekly team synchronization",
+  "startTime": "2025-06-24T10:00:00Z",
+  "endTime": "2025-06-24T11:00:00Z",
+  "location": "Conference Room A",
   "allDay": false,
-  "reminderMinutes": 15,
-  "color": "#FF5722"
+  "reminderMinutes": 15
 }
 ```
 
-**レスポンス** (201 Created):
+**Response** (201 Created):
 ```json
 {
-  "id": 1,
-  "title": "会議",
-  "description": "定例会議",
-  "startDateTime": "2024-12-31T10:00:00",
-  "endDateTime": "2024-12-31T11:00:00",
-  "location": "会議室A",
+  "id": 456,
+  "title": "Team Meeting",
+  "description": "Weekly team synchronization",
+  "startTime": "2025-06-24T10:00:00Z",
+  "endTime": "2025-06-24T11:00:00Z",
+  "location": "Conference Room A",
   "allDay": false,
   "reminderMinutes": 15,
-  "color": "#FF5722",
-  "createdAt": "2024-01-01T09:00:00+09:00",
-  "updatedAt": "2024-01-01T09:00:00+09:00"
+  "createdAt": "2025-06-23T12:34:56.789Z",
+  "updatedAt": "2025-06-23T12:34:56.789Z"
 }
 ```
 
-### 20. イベント取得（ID指定）
-```
-GET /api/v1/events/{id}
-Authorization: Bearer <JWT_TOKEN>
-```
+### Get Events
+**Endpoint**: `GET /calendar/events`
+**Authentication**: Required
 
-**パスパラメータ**:
-- `id`: イベント ID (Long)
+**Query Parameters**:
+- `start` (optional): Start date (ISO 8601)
+- `end` (optional): End date (ISO 8601)
+- `page` (optional): Page number
+- `size` (optional): Page size
 
-**レスポンス** (200 OK):
-```json
-{
-  "id": 1,
-  "title": "会議",
-  "description": "定例会議",
-  "startDateTime": "2024-12-31T10:00:00",
-  "endDateTime": "2024-12-31T11:00:00",
-  "location": "会議室A",
-  "allDay": false,
-  "reminderMinutes": 15,
-  "color": "#FF5722",
-  "createdAt": "2024-01-01T09:00:00+09:00",
-  "updatedAt": "2024-01-01T09:00:00+09:00"
-}
-```
-
-### 21. イベント一覧取得
-```
-GET /api/v1/events
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**クエリパラメータ**:
-- `startDate`: 開始日（YYYY-MM-DD）
-- `endDate`: 終了日（YYYY-MM-DD）
-- `page`: ページ番号（デフォルト: 0）
-- `size`: 1ページあたりの件数（デフォルト: 20）
-
-**レスポンス** (200 OK):
-認証済みユーザーのイベントのみが返されます。
+**Response** (200 OK):
 ```json
 {
   "content": [
     {
-      "id": 1,
-      "title": "会議",
-      "description": "定例会議",
-      "startDateTime": "2024-12-31T10:00:00",
-      "endDateTime": "2024-12-31T11:00:00",
-      "location": "会議室A",
+      "id": 456,
+      "title": "Team Meeting",
+      "description": "Weekly team synchronization",
+      "startTime": "2025-06-24T10:00:00Z",
+      "endTime": "2025-06-24T11:00:00Z",
+      "location": "Conference Room A",
       "allDay": false,
       "reminderMinutes": 15,
-      "color": "#FF5722",
-      "createdAt": "2024-01-01T09:00:00+09:00",
-      "updatedAt": "2024-01-01T09:00:00+09:00"
+      "createdAt": "2025-06-23T12:34:56.789Z",
+      "updatedAt": "2025-06-23T12:34:56.789Z"
     }
   ],
   "pageable": {
     "pageNumber": 0,
     "pageSize": 20
   },
-  "totalElements": 1,
-  "totalPages": 1
+  "totalElements": 1
 }
 ```
 
-### 22. イベント更新
-```
-PUT /api/v1/events/{id}
-Authorization: Bearer <JWT_TOKEN>
-```
+## Note Endpoints
 
-**パスパラメータ**:
-- `id`: イベント ID (Long)
+### Create Note
+**Endpoint**: `POST /notes`
+**Authentication**: Required
 
-**リクエストボディ**:
+**Request Body**:
 ```json
 {
-  "title": "更新された会議",
-  "description": "更新された定例会議",
-  "startDateTime": "2024-12-31T14:00:00",
-  "endDateTime": "2024-12-31T15:00:00",
-  "location": "会議室B",
-  "allDay": false,
-  "reminderMinutes": 30,
-  "color": "#4CAF50"
+  "title": "Meeting Notes",
+  "content": "# Team Meeting Notes\n\n## Action Items\n- Follow up on project X\n- Review documentation",
+  "tags": ["meeting", "project"],
+  "isPublic": false
 }
 ```
 
-**レスポンス** (200 OK):
+**Response** (201 Created):
 ```json
 {
-  "id": 1,
-  "title": "更新された会議",
-  "description": "更新された定例会議",
-  "startDateTime": "2024-12-31T14:00:00",
-  "endDateTime": "2024-12-31T15:00:00",
-  "location": "会議室B",
-  "allDay": false,
-  "reminderMinutes": 30,
-  "color": "#4CAF50",
-  "createdAt": "2024-01-01T09:00:00+09:00",
-  "updatedAt": "2024-01-01T12:00:00+09:00"
+  "id": 789,
+  "title": "Meeting Notes",
+  "content": "# Team Meeting Notes\n\n## Action Items\n- Follow up on project X\n- Review documentation",
+  "tags": ["meeting", "project"],
+  "isPublic": false,
+  "createdAt": "2025-06-23T12:34:56.789Z",
+  "updatedAt": "2025-06-23T12:34:56.789Z"
 }
 ```
 
-### 23. イベント削除
-```
-DELETE /api/v1/events/{id}
-Authorization: Bearer <JWT_TOKEN>
-```
+### Search Notes
+**Endpoint**: `GET /notes/search`
+**Authentication**: Required
 
-**パスパラメータ**:
-- `id`: イベント ID (Long)
+**Query Parameters**:
+- `q`: Search query
+- `tags` (optional): Comma-separated tag list
+- `page` (optional): Page number
+- `size` (optional): Page size
 
-**レスポンス** (204 No Content):
-レスポンスボディなし
-
-## 🔒 ノートエンドポイント（認証必須）
-
-### 24. ノート作成
-```
-POST /api/v1/notes
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**リクエストボディ**:
-```json
-{
-  "title": "アイデアメモ",
-  "content": "新しいプロジェクトのアイデア...",
-  "tags": ["アイデア", "プロジェクト"]
-}
-```
-
-**レスポンス** (201 Created):
-```json
-{
-  "id": 1,
-  "title": "アイデアメモ",
-  "content": "新しいプロジェクトのアイデア...",
-  "tags": ["アイデア", "プロジェクト"],
-  "createdAt": "2024-01-01T09:00:00+09:00",
-  "updatedAt": "2024-01-01T09:00:00+09:00"
-}
-```
-
-### 25. ノート取得（ID指定）
-```
-GET /api/v1/notes/{id}
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**パスパラメータ**:
-- `id`: ノート ID (Long)
-
-**レスポンス** (200 OK):
-```json
-{
-  "id": 1,
-  "title": "アイデアメモ",
-  "content": "新しいプロジェクトのアイデア...",
-  "tags": ["アイデア", "プロジェクト"],
-  "createdAt": "2024-01-01T09:00:00+09:00",
-  "updatedAt": "2024-01-01T09:00:00+09:00"
-}
-```
-
-### 26. ノート一覧取得
-```
-GET /api/v1/notes
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**クエリパラメータ**:
-- `page`: ページ番号（デフォルト: 0）
-- `size`: 1ページあたりの件数（デフォルト: 20）
-
-**レスポンス** (200 OK):
-認証済みユーザーのノートのみが返されます。
+**Response** (200 OK):
 ```json
 {
   "content": [
     {
-      "id": 1,
-      "title": "アイデアメモ",
-      "content": "新しいプロジェクトのアイデア...",
-      "tags": ["アイデア", "プロジェクト"],
-      "createdAt": "2024-01-01T09:00:00+09:00",
-      "updatedAt": "2024-01-01T09:00:00+09:00"
+      "id": 789,
+      "title": "Meeting Notes",
+      "content": "# Team Meeting Notes\n\n## Action Items\n- Follow up on project X\n- Review documentation",
+      "tags": ["meeting", "project"],
+      "isPublic": false,
+      "createdAt": "2025-06-23T12:34:56.789Z",
+      "updatedAt": "2025-06-23T12:34:56.789Z"
     }
   ],
-  "pageable": {
-    "pageNumber": 0,
-    "pageSize": 20
-  },
-  "totalElements": 1,
-  "totalPages": 1
+  "totalElements": 1
 }
 ```
 
-### 27. ノート検索
-```
-GET /api/v1/notes/search
-Authorization: Bearer <JWT_TOKEN>
-```
+## Analytics Endpoints
 
-**クエリパラメータ**:
-- `query`: 検索キーワード
+### Get Dashboard
+**Endpoint**: `GET /analytics/dashboard`
+**Authentication**: Required
 
-**レスポンス** (200 OK):
-認証済みユーザーのノートのみが返されます。
-```json
-[
-  {
-    "id": 1,
-    "title": "アイデアメモ",
-    "content": "新しいプロジェクトのアイデア...",
-    "tags": ["アイデア", "プロジェクト"],
-    "createdAt": "2024-01-01T09:00:00+09:00",
-    "updatedAt": "2024-01-01T09:00:00+09:00"
-  }
-]
-```
-
-### 28. ノート更新
-```
-PUT /api/v1/notes/{id}
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**パスパラメータ**:
-- `id`: ノート ID (Long)
-
-**リクエストボディ**:
+**Response** (200 OK):
 ```json
 {
-  "title": "更新されたアイデアメモ",
-  "content": "更新されたプロジェクトのアイデア...",
-  "tags": ["アイデア", "プロジェクト", "更新"]
+  "totalTodos": 25,
+  "completedTodos": 18,
+  "completionRate": 72.0,
+  "upcomingEvents": 3,
+  "totalNotes": 12,
+  "productivityScore": 85.5,
+  "weeklyActivity": [
+    {"date": "2025-06-17", "completedTasks": 3},
+    {"date": "2025-06-18", "completedTasks": 5},
+    {"date": "2025-06-19", "completedTasks": 2},
+    {"date": "2025-06-20", "completedTasks": 4},
+    {"date": "2025-06-21", "completedTasks": 3},
+    {"date": "2025-06-22", "completedTasks": 1},
+    {"date": "2025-06-23", "completedTasks": 0}
+  ]
 }
 ```
 
-**レスポンス** (200 OK):
+### Get TODO Activity
+**Endpoint**: `GET /analytics/todos/activity`
+**Authentication**: Required
+
+**Query Parameters**:
+- `period` (optional): DAY, WEEK, MONTH (default: WEEK)
+- `startDate` (optional): Start date (ISO 8601)
+- `endDate` (optional): End date (ISO 8601)
+
+**Response** (200 OK):
 ```json
 {
-  "id": 1,
-  "title": "更新されたアイデアメモ",
-  "content": "更新されたプロジェクトのアイデア...",
-  "tags": ["アイデア", "プロジェクト", "更新"],
-  "createdAt": "2024-01-01T09:00:00+09:00",
-  "updatedAt": "2024-01-01T12:00:00+09:00"
-}
-```
-
-### 29. ノート削除
-```
-DELETE /api/v1/notes/{id}
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**パスパラメータ**:
-- `id`: ノート ID (Long)
-
-**レスポンス** (204 No Content):
-レスポンスボディなし
-
-## 🔒 分析エンドポイント（認証必須）
-
-### 30. 生産性ダッシュボード取得
-```
-GET /api/v1/analytics/dashboard
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**クエリパラメータ**:
-- `period`: 期間（week, month, year）
-- `startDate`: 開始日（YYYY-MM-DD）
-- `endDate`: 終了日（YYYY-MM-DD）
-
-**レスポンス** (200 OK):
-```json
-{
-  "todoStats": {
-    "totalTodos": 50,
-    "completedTodos": 35,
-    "inProgressTodos": 10,
-    "pendingTodos": 5,
-    "completionRate": 0.7,
-    "overdueTodos": 3
-  },
-  "eventStats": {
-    "totalEvents": 20,
-    "upcomingEvents": 5,
-    "pastEvents": 15,
-    "todayEvents": 2
-  },
-  "noteStats": {
-    "totalNotes": 100,
-    "recentlyUpdatedNotes": 10,
-    "topTags": ["アイデア", "プロジェクト", "メモ"]
-  },
-  "productivityStats": {
-    "weeklyProductivityScore": 85.5,
-    "tasksCompletedThisWeek": 12,
-    "eventsAttendedThisWeek": 4,
-    "notesCreatedThisWeek": 6
-  }
-}
-```
-
-### 31. TODOアクティビティ統計
-```
-GET /api/v1/analytics/todos/activity
-Authorization: Bearer <JWT_TOKEN>
-```
-
-**レスポンス** (200 OK):
-```json
-{
-  "dailyCompletions": [
+  "period": "WEEK",
+  "startDate": "2025-06-17",
+  "endDate": "2025-06-23",
+  "totalCreated": 8,
+  "totalCompleted": 18,
+  "dailyActivity": [
     {
-      "date": "2024-01-01",
-      "completed": 5
+      "date": "2025-06-17",
+      "created": 2,
+      "completed": 3,
+      "pending": 5
     },
     {
-      "date": "2024-01-02", 
-      "completed": 3
+      "date": "2025-06-18",
+      "created": 1,
+      "completed": 5,
+      "pending": 3
     }
   ],
-  "dailyCreations": [
-    {
-      "date": "2024-01-01",
-      "created": 8
-    },
-    {
-      "date": "2024-01-02",
-      "created": 4
-    }
-  ],
-  "priorityDistribution": {
-    "HIGH": 8,
+  "priorityBreakdown": {
+    "HIGH": 5,
     "MEDIUM": 12,
-    "LOW": 5
+    "LOW": 8
   },
-  "statusDistribution": {
-    "TODO": 10,
-    "IN_PROGRESS": 8,
-    "DONE": 7
-  },
-  "averageCompletionTimeInDays": 3.5
+  "statusBreakdown": {
+    "TODO": 7,
+    "IN_PROGRESS": 3,
+    "DONE": 15
+  }
 }
 ```
 
-## 今後の機能拡張予定
-1. **統合検索**: 全機能横断の検索機能
-2. **データエクスポート**: CSV、PDF形式でのエクスポート
-3. **定期タスク**: 繰り返しタスクの自動生成
-4. **コラボレーション**: タスクやノートの共有機能
-5. **AI提案**: タスク優先度やスケジュールの最適化提案
-6. **OpenAPI**: Swagger UI での API ドキュメント
+## Data Types
+
+### TODO Priority
+- `LOW`
+- `MEDIUM`
+- `HIGH`
+
+### TODO Status
+- `TODO`
+- `IN_PROGRESS`
+- `DONE`
+
+### Repeat Types
+- `DAILY`
+- `WEEKLY`
+- `MONTHLY`
+- `YEARLY`
+
+### Repeat Configuration
+```json
+{
+  "repeatType": "WEEKLY",
+  "interval": 1,
+  "daysOfWeek": "MON,WED,FRI",
+  "dayOfMonth": null,
+  "endDate": "2025-12-31"
+}
+```
+
+## Error Handling
+
+### Validation Errors (400 Bad Request)
+```json
+{
+  "timestamp": "2025-06-23T12:34:56.789Z",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Validation failed",
+  "path": "/api/v1/todos",
+  "validationErrors": [
+    {
+      "field": "title",
+      "message": "Title is required and cannot be empty"
+    },
+    {
+      "field": "priority",
+      "message": "Priority must be one of: LOW, MEDIUM, HIGH"
+    }
+  ]
+}
+```
+
+### Authentication Errors (401 Unauthorized)
+```json
+{
+  "timestamp": "2025-06-23T12:34:56.789Z",
+  "status": 401,
+  "error": "Unauthorized",
+  "message": "JWT token is expired or invalid",
+  "path": "/api/v1/todos"
+}
+```
+
+### Access Denied Errors (403 Forbidden)
+```json
+{
+  "timestamp": "2025-06-23T12:34:56.789Z",
+  "status": 403,
+  "error": "Forbidden",
+  "message": "Access denied to TODO with id: 123",
+  "path": "/api/v1/todos/123"
+}
+```
+
+### Resource Not Found (404 Not Found)
+```json
+{
+  "timestamp": "2025-06-23T12:34:56.789Z",
+  "status": 404,
+  "error": "Not Found",
+  "message": "TODO not found with id: 999",
+  "path": "/api/v1/todos/999"
+}
+```
+
+## Rate Limiting
+
+### Limits
+- **Authentication endpoints**: 1000 requests per minute per IP
+- **General endpoints**: 1000 requests per minute per IP
+
+### Rate Limit Headers
+When rate limits are exceeded, the following headers are included:
+```
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1640995200
+```
+
+### Rate Limit Error (429 Too Many Requests)
+```json
+{
+  "timestamp": "2025-06-23T12:34:56.789Z",
+  "status": 429,
+  "error": "Too Many Requests",
+  "message": "Rate limit exceeded. Please try again later.",
+  "path": "/api/v1/auth/login"
+}
+```
+
+## CORS Support
+
+The API supports Cross-Origin Resource Sharing (CORS) for the following origins:
+- `http://localhost:3000` (React default)
+- `http://localhost:3001` (Alternative React port)
+- `http://localhost:5173` (Vite default)
+- `http://localhost:4173` (Vite preview)
+- `http://127.0.0.1:3000`, `http://127.0.0.1:3001`, `http://127.0.0.1:5173`
+
+### Allowed Methods
+- GET, POST, PUT, DELETE, OPTIONS, PATCH
+
+### Allowed Headers
+- Authorization, Content-Type, Accept, X-XSRF-TOKEN, X-Requested-With
+
+This API specification provides comprehensive coverage of all available endpoints and their usage patterns for the Personal Hub application.

@@ -1,356 +1,251 @@
-# データベース設計書
+# Database Design Document
 
-## 概要
-PostgreSQL 16を使用したPersonal Hub統合アプリケーションのデータベース設計
-TODO管理、カレンダー、ノート機能を統合的に管理
+## Overview
+Database design for Personal Hub integrated application using PostgreSQL 16
+Comprehensive management of TODO, calendar, and note features
 
-## ERダイアグラム
+## ER Diagram
 ```
 ┌─────────────────────────────────────────────┐
 │                   users                     │
 ├─────────────────────────────────────────────┤
-│ id (BIGSERIAL) PK                          │
+│ id (UUID) PK                               │
 │ username (VARCHAR(50)) NOT NULL UNIQUE     │
 │ email (VARCHAR(255)) NOT NULL UNIQUE       │
-│ password (VARCHAR(255)) NOT NULL           │
+│ password (VARCHAR(255)) NULLABLE           │
 │ enabled (BOOLEAN) NOT NULL DEFAULT TRUE    │
+│ email_verified (BOOLEAN) DEFAULT FALSE     │
+│ given_name (VARCHAR(100))                  │
+│ family_name (VARCHAR(100))                 │
+│ locale (VARCHAR(10))                       │
+│ profile_picture_url (TEXT)                 │
 │ created_at (TIMESTAMP) NOT NULL            │
 │ updated_at (TIMESTAMP) NOT NULL            │
 └─────────────────────────────────────────────┘
          │              │              │
-         │ 1:N          │ 1:N          │ 1:N
-         ▼              ▼              ▼
-┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-│    todos    │ │   events    │ │    notes    │
-├─────────────┤ ├─────────────┤ ├─────────────┤
-│ id          │ │ id          │ │ id          │
-│ user_id FK  │ │ user_id FK  │ │ user_id FK  │
-│ parent_id FK│ │ title       │ │ title       │
-│ title       │ │ description │ │ content     │
-│ description │ │ start_date  │ │ created_at  │
-│ status      │ │ end_date    │ │ updated_at  │
-│ priority    │ │ location    │ └─────────────┘
-│ due_date    │ │ is_all_day  │        │
-│ created_at  │ │ reminder    │        │ 1:N
-│ updated_at  │ │ created_at  │        ▼
-└─────────────┘ │ updated_at  │ ┌─────────────┐
-       │ 1:N    └─────────────┘ │ note_tags   │
-       ▼                        ├─────────────┤
- (self-reference)               │ note_id FK  │
-                               │ tag_name    │
-                               └─────────────┘
+         │              │              │
+┌────────┴────────┐ ┌───┴─────────┐ ┌──┴───────────┐
+│      todos      │ │ calendar_   │ │    notes     │
+│                 │ │   events    │ │              │
+├─────────────────┤ ├─────────────┤ ├──────────────┤
+│ id (BIGSERIAL)  │ │ id (BIGINT) │ │ id (BIGINT)  │
+│ user_id (UUID)  │ │ user_id     │ │ user_id      │
+│ title           │ │ title       │ │ title        │
+│ description     │ │ description │ │ content      │
+│ status          │ │ start_time  │ │ tags         │
+│ priority        │ │ end_time    │ │ created_at   │
+│ due_date        │ │ location    │ │ updated_at   │
+│ parent_id       │ │ created_at  │ │              │
+│ created_at      │ │ updated_at  │ │              │
+│ updated_at      │ │             │ │              │
+└─────────────────┘ └─────────────┘ └──────────────┘
 ```
 
-## テーブル定義
+## Table Specifications
 
-### users テーブル
-| カラム名 | データ型 | 制約 | 説明 |
-|---------|----------|------|------|
-| id | BIGSERIAL | PRIMARY KEY | 自動採番ID |
-| username | VARCHAR(50) | NOT NULL, UNIQUE | ユーザー名 |
-| email | VARCHAR(255) | NOT NULL, UNIQUE | メールアドレス |
-| password | VARCHAR(255) | NOT NULL | ハッシュ化パスワード |
-| enabled | BOOLEAN | NOT NULL, DEFAULT TRUE | アカウント有効状態 |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
-| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
+### users Table
+**Purpose**: User account management and profile information
 
-### todos テーブル
-| カラム名 | データ型 | 制約 | 説明 |
-|---------|----------|------|------|
-| id | BIGSERIAL | PRIMARY KEY | 自動採番ID |
-| user_id | BIGINT | NOT NULL, FK → users.id | 所有者ユーザーID |
-| parent_id | BIGINT | NULL, FK → todos.id | 親タスクID |
-| title | VARCHAR(255) | NOT NULL | TODOタイトル |
-| description | TEXT | NULL | 詳細説明 |
-| status | VARCHAR(20) | NOT NULL, DEFAULT 'TODO' | ステータス |
-| priority | VARCHAR(10) | NOT NULL, DEFAULT 'MEDIUM' | 優先度 |
-| due_date | DATE | NULL | 期限日 |
-| is_repeatable | BOOLEAN | DEFAULT FALSE | 繰り返し可能フラグ |
-| repeat_type | VARCHAR(50) | NULL | 繰り返しタイプ |
-| repeat_interval | INTEGER | DEFAULT 1 | 繰り返し間隔 |
-| repeat_days_of_week | VARCHAR(20) | NULL | 繰り返し曜日（カンマ区切り） |
-| repeat_day_of_month | INTEGER | NULL | 月次繰り返し日 |
-| repeat_end_date | DATE | NULL | 繰り返し終了日 |
-| original_todo_id | BIGINT | NULL, FK → todos.id | 元繰り返しTODO ID |
-| created_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | 作成日時 |
-| updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | 更新日時 |
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | UUID | PRIMARY KEY | Unique user identifier |
+| username | VARCHAR(50) | NOT NULL, UNIQUE | User display name |
+| email | VARCHAR(255) | NOT NULL, UNIQUE | Email address (login ID) |
+| password | VARCHAR(255) | NULLABLE | BCrypt hashed password (NULL for OAuth users) |
+| enabled | BOOLEAN | NOT NULL, DEFAULT TRUE | Account activation status |
+| email_verified | BOOLEAN | DEFAULT FALSE | Email verification status |
+| given_name | VARCHAR(100) | NULLABLE | First name (from OAuth) |
+| family_name | VARCHAR(100) | NULLABLE | Last name (from OAuth) |
+| locale | VARCHAR(10) | NULLABLE | User's locale preference |
+| profile_picture_url | TEXT | NULLABLE | Profile image URL |
+| created_at | TIMESTAMP | NOT NULL | Account creation timestamp |
+| updated_at | TIMESTAMP | NOT NULL | Last update timestamp |
 
-### events テーブル
-| カラム名 | データ型 | 制約 | 説明 |
-|---------|----------|------|------|
-| id | BIGSERIAL | PRIMARY KEY | 自動採番ID |
-| user_id | BIGINT | NOT NULL, FK → users.id | 所有者ユーザーID |
-| title | VARCHAR(255) | NOT NULL | イベントタイトル |
-| description | TEXT | NULL | 詳細説明 |
-| start_date | TIMESTAMPTZ | NOT NULL | 開始日時 |
-| end_date | TIMESTAMPTZ | NOT NULL | 終了日時 |
-| location | VARCHAR(255) | NULL | 場所 |
-| is_all_day | BOOLEAN | NOT NULL, DEFAULT FALSE | 終日フラグ |
-| reminder | INTEGER | NULL | リマインダー（分） |
-| google_calendar_id | VARCHAR(255) | NULL | Google Calendar ID |
-| google_event_id | VARCHAR(255) | NULL | Google Event ID |
-| last_synced_at | TIMESTAMPTZ | NULL | 最終同期日時 |
-| sync_status | VARCHAR(50) | DEFAULT 'NONE' | 同期ステータス |
-| created_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | 作成日時 |
-| updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | 更新日時 |
+**Indexes**:
+- Primary: `users_pkey` on `id`
+- Unique: `users_username_key` on `username`
+- Unique: `users_email_key` on `email`
 
-### notes テーブル
-| カラム名 | データ型 | 制約 | 説明 |
-|---------|----------|------|------|
-| id | BIGSERIAL | PRIMARY KEY | 自動採番ID |
-| user_id | BIGINT | NOT NULL, FK → users.id | 所有者ユーザーID |
-| title | VARCHAR(255) | NOT NULL | ノートタイトル |
-| content | TEXT | NOT NULL | ノート内容 |
-| created_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | 作成日時 |
-| updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | 更新日時 |
+**Special Considerations**:
+- Password is nullable for OAuth/social login users
+- UUID used for better security and distribution
+- Support for OAuth user profile information
 
-### calendar_sync_settings テーブル
-| カラム名 | データ型 | 制約 | 説明 |
-|---------|----------|------|------|
-| id | BIGSERIAL | PRIMARY KEY | 自動採番ID |
-| user_id | BIGINT | NOT NULL, FK → users.id | 所有者ユーザーID |
-| google_calendar_id | VARCHAR(255) | NOT NULL | Google Calendar ID |
-| calendar_name | VARCHAR(255) | NULL | カレンダー名 |
-| sync_enabled | BOOLEAN | DEFAULT TRUE | 同期有効フラグ |
-| last_sync_at | TIMESTAMPTZ | NULL | 最終同期日時 |
-| sync_direction | VARCHAR(20) | DEFAULT 'BIDIRECTIONAL' | 同期方向 |
-| created_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | 作成日時 |
-| updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | 更新日時 |
+### todos Table
+**Purpose**: TODO task management with hierarchical structure
 
-### note_tags テーブル
-| カラム名 | データ型 | 制約 | 説明 |
-|---------|----------|------|------|
-| note_id | BIGINT | NOT NULL, FK → notes.id | ノートID |
-| tag_name | VARCHAR(50) | NOT NULL | タグ名 |
-| PRIMARY KEY | (note_id, tag_name) | 複合主キー | - |
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | BIGSERIAL | PRIMARY KEY | Auto-incrementing task ID |
+| user_id | UUID | NOT NULL, FK → users(id) | Task owner |
+| title | VARCHAR(255) | NOT NULL | Task title |
+| description | TEXT | NULLABLE | Detailed task description |
+| status | todo_status | NOT NULL, DEFAULT 'TODO' | Task status (TODO/IN_PROGRESS/DONE) |
+| priority | todo_priority | NOT NULL, DEFAULT 'MEDIUM' | Task priority (LOW/MEDIUM/HIGH) |
+| due_date | DATE | NULLABLE | Task deadline |
+| parent_id | BIGINT | NULLABLE, FK → todos(id) | Parent task for subtasks |
+| is_repeatable | BOOLEAN | DEFAULT FALSE | Whether task repeats |
+| repeat_type | repeat_type | NULLABLE | Repeat pattern type |
+| repeat_interval | INTEGER | NULLABLE | Repeat interval |
+| repeat_days_of_week | VARCHAR(20) | NULLABLE | Days of week for weekly repeat |
+| repeat_day_of_month | INTEGER | NULLABLE | Day of month for monthly repeat |
+| repeat_end_date | DATE | NULLABLE | When repetition ends |
+| original_todo_id | BIGINT | NULLABLE, FK → todos(id) | Original task for repeated instances |
+| created_at | TIMESTAMP | NOT NULL | Creation timestamp |
+| updated_at | TIMESTAMP | NOT NULL | Last update timestamp |
 
-## 制約
+**Indexes**:
+- Primary: `todos_pkey` on `id`
+- Index: `idx_todos_user_id` on `user_id`
+- Index: `idx_todos_status` on `status`
+- Index: `idx_todos_due_date` on `due_date`
+- Index: `idx_todos_parent_id` on `parent_id`
 
-### 外部キー制約
+**Foreign Keys**:
+- `fk_todos_user_id`: `user_id` → `users(id)` ON DELETE CASCADE
+- `fk_todos_parent_id`: `parent_id` → `todos(id)` ON DELETE SET NULL
+- `fk_todos_original_todo_id`: `original_todo_id` → `todos(id)` ON DELETE SET NULL
+
+### calendar_events Table
+**Purpose**: Calendar event management
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | BIGSERIAL | PRIMARY KEY | Auto-incrementing event ID |
+| user_id | UUID | NOT NULL, FK → users(id) | Event owner |
+| title | VARCHAR(255) | NOT NULL | Event title |
+| description | TEXT | NULLABLE | Event description |
+| start_time | TIMESTAMP | NOT NULL | Event start time |
+| end_time | TIMESTAMP | NOT NULL | Event end time |
+| location | VARCHAR(255) | NULLABLE | Event location |
+| all_day | BOOLEAN | DEFAULT FALSE | All-day event flag |
+| reminder_minutes | INTEGER | NULLABLE | Reminder time in minutes before event |
+| created_at | TIMESTAMP | NOT NULL | Creation timestamp |
+| updated_at | TIMESTAMP | NOT NULL | Last update timestamp |
+
+**Indexes**:
+- Primary: `calendar_events_pkey` on `id`
+- Index: `idx_calendar_events_user_id` on `user_id`
+- Index: `idx_calendar_events_start_time` on `start_time`
+
+**Constraints**:
+- Check: `start_time < end_time`
+- Check: `reminder_minutes >= 0`
+
+### notes Table
+**Purpose**: Note and documentation management
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | BIGSERIAL | PRIMARY KEY | Auto-incrementing note ID |
+| user_id | UUID | NOT NULL, FK → users(id) | Note owner |
+| title | VARCHAR(255) | NOT NULL | Note title |
+| content | TEXT | NOT NULL | Note content (Markdown supported) |
+| tags | TEXT[] | NULLABLE | Array of tags for categorization |
+| is_public | BOOLEAN | DEFAULT FALSE | Public visibility flag |
+| created_at | TIMESTAMP | NOT NULL | Creation timestamp |
+| updated_at | TIMESTAMP | NOT NULL | Last update timestamp |
+
+**Indexes**:
+- Primary: `notes_pkey` on `id`
+- Index: `idx_notes_user_id` on `user_id`
+- Index: `idx_notes_tags` on `tags` (GIN index for array search)
+- Index: `idx_notes_title` on `title` (for text search)
+
+## Custom Types (Enums)
+
+### todo_status
 ```sql
--- TODO → ユーザー関連付け
-ALTER TABLE todos ADD CONSTRAINT fk_todos_user_id 
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-
--- TODO → 親TODO関連付け
-ALTER TABLE todos ADD CONSTRAINT fk_todos_parent_id 
-    FOREIGN KEY (parent_id) REFERENCES todos(id) ON DELETE CASCADE;
-
--- TODO → 元繰り返しTODO関連付け
-ALTER TABLE todos ADD CONSTRAINT fk_todos_original_todo_id 
-    FOREIGN KEY (original_todo_id) REFERENCES todos(id) ON DELETE CASCADE;
-
--- イベント → ユーザー関連付け
-ALTER TABLE events ADD CONSTRAINT fk_events_user_id 
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-
--- ノート → ユーザー関連付け
-ALTER TABLE notes ADD CONSTRAINT fk_notes_user_id 
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-
--- ノートタグ → ノート関連付け
-ALTER TABLE note_tags ADD CONSTRAINT fk_note_tags_note_id 
-    FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE;
+CREATE TYPE todo_status AS ENUM ('TODO', 'IN_PROGRESS', 'DONE');
 ```
 
-### CHECK制約
+### todo_priority
 ```sql
--- ステータス制約
-ALTER TABLE todos ADD CONSTRAINT chk_status
-    CHECK (status IN ('TODO', 'IN_PROGRESS', 'DONE'));
-
--- 優先度制約  
-ALTER TABLE todos ADD CONSTRAINT chk_priority
-    CHECK (priority IN ('HIGH', 'MEDIUM', 'LOW'));
-
--- 繰り返しタイプ制約
-ALTER TABLE todos ADD CONSTRAINT chk_repeat_type
-    CHECK (repeat_type IN ('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY', 'ONCE'));
-
--- 繰り返し間隔制約
-ALTER TABLE todos ADD CONSTRAINT chk_repeat_interval
-    CHECK (repeat_interval >= 1);
-
--- 月次繰り返し日制約
-ALTER TABLE todos ADD CONSTRAINT chk_repeat_day_of_month
-    CHECK (repeat_day_of_month >= 1 AND repeat_day_of_month <= 31);
+CREATE TYPE todo_priority AS ENUM ('LOW', 'MEDIUM', 'HIGH');
 ```
 
-### インデックス
+### repeat_type
 ```sql
--- users テーブル
-CREATE INDEX idx_users_username ON users(username);
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_enabled ON users(enabled);
-
--- todos テーブル
-CREATE INDEX idx_todos_user_id ON todos(user_id);
-CREATE INDEX idx_todos_parent_id ON todos(parent_id);
-CREATE INDEX idx_todos_user_status ON todos(user_id, status);
-CREATE INDEX idx_todos_status ON todos(status);
-CREATE INDEX idx_todos_due_date ON todos(due_date);
-CREATE INDEX idx_todos_is_repeatable ON todos(is_repeatable);
-CREATE INDEX idx_todos_user_repeatable ON todos(user_id, is_repeatable);
-CREATE INDEX idx_todos_original_todo_id ON todos(original_todo_id);
-CREATE INDEX idx_todos_original_due_date ON todos(original_todo_id, due_date);
-
--- events テーブル
-CREATE INDEX idx_events_user_id ON events(user_id);
-CREATE INDEX idx_events_start_date ON events(start_date);
-CREATE INDEX idx_events_end_date ON events(end_date);
-CREATE INDEX idx_events_user_date_range ON events(user_id, start_date, end_date);
-
--- notes テーブル
-CREATE INDEX idx_notes_user_id ON notes(user_id);
-CREATE INDEX idx_notes_updated_at ON notes(updated_at);
-CREATE INDEX idx_notes_user_updated ON notes(user_id, updated_at DESC);
-
--- note_tags テーブル
-CREATE INDEX idx_note_tags_tag_name ON note_tags(tag_name);
+CREATE TYPE repeat_type AS ENUM ('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY');
 ```
 
-## トリガー
+## Security Design
 
-### 更新日時自動更新
-```sql
--- 更新日時を自動更新する関数
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
+### Data Isolation
+- All tables include `user_id` foreign key for row-level security
+- Application-level enforcement ensures users can only access their own data
+- UUID for user IDs prevents enumeration attacks
 
--- トリガーの作成
-CREATE TRIGGER update_todos_updated_at BEFORE UPDATE
-    ON todos FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+### Password Security
+- BCrypt hashing for password storage
+- Nullable password column supports OAuth users without passwords
+- Password field never exposed in API responses
 
-CREATE TRIGGER update_events_updated_at BEFORE UPDATE
-    ON events FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+### Access Control
+- Foreign key constraints ensure data integrity
+- Cascade deletion for user data cleanup
+- Proper indexing for efficient user-based queries
 
-CREATE TRIGGER update_notes_updated_at BEFORE UPDATE
-    ON notes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+## Migration Strategy
 
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE
-    ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-```
+### Flyway Integration
+- Version-controlled schema migrations in `src/main/resources/db/migration/`
+- Naming convention: `V{version}__{description}.sql`
+- Automatic migration execution on application startup
 
-## マイグレーション
+### Key Migrations
+- `V1__Initial_schema.sql`: Initial table creation
+- `V18__make_password_nullable_for_oauth_users.sql`: OAuth support
+- Additional migrations for repeatable todos and calendar features
 
-### Flyway設定
-- **ファイル配置**: `src/main/resources/db/migration/`
-- **命名規則**: `V{version}__{description}.sql`
-- **マイグレーション履歴**:
-  - `V1__create_todo_table.sql`: TODOテーブル作成
-  - `V2__create_user_table.sql`: ユーザーテーブル作成
-  - `V3__add_user_id_to_todos.sql`: TODO-ユーザー関連付け
-  - `V4__update_user_table_to_username.sql`: ユーザー名カラム追加
-  - `V5__add_parent_id_to_todos.sql`: 親子TODO関係
-  - `V6__create_event_table.sql`: イベントテーブル作成
-  - `V7__create_note_table.sql`: ノートテーブル作成
-  - `V8__add_repeat_fields_to_todos.sql`: TODOに繰り返し機能追加
-  - `V9__add_google_calendar_sync_fields.sql`: Google Calendar同期フィールド追加
+## Performance Considerations
 
-### 設定
-```yaml
-spring:
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
-    baseline-version: 0
-```
+### Indexing Strategy
+- Primary keys for all tables
+- Foreign key indexes for join performance
+- Composite indexes for common query patterns
+- GIN indexes for array and full-text search
 
-## セットアップ手順
+### Query Optimization
+- Pagination support for large datasets
+- Efficient user-based filtering
+- Proper use of LIMIT and OFFSET
+- Connection pooling with HikariCP
 
-### 1. データベース作成
-```bash
-sudo -u postgres psql -c "CREATE DATABASE personalhub;"
-sudo -u postgres psql -c "CREATE USER personalhub WITH ENCRYPTED PASSWORD 'personalhub';"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE personalhub TO personalhub;"
-sudo -u postgres psql -c "ALTER DATABASE personalhub OWNER TO personalhub;"
-```
+### Scalability
+- UUID primary keys for distributed systems
+- Proper normalization to 3NF
+- Efficient date-based queries with proper indexing
+- Support for read replicas through JPA configuration
 
-### 2. 接続設定
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/personalhub
-    username: personalhub
-    password: personalhub
-    driver-class-name: org.postgresql.Driver
-```
+## Data Integrity
 
-## パフォーマンス考慮事項
+### Referential Integrity
+- Foreign key constraints with appropriate cascade rules
+- Check constraints for business rules
+- NOT NULL constraints for required fields
 
-### 接続プール（HikariCP）
-```yaml
-spring:
-  datasource:
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
-```
+### Business Rules
+- Start time must be before end time for events
+- Reminder minutes must be non-negative
+- Todo status transitions follow business logic
+- Parent-child relationships prevent circular dependencies
 
-### クエリ最適化
-1. **ユーザー別TODO検索**: `idx_todos_user_id` インデックス使用
-2. **ユーザー・ステータス組み合わせ**: `idx_todos_user_status` 複合インデックス使用
-3. **メール検索**: `idx_users_email` インデックス使用
-4. **期限日検索**: `idx_todos_due_date` インデックス使用
-5. **イベント日付範囲検索**: `idx_events_user_date_range` 複合インデックス使用
-6. **ノート更新順検索**: `idx_notes_user_updated` 複合インデックス使用
-7. **タグ検索**: `idx_note_tags_tag_name` インデックス使用
+### Audit Trail
+- `created_at` and `updated_at` timestamps on all entities
+- Automatic timestamp updates via JPA annotations
+- Soft deletes possible through status fields where needed
 
-### セキュリティ考慮事項
-1. **パスワードハッシュ化**: BCrypt使用（コスト12）
-2. **カスケード削除**: ユーザー削除時の関連データ自動削除
-3. **データ分離**: ユーザー別のデータアクセス制御（TODO、イベント、ノート）
-4. **SQLインジェクション対策**: プリペアドステートメント使用
+## Development and Testing
 
-## 現在の実装状況
+### Test Database
+- H2 in-memory database for unit tests
+- Separate Flyway migrations for test environment
+- Test data fixtures for consistent testing
 
-### 実装済み機能
-1. ✅ **users**: ユーザー管理（認証用）
-2. ✅ **todos**: TODO管理（親子関係、繰り返し機能、所有者制御付き）
-3. ✅ **events**: カレンダーイベント管理
-4. ✅ **notes**: ノート管理
-5. ✅ **外部キー制約**: データ整合性保証
-6. ✅ **インデックス**: パフォーマンス最適化
+### Local Development
+- PostgreSQL Docker containers for development
+- Database seeding scripts for sample data
+- Environment-specific configuration
 
-### 新規追加機能（v8）
-1. ✅ **繰り返しTODO**: 日次・週次・月次・年次の自動繰り返し
-2. ✅ **インスタンス管理**: 元TODOから生成されるインスタンスの追跡
-3. ✅ **繰り返し設定**: 間隔・曜日・終了日の詳細設定
-4. ✅ **自動生成**: 完了時の次回インスタンス自動作成
-
-### 繰り返し機能の技術仕様
-- **RepeatType**: DAILY, WEEKLY, MONTHLY, YEARLY, ONCE
-- **interval**: 繰り返し間隔（例：2週間おき）
-- **daysOfWeek**: 週次の曜日指定（1=月曜...7=日曜）
-- **dayOfMonth**: 月次の日付指定（1-31）
-- **originalTodoId**: 生成されたインスタンスと元TODOの関連
-
-### 将来の拡張予定
-1. **attachments**: ファイル添付（ノート、TODO）
-2. **notifications**: 通知管理（リマインダー、期限通知）
-3. **user_preferences**: ユーザー設定（タイムゾーン、言語等）
-4. **activity_logs**: アクティビティログ（監査ログ）
-5. **collaboration**: タスク・ノート共有機能
-
-### 拡張時の設計方針
-- **外部キー制約**: 参照整合性保証
-- **論理削除**: deleted_at カラム追加
-- **監査ログ**: created_by, updated_by カラム追加
-
-## バックアップ・復旧
-```bash
-# バックアップ
-pg_dump -h localhost -U personalhub -d personalhub > backup.sql
-
-# 復旧
-psql -h localhost -U personalhub -d personalhub < backup.sql
-```
+This database design supports the Personal Hub application's requirements while maintaining good performance, security, and scalability characteristics.

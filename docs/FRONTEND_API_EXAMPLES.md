@@ -1,32 +1,32 @@
-# フロントエンドAPI実装例
+# Frontend API Implementation Examples
 
-## 1. 認証API実装例（TypeScript + Axios）
+## 1. Authentication API Implementation (TypeScript + Axios)
 
-### 基本設定
+### Basic Setup
 ```typescript
 import axios, { AxiosInstance } from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api/v1';
 
-// Axiosインスタンスの作成
+// Create Axios instance
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // CSRF cookieのため必要
+  withCredentials: true, // Required for CSRF cookies
 });
 
-// リクエストインターセプター
+// Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    // JWTトークンの付与
+    // Add JWT token
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    // CSRFトークンの付与
+    // Add CSRF token
     const csrfToken = getCookie('XSRF-TOKEN');
     if (csrfToken) {
       config.headers['X-XSRF-TOKEN'] = csrfToken;
@@ -37,13 +37,13 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// レスポンスインターセプター
+// Response interceptor
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
     
-    // 401エラー処理
+    // Handle 401 errors
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
@@ -59,14 +59,14 @@ apiClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
-        // リフレッシュ失敗時はログイン画面へ
+        // Redirect to login on refresh failure
         localStorage.clear();
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }
     
-    // 429エラー処理（Rate Limit）
+    // Handle 429 errors (Rate Limit)
     if (error.response?.status === 429) {
       const retryAfter = error.response.headers['x-rate-limit-retry-after-seconds'];
       console.error(`Rate limit exceeded. Retry after ${retryAfter} seconds`);
@@ -77,15 +77,15 @@ apiClient.interceptors.response.use(
 );
 ```
 
-### 認証サービス実装
+### Authentication Service Implementation
 ```typescript
 export class AuthService {
-  // ログイン
+  // Login
   static async login(email: string, password: string): Promise<AuthResponse> {
     const response = await apiClient.post('/auth/login', { email, password });
     const data = response.data;
     
-    // トークンを保存
+    // Store tokens
     localStorage.setItem('accessToken', data.accessToken);
     if (data.refreshToken) {
       localStorage.setItem('refreshToken', data.refreshToken);
@@ -94,7 +94,7 @@ export class AuthService {
     return data;
   }
   
-  // 新規登録
+  // Registration
   static async register(email: string, password: string, username: string): Promise<AuthResponse> {
     const response = await apiClient.post('/auth/register', { 
       email, 
@@ -111,13 +111,13 @@ export class AuthService {
     return data;
   }
   
-  // ソーシャル認証開始
+  // Initiate social authentication
   static async initiateOAuth(provider: 'google' | 'github'): Promise<OAuthInitResponse> {
     const response = await apiClient.get(`/auth/oidc/${provider}/authorize`);
     return response.data;
   }
   
-  // OAuthコールバック処理
+  // Handle OAuth callback
   static async handleOAuthCallback(
     provider: string, 
     code: string, 
@@ -137,7 +137,7 @@ export class AuthService {
     return data;
   }
   
-  // ログアウト
+  // Logout
   static async logout(): Promise<void> {
     try {
       await apiClient.post('/auth/logout');
@@ -150,9 +150,9 @@ export class AuthService {
 }
 ```
 
-## 2. React コンポーネント実装例
+## 2. React Component Implementation Examples
 
-### ログインコンポーネント
+### Login Component
 ```tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -175,11 +175,11 @@ export const LoginPage: React.FC = () => {
       navigate('/dashboard');
     } catch (err: any) {
       if (err.response?.status === 401) {
-        setError('メールアドレスまたはパスワードが正しくありません');
+        setError('Invalid email address or password');
       } else if (err.response?.status === 429) {
-        setError('ログイン試行回数が多すぎます。しばらくしてから再試行してください');
+        setError('Too many login attempts. Please try again later');
       } else {
-        setError('ログインに失敗しました');
+        setError('Login failed');
       }
     } finally {
       setLoading(false);
@@ -190,20 +190,20 @@ export const LoginPage: React.FC = () => {
     try {
       const { authorizationUrl, state } = await AuthService.initiateOAuth(provider);
       
-      // stateをセッションストレージに保存
+      // Store state in session storage
       sessionStorage.setItem('oauth_state', state);
       sessionStorage.setItem('oauth_provider', provider);
       
-      // 認証プロバイダーへリダイレクト
+      // Redirect to authentication provider
       window.location.href = authorizationUrl;
     } catch (err) {
-      setError(`${provider}ログインの開始に失敗しました`);
+      setError(`Failed to initiate ${provider} login`);
     }
   };
   
   return (
     <div className="login-container">
-      <h1>ログイン</h1>
+      <h1>Login</h1>
       
       {error && (
         <div className="alert alert-error">{error}</div>
@@ -212,7 +212,7 @@ export const LoginPage: React.FC = () => {
       <form onSubmit={handleSubmit}>
         <input
           type="email"
-          placeholder="メールアドレス"
+          placeholder="Email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -220,14 +220,14 @@ export const LoginPage: React.FC = () => {
         
         <input
           type="password"
-          placeholder="パスワード"
+          placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
         
         <button type="submit" disabled={loading}>
-          {loading ? 'ログイン中...' : 'ログイン'}
+          {loading ? 'Logging in...' : 'Login'}
         </button>
       </form>
       
@@ -237,7 +237,7 @@ export const LoginPage: React.FC = () => {
           className="google-login-btn"
         >
           <img src="/google-icon.svg" alt="Google" />
-          Googleでログイン
+          Login with Google
         </button>
         
         <button 
@@ -245,20 +245,20 @@ export const LoginPage: React.FC = () => {
           className="github-login-btn"
         >
           <img src="/github-icon.svg" alt="GitHub" />
-          GitHubでログイン
+          Login with GitHub
         </button>
       </div>
       
       <p>
-        アカウントをお持ちでない方は
-        <a href="/register">新規登録</a>
+        Don't have an account?{' '}
+        <a href="/register">Sign up</a>
       </p>
     </div>
   );
 };
 ```
 
-### OAuthコールバックコンポーネント
+### OAuth Callback Component
 ```tsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -276,34 +276,34 @@ export const OAuthCallback: React.FC = () => {
       const error = searchParams.get('error');
       
       if (error) {
-        setError('認証がキャンセルされました');
+        setError('Authentication was cancelled');
         return;
       }
       
       if (!code || !state) {
-        setError('認証パラメーターが不足しています');
+        setError('Missing authentication parameters');
         return;
       }
       
-      // セッションストレージからstateを検証
+      // Verify state from session storage
       const savedState = sessionStorage.getItem('oauth_state');
       const provider = sessionStorage.getItem('oauth_provider');
       
       if (state !== savedState) {
-        setError('セキュリティエラー: 不正なstate');
+        setError('Security error: Invalid state');
         return;
       }
       
       try {
         await AuthService.handleOAuthCallback(provider!, code, state);
         
-        // クリーンアップ
+        // Cleanup
         sessionStorage.removeItem('oauth_state');
         sessionStorage.removeItem('oauth_provider');
         
         navigate('/dashboard');
       } catch (err) {
-        setError('認証処理に失敗しました');
+        setError('Authentication processing failed');
       }
     };
     
@@ -314,13 +314,13 @@ export const OAuthCallback: React.FC = () => {
     <div className="oauth-callback">
       {error ? (
         <div>
-          <h2>認証エラー</h2>
+          <h2>Authentication Error</h2>
           <p>{error}</p>
-          <a href="/login">ログイン画面に戻る</a>
+          <a href="/login">Return to login</a>
         </div>
       ) : (
         <div>
-          <h2>認証処理中...</h2>
+          <h2>Processing authentication...</h2>
           <div className="spinner"></div>
         </div>
       )}
@@ -329,7 +329,7 @@ export const OAuthCallback: React.FC = () => {
 };
 ```
 
-### 認証Context（状態管理）
+### Authentication Context (State Management)
 ```tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthService } from '../services/AuthService';
@@ -357,7 +357,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     try {
-      // UserInfo エンドポイントでユーザー情報取得
+      // Get user info from UserInfo endpoint
       const response = await apiClient.get('/oauth2/userinfo');
       setUser(response.data);
     } catch (err) {
@@ -405,7 +405,7 @@ export const useAuth = () => {
 };
 ```
 
-### Protected Route実装
+### Protected Route Implementation
 ```tsx
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
@@ -422,7 +422,7 @@ export const ProtectedRoute: React.FC = () => {
 };
 ```
 
-## 3. ルーティング設定例
+## 3. Routing Configuration Example
 
 ```tsx
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -438,12 +438,12 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* 公開ルート */}
+          {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/auth/callback" element={<OAuthCallback />} />
           
-          {/* 保護されたルート */}
+          {/* Protected routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/todos" element={<TodoList />} />
@@ -451,7 +451,7 @@ function App() {
             <Route path="/calendar" element={<Calendar />} />
           </Route>
           
-          {/* デフォルトリダイレクト */}
+          {/* Default redirect */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </AuthProvider>
@@ -460,10 +460,10 @@ function App() {
 }
 ```
 
-## 4. ユーティリティ関数
+## 4. Utility Functions
 
 ```typescript
-// Cookie取得
+// Get cookie
 function getCookie(name: string): string | null {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -473,7 +473,7 @@ function getCookie(name: string): string | null {
   return null;
 }
 
-// JWTデコード
+// Decode JWT
 function decodeJWT(token: string): any {
   try {
     const base64Url = token.split('.')[1];
@@ -490,7 +490,7 @@ function decodeJWT(token: string): any {
   }
 }
 
-// トークン有効期限チェック
+// Check token expiration
 function isTokenExpired(token: string): boolean {
   const decoded = decodeJWT(token);
   if (!decoded || !decoded.exp) return true;
@@ -500,7 +500,7 @@ function isTokenExpired(token: string): boolean {
 }
 ```
 
-## テスト実装例
+## Test Implementation Example
 
 ```typescript
 // AuthService.test.ts
@@ -535,3 +535,37 @@ describe('AuthService', () => {
   });
 });
 ```
+
+## TypeScript Type Definitions
+
+```typescript
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface AuthResponse {
+  accessToken: string;
+  refreshToken?: string;
+  user: User;
+}
+
+interface OAuthInitResponse {
+  authorizationUrl: string;
+  state: string;
+  provider: string;
+}
+
+interface ErrorResponse {
+  timestamp: string;
+  status: number;
+  error: string;
+  message: string;
+  path: string;
+}
+```
+
+This implementation provides a comprehensive foundation for frontend integration with the Personal Hub backend API, including proper authentication handling, OAuth flows, and error management.

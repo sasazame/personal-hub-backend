@@ -1,30 +1,30 @@
-# Google OAuth セットアップガイド
+# Google OAuth Setup Guide
 
-## 概要
-Personal Hub バックエンドでGoogle OAuth認証を使用するための設定手順です。
+## Overview
+Setup instructions for using Google OAuth authentication in the Personal Hub backend.
 
-## 前提条件
-- Google Cloud Consoleアカウント
-- Google Cloud プロジェクト
+## Prerequisites
+- Google Cloud Console account
+- Google Cloud project
 
-## セットアップ手順
+## Setup Instructions
 
-### 1. Google Cloud Console設定
-1. [Google Cloud Console](https://console.cloud.google.com/)にアクセス
-2. プロジェクトを選択または作成
-3. 「APIとサービス」→「認証情報」に移動
-4. 「認証情報を作成」→「OAuth クライアント ID」を選択
-5. アプリケーションの種類で「ウェブ アプリケーション」を選択
-6. 以下の設定を行う：
-   - **名前**: Personal Hub Backend
-   - **承認済みのJavaScript生成元**: 
+### 1. Google Cloud Console Configuration
+1. Access [Google Cloud Console](https://console.cloud.google.com/)
+2. Select or create a project
+3. Navigate to "APIs & Services" → "Credentials"
+4. Click "Create Credentials" → "OAuth client ID"
+5. Select "Web application" as the application type
+6. Configure the following settings:
+   - **Name**: Personal Hub Backend
+   - **Authorized JavaScript origins**: 
      - `http://localhost:8080`
-     - `http://localhost:3000` (フロントエンド用)
-   - **承認済みのリダイレクトURI**:
+     - `http://localhost:3000` (for frontend)
+   - **Authorized redirect URIs**:
      - `http://localhost:8080/api/v1/auth/oidc/google/callback`
 
-### 2. 環境変数の設定
-プロジェクトルートに`.env`ファイルを作成し、以下の内容を設定：
+### 2. Environment Variable Configuration
+Create a `.env` file in the project root with the following content:
 
 ```bash
 # Google OAuth Configuration
@@ -33,22 +33,22 @@ GOOGLE_OIDC_CLIENT_SECRET=your_client_secret_here
 GOOGLE_OIDC_REDIRECT_URI=http://localhost:8080/api/v1/auth/oidc/google/callback
 ```
 
-### 3. アプリケーション起動
+### 3. Start Application
 ```bash
-# 環境変数を読み込んで起動
+# Load environment variables and start
 source .env && mvn spring-boot:run
 ```
 
-または、IDE使用時は環境変数を設定してから起動してください。
+Or when using an IDE, configure environment variables before starting.
 
-## 認証フロー
+## Authentication Flow
 
-### 1. 認証開始
+### 1. Initiate Authentication
 ```
 GET /api/v1/auth/oidc/google/authorize
 ```
 
-レスポンス:
+Response:
 ```json
 {
   "authorizationUrl": "https://accounts.google.com/o/oauth2/v2/auth?...",
@@ -56,11 +56,11 @@ GET /api/v1/auth/oidc/google/authorize
 }
 ```
 
-### 2. Googleログイン
-ユーザーをauthorizationUrlにリダイレクトし、Googleアカウントでログイン
+### 2. Google Login
+Redirect user to authorizationUrl to log in with Google account
 
-### 3. コールバック処理
-Googleからのリダイレクト後:
+### 3. Callback Processing
+After Google redirect:
 ```
 POST /api/v1/auth/oidc/google/callback
 Content-Type: application/json
@@ -71,7 +71,7 @@ Content-Type: application/json
 }
 ```
 
-レスポンス:
+Response:
 ```json
 {
   "accessToken": "jwt-token",
@@ -86,17 +86,113 @@ Content-Type: application/json
 }
 ```
 
-## トラブルシューティング
+## Information Retrieved from Google OAuth
 
-### エラー: redirect_uri_mismatch
-- Google Cloud Consoleで設定したリダイレクトURIと、アプリケーションで使用しているURIが完全に一致していることを確認
-- プロトコル（http/https）、ポート番号、パスが正確に一致している必要があります
+### Basic User Information
+- Google user ID (sub)
+- Email address
+- Email verification status
+- Full name
+- Given name (first name)
+- Family name (last name)
+- Profile picture URL
+- Locale preference
 
-### エラー: invalid_client
-- CLIENT_IDとCLIENT_SECRETが正しく設定されていることを確認
-- 環境変数が正しく読み込まれていることを確認
+### Scopes Requested
+- `openid`: OpenID Connect authentication
+- `email`: Email address access
+- `profile`: Basic profile information
 
-## セキュリティ注意事項
-- `.env`ファイルは絶対にGitにコミットしないでください
-- 本番環境では必ずHTTPSを使用してください
-- CLIENT_SECRETは安全に管理し、フロントエンドには公開しないでください
+## Troubleshooting
+
+### Error: redirect_uri_mismatch
+- Verify that the redirect URI configured in Google Cloud Console matches exactly with the application URI
+- Protocol (http/https), port number, and path must match precisely
+
+### Error: invalid_client
+- Verify CLIENT_ID and CLIENT_SECRET are configured correctly
+- Verify environment variables are loaded correctly
+
+### Error: access_denied
+- User denied permission during OAuth consent
+- Check OAuth consent screen configuration
+
+### Error: invalid_grant
+- Authorization code expired (typically 10 minutes)
+- Authorization code already used
+- Time synchronization issues
+
+## Security Considerations
+- **Never commit** the `.env` file to Git
+- **Always use HTTPS** in production environments
+- Keep CLIENT_SECRET secure and **never expose** to frontend
+- Configure OAuth consent screen appropriately
+- Use minimal required scopes
+
+## OAuth Consent Screen Configuration
+
+### Development Environment
+- User Type: External (for testing)
+- Test users: Add specific Google accounts for testing
+- Publishing status: Testing
+
+### Production Environment
+- User Type: External
+- Publishing status: Published (after verification)
+- Privacy policy and terms of service URLs required
+
+## Development vs Production Environment Configuration
+
+### Development Environment
+```bash
+GOOGLE_OIDC_REDIRECT_URI=http://localhost:8080/api/v1/auth/oidc/google/callback
+```
+
+### Production Environment
+```bash
+GOOGLE_OIDC_REDIRECT_URI=https://yourdomain.com/api/v1/auth/oidc/google/callback
+```
+
+### Google Cloud Console Settings
+
+#### Development
+- Authorized JavaScript origins: `http://localhost:8080`, `http://localhost:3000`
+- Authorized redirect URIs: `http://localhost:8080/api/v1/auth/oidc/google/callback`
+
+#### Production
+- Authorized JavaScript origins: `https://yourdomain.com`, `https://app.yourdomain.com`
+- Authorized redirect URIs: `https://yourdomain.com/api/v1/auth/oidc/google/callback`
+
+## Testing OAuth Integration
+
+### 1. Manual Testing
+1. Start the application
+2. Navigate to `/api/v1/auth/oidc/google/authorize`
+3. Follow the redirect to Google
+4. Complete authentication
+5. Verify callback processing
+
+### 2. Frontend Integration Testing
+1. Implement frontend OAuth flow
+2. Test state parameter validation
+3. Verify token storage and usage
+4. Test error handling scenarios
+
+## Common Issues and Solutions
+
+### Issue: "This app isn't verified"
+- Expected during development with external user type
+- Add test users to avoid this warning
+- For production, complete app verification process
+
+### Issue: Token refresh not working
+- Google OAuth tokens expire in 1 hour
+- Implement token refresh logic in frontend
+- Use refresh tokens for long-lived sessions
+
+### Issue: CORS errors
+- Ensure frontend origin is in authorized JavaScript origins
+- Check CORS configuration in backend
+- Verify exact URL matching (including protocol and port)
+
+For multiple environments, it's recommended to create separate Google Cloud projects or OAuth clients for each environment to maintain proper isolation.
