@@ -35,13 +35,13 @@ public class GoogleOidcService {
     private static final String GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
     private static final String PROVIDER_NAME = "google";
 
-    @Value("${google.client.id}")
+    @Value("${google.client.id:}")
     private String clientId;
 
-    @Value("${google.client.secret}")
+    @Value("${google.client.secret:}")
     private String clientSecret;
 
-    @Value("${google.redirect.uri}")
+    @Value("${google.redirect.uri:}")
     private String redirectUri;
 
     private final UserRepository userRepository;
@@ -55,6 +55,13 @@ public class GoogleOidcService {
      * Google認証URLを生成
      */
     public String generateAuthorizationUrl(String state, String nonce) {
+        log.debug("Generating Google authorization URL with clientId: {}, redirectUri: {}", clientId, redirectUri);
+        
+        if (clientId == null || clientId.isEmpty()) {
+            log.error("Google client ID is not configured. Please set GOOGLE_OIDC_CLIENT_ID environment variable.");
+            throw new IllegalStateException("Google OAuth client ID is not configured");
+        }
+        
         return UriComponentsBuilder.fromHttpUrl(GOOGLE_AUTH_URL)
                 .queryParam("client_id", clientId)
                 .queryParam("redirect_uri", redirectUri)

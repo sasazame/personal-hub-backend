@@ -19,11 +19,19 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+                .orElseThrow(() -> new UsernameNotFoundException("Invalid email or password"));
+
+        // For OAuth users (null password), return a dummy password that will never match
+        // This prevents information leakage about account existence and auth method
+        String password = user.getPassword();
+        if (password == null) {
+            // Use a secure random string that will never match any user input
+            password = "$2a$10$dummypasswordthatwillnevermatchanyuserinput";
+        }
 
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
-                .password(user.getPassword())
+                .password(password)
                 .authorities(new ArrayList<>())
                 .disabled(!user.isEnabled())
                 .build();

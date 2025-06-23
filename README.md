@@ -55,10 +55,21 @@ sudo -u postgres psql -c "CREATE DATABASE personalhub;"
 sudo -u postgres psql -c "CREATE USER personalhub WITH ENCRYPTED PASSWORD 'personalhub';"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE personalhub TO personalhub;"
 
-# 3. アプリケーション起動
+# 3. 環境変数設定（.env.exampleをコピーして編集）
+cp .env.example .env
+# .envファイルを編集してGoogle/GitHub OAuth認証情報を設定
+
+# 4. アプリケーション起動
+# Linux/Mac
+./run.sh
+
+# Windows
+run.bat
+
+# または環境変数を直接指定
 mvn spring-boot:run
 
-# 4. 動作確認（ユーザー登録）
+# 5. 動作確認（ユーザー登録）
 curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
@@ -67,7 +78,7 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
     "username": "testuser"
   }'
 
-# 5. ログインしてJWTトークン取得
+# 6. ログインしてJWTトークン取得
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
