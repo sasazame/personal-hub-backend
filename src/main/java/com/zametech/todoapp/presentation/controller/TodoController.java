@@ -25,7 +25,6 @@ import java.util.List;
 @RequestMapping("/api/v1/todos")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:3000")
 public class TodoController {
 
     private final TodoService todoService;

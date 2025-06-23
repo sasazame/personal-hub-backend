@@ -11,16 +11,17 @@ import java.time.Duration;
 
 @Configuration
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "jwt")
+@ConfigurationProperties(prefix = "app.security.jwt")
 @Getter
 @Setter
 public class JwtConfiguration {
 
-    private String secret = "your-default-secret-key-that-is-at-least-256-bits-long-for-HS256-algorithm-security";
-    private long expiration = 86400000;
+    private String secretKey = "your-default-secret-key-that-is-at-least-256-bits-long-for-HS256-algorithm-security";
+    private long expiration = 900000;
+    private String keyId = "default-key";
 
     @Bean
     public JwtService jwtService() {
-        return new JwtService(secret, Duration.ofMillis(expiration));
+        return new JwtService(secretKey, Duration.ofMillis(expiration));
     }
 }

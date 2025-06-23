@@ -2,6 +2,7 @@ package com.zametech.todoapp.presentation.controller;
 
 import com.zametech.todoapp.application.service.GitHubOAuthService;
 import com.zametech.todoapp.application.service.GoogleOidcService;
+import com.zametech.todoapp.application.service.OAuthStateService;
 import com.zametech.todoapp.presentation.dto.request.OidcCallbackRequest;
 import com.zametech.todoapp.presentation.dto.response.AuthenticationResponse;
 import com.zametech.todoapp.presentation.dto.response.OidcAuthorizationResponse;
@@ -9,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,16 +24,15 @@ public class OidcController {
 
     private final GoogleOidcService googleOidcService;
     private final GitHubOAuthService gitHubOAuthService;
+    private final OAuthStateService oAuthStateService;
 
     /**
      * Google OIDC認証開始
      */
     @GetMapping("/google/authorize")
     public ResponseEntity<OidcAuthorizationResponse> initiateGoogleAuth() {
-        String state = UUID.randomUUID().toString();
+        String state = oAuthStateService.generateState("google");
         String nonce = UUID.randomUUID().toString();
-        
-        // TODO: stateとnonceをセッションまたはキャッシュに保存
         
         String authorizationUrl = googleOidcService.generateAuthorizationUrl(state, nonce);
         
@@ -58,7 +59,13 @@ public class OidcController {
             return ResponseEntity.badRequest().build();
         }
         
-        // TODO: stateパラメータの検証
+        // stateパラメータの検証
+        String provider = oAuthStateService.validateStateAndGetProvider(request.state());
+        if (provider == null || !"google".equals(provider)) {
+            log.error("Invalid OAuth state for Google callback: {}", request.state());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(null);
+        }
         
         String ipAddress = getClientIpAddress(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
@@ -73,9 +80,7 @@ public class OidcController {
      */
     @GetMapping("/github/authorize")
     public ResponseEntity<OidcAuthorizationResponse> initiateGitHubAuth() {
-        String state = UUID.randomUUID().toString();
-        
-        // TODO: stateをセッションまたはキャッシュに保存
+        String state = oAuthStateService.generateState("github");
         
         String authorizationUrl = gitHubOAuthService.generateAuthorizationUrl(state);
         
@@ -102,7 +107,13 @@ public class OidcController {
             return ResponseEntity.badRequest().build();
         }
         
-        // TODO: stateパラメータの検証
+        // stateパラメータの検証
+        String provider = oAuthStateService.validateStateAndGetProvider(request.state());
+        if (provider == null || !"github".equals(provider)) {
+            log.error("Invalid OAuth state for GitHub callback: {}", request.state());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(null);
+        }
         
         String ipAddress = getClientIpAddress(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");

@@ -4,6 +4,7 @@ import com.zametech.todoapp.application.service.AuthenticationService;
 import com.zametech.todoapp.application.service.UserContextService;
 import com.zametech.todoapp.domain.model.User;
 import com.zametech.todoapp.presentation.dto.request.LoginRequest;
+import com.zametech.todoapp.presentation.dto.request.RefreshTokenRequest;
 import com.zametech.todoapp.presentation.dto.request.RegisterRequest;
 import com.zametech.todoapp.presentation.dto.response.AuthenticationResponse;
 import com.zametech.todoapp.presentation.dto.response.UserResponse;
@@ -34,6 +35,14 @@ public class AuthenticationController {
             @Valid @RequestBody LoginRequest request
     ) {
         AuthenticationResponse response = authenticationService.login(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthenticationResponse> refresh(
+            @Valid @RequestBody RefreshTokenRequest request
+    ) {
+        AuthenticationResponse response = authenticationService.refreshToken(request.refreshToken());
         return ResponseEntity.ok(response);
     }
 

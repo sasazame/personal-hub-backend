@@ -35,4 +35,14 @@ public class SecurityEventRepositoryImpl implements SecurityEventRepository {
     public long countFailedLoginAttempts(UUID userId, LocalDateTime after) {
         return jpaRepository.countFailedLoginAttempts(userId, after);
     }
+    
+    @Override
+    public List<SecurityEvent> findRecentEventsByUser(UUID userId, int limit) {
+        return jpaRepository.findTopByUserIdOrderByCreatedAtDesc(userId, limit);
+    }
+    
+    @Override
+    public long countByEventTypeAndSuccessAndCreatedAtAfter(SecurityEvent.EventType eventType, boolean success, LocalDateTime after) {
+        return jpaRepository.countByEventTypeAndSuccessAndCreatedAtAfter(eventType, success, after);
+    }
 }
