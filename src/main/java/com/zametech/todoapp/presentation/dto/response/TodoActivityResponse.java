@@ -1,13 +1,13 @@
 package com.zametech.todoapp.presentation.dto.response;
 
-import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 public record TodoActivityResponse(
-        Map<LocalDate, Long> dailyCompletions,
-        Map<LocalDate, Long> dailyCreations,
-        Map<String, Long> priorityDistribution,
-        Map<String, Long> statusDistribution,
+        List<DailyCount> dailyCompletions,
+        List<DailyCount> dailyCreations,
+        Map<String, Integer> priorityDistribution,
+        Map<String, Integer> statusDistribution,
         double averageCompletionTimeInDays
 ) {
 }

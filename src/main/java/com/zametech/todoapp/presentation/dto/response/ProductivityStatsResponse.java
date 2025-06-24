@@ -1,12 +1,11 @@
 package com.zametech.todoapp.presentation.dto.response;
 
-import java.time.LocalDate;
-import java.util.Map;
+import java.util.List;
 
 public record ProductivityStatsResponse(
-        Map<LocalDate, Long> dailyTodoCompletions,
-        Map<LocalDate, Long> dailyEventCounts,
-        Map<LocalDate, Long> dailyNoteCreations,
+        List<DailyCount> dailyTodoCompletions,
+        List<DailyCount> dailyEventCounts,
+        List<DailyCount> dailyNoteCreations,
         double weeklyProductivityScore
 ) {
 }

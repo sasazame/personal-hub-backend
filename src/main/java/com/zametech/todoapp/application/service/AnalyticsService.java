@@ -43,39 +43,43 @@ public class AnalyticsService {
         return new DashboardResponse(todoStats, eventStats, noteStats, productivityStats);
     }
 
-    public TodoActivityResponse getTodoActivity() {
+    public TodoActivityResponse getTodoActivity(LocalDate startDate, LocalDate endDate) {
         UUID currentUserId = userContextService.getCurrentUserId();
         
-        log.info("Generating TODO activity for user: {}", currentUserId);
+        log.info("Generating TODO activity for user: {} from {} to {}", currentUserId, startDate, endDate);
         
         List<TodoEntity> allTodos = todoRepository.findByUserId(currentUserId, PageRequest.of(0, 1000)).getContent();
         
-        // Daily completions (last 30 days)
-        Map<LocalDate, Long> dailyCompletions = generateDailyCompletions(allTodos);
+        // Daily completions for the specified date range
+        Map<LocalDate, Long> dailyCompletions = generateDailyCompletionsInRange(allTodos, startDate, endDate);
         
-        // Daily creations (last 30 days)
-        Map<LocalDate, Long> dailyCreations = generateDailyCreations(allTodos);
+        // Daily creations for the specified date range
+        Map<LocalDate, Long> dailyCreations = generateDailyCreationsInRange(allTodos, startDate, endDate);
         
-        // Priority distribution
-        Map<String, Long> priorityDistribution = allTodos.stream()
+        // Priority distribution (all todos)
+        Map<String, Integer> priorityDistribution = allTodos.stream()
                 .collect(Collectors.groupingBy(
                         todo -> todo.getPriority().name(),
-                        Collectors.counting()
+                        Collectors.collectingAndThen(Collectors.counting(), Math::toIntExact)
                 ));
         
-        // Status distribution
-        Map<String, Long> statusDistribution = allTodos.stream()
+        // Status distribution (all todos)
+        Map<String, Integer> statusDistribution = allTodos.stream()
                 .collect(Collectors.groupingBy(
                         todo -> todo.getStatus().name(),
-                        Collectors.counting()
+                        Collectors.collectingAndThen(Collectors.counting(), Math::toIntExact)
                 ));
         
         // Average completion time
         double averageCompletionTime = calculateAverageCompletionTime(allTodos);
         
+        // Convert Maps to Lists of DailyCount
+        List<DailyCount> dailyCompletionsList = convertMapToList(dailyCompletions);
+        List<DailyCount> dailyCreationsList = convertMapToList(dailyCreations);
+        
         return new TodoActivityResponse(
-                dailyCompletions,
-                dailyCreations,
+                dailyCompletionsList,
+                dailyCreationsList,
                 priorityDistribution,
                 statusDistribution,
                 averageCompletionTime
@@ -169,10 +173,15 @@ public class AnalyticsService {
         double weeklyProductivityScore = calculateWeeklyProductivityScore(
                 dailyTodoCompletions, dailyEventCounts, dailyNoteCreations);
         
+        // Convert Maps to Lists of DailyCount
+        List<DailyCount> dailyTodoCompletionsList = convertMapToList(dailyTodoCompletions);
+        List<DailyCount> dailyEventCountsList = convertMapToList(dailyEventCounts);
+        List<DailyCount> dailyNoteCreationsList = convertMapToList(dailyNoteCreations);
+        
         return new ProductivityStatsResponse(
-                dailyTodoCompletions,
-                dailyEventCounts,
-                dailyNoteCreations,
+                dailyTodoCompletionsList,
+                dailyEventCountsList,
+                dailyNoteCreationsList,
                 Math.round(weeklyProductivityScore * 100.0) / 100.0
         );
     }
@@ -205,7 +214,10 @@ public class AnalyticsService {
     private Map<LocalDate, Long> generateDailyCreations(List<TodoEntity> todos) {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(30);
-        
+        return generateDailyCreationsInRange(todos, startDate, endDate);
+    }
+
+    private Map<LocalDate, Long> generateDailyCreationsInRange(List<TodoEntity> todos, LocalDate startDate, LocalDate endDate) {
         Map<LocalDate, Long> dailyCreations = new LinkedHashMap<>();
         
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
@@ -293,5 +305,11 @@ public class AnalyticsService {
 
     private boolean isEventToday(Event event, LocalDateTime startOfDay, LocalDateTime endOfDay) {
         return (event.getStartDateTime().isBefore(endOfDay) && event.getEndDateTime().isAfter(startOfDay));
+    }
+
+    private List<DailyCount> convertMapToList(Map<LocalDate, Long> dailyData) {
+        return dailyData.entrySet().stream()
+                .map(entry -> new DailyCount(entry.getKey(), Math.toIntExact(entry.getValue())))
+                .collect(Collectors.toList());
     }
 }
