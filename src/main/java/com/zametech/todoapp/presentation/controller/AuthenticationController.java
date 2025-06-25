@@ -14,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -59,5 +61,18 @@ public class AuthenticationController {
         );
         
         return ResponseEntity.ok(userResponse);
+    }
+    
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout() {
+        // Since JWTs are stateless, logout is handled on the client side
+        // by removing the token from storage.
+        // In a production system, you might want to maintain a blacklist
+        // of revoked tokens for additional security.
+        
+        return ResponseEntity.ok(Map.of(
+            "message", "Logout successful",
+            "note", "Please remove the token from client storage"
+        ));
     }
 }

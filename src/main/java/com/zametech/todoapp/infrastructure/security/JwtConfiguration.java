@@ -20,8 +20,6 @@ public class JwtConfiguration {
     private long expiration = 900000;
     private String keyId = "default-key";
 
-    @Bean
-    public JwtService jwtService() {
-        return new JwtService(secretKey, Duration.ofMillis(expiration));
-    }
+    // JwtService is now defined as @Service component with @RequiredArgsConstructor
+    // No need for @Bean definition here
 }

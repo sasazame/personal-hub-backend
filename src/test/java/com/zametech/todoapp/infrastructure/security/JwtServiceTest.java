@@ -1,27 +1,54 @@
 package com.zametech.todoapp.infrastructure.security;
 
+import com.zametech.todoapp.application.service.JwksService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 class JwtServiceTest {
 
     private JwtService jwtService;
     private UserDetails userDetails;
+    
+    @Mock
+    private JwksService jwksService;
+    
+    private JwtConfiguration jwtConfiguration;
 
     @BeforeEach
-    void setUp() {
-        jwtService = new JwtService("test-secret-key-that-is-at-least-256-bits-long-for-HS256-algorithm", Duration.ofHours(1));
+    void setUp() throws Exception {
+        MockitoAnnotations.openMocks(this);
+        
+        // Setup mock JwksService with RSA key pair
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(2048);
+        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+        
+        when(jwksService.getKeyPair()).thenReturn(keyPair);
+        when(jwksService.getKeyId()).thenReturn("test-key");
+        
+        // Create JwtConfiguration
+        jwtConfiguration = new JwtConfiguration();
+        jwtConfiguration.setSecretKey("test-secret-key-that-is-at-least-256-bits-long-for-HS256-algorithm");
+        jwtConfiguration.setExpiration(3600000);
+        jwtConfiguration.setKeyId("test-key");
+        
+        jwtService = new JwtService(jwksService, jwtConfiguration);
         userDetails = User.builder()
                 .username("testuser")
                 .password("password")
@@ -81,11 +108,14 @@ class JwtServiceTest {
     }
 
     @Test
-    void shouldRejectExpiredToken() {
-        JwtService shortLivedJwtService = new JwtService(
-            "test-secret-key-that-is-at-least-256-bits-long-for-HS256-algorithm", 
-            Duration.ofMillis(1)
-        );
+    void shouldRejectExpiredToken() throws Exception {
+        // Create configuration with very short expiration
+        JwtConfiguration shortLivedConfig = new JwtConfiguration();
+        shortLivedConfig.setSecretKey("test-secret-key-that-is-at-least-256-bits-long-for-HS256-algorithm");
+        shortLivedConfig.setExpiration(1); // 1 millisecond
+        shortLivedConfig.setKeyId("test-key");
+        
+        JwtService shortLivedJwtService = new JwtService(jwksService, shortLivedConfig);
         String token = shortLivedJwtService.generateToken(userDetails);
         
         try {
@@ -109,11 +139,14 @@ class JwtServiceTest {
     }
 
     @Test
-    void shouldRejectTokenWithWrongSignature() {
-        JwtService differentKeyService = new JwtService(
-            "different-secret-key-that-is-at-least-256-bits-long-for-HS256-algorithm", 
-            Duration.ofHours(1)
-        );
+    void shouldRejectTokenWithWrongSignature() throws Exception {
+        // Create JwtConfiguration with different secret key
+        JwtConfiguration differentConfig = new JwtConfiguration();
+        differentConfig.setSecretKey("different-secret-key-that-is-at-least-256-bits-long-for-HS256-algorithm");
+        differentConfig.setExpiration(3600000);
+        differentConfig.setKeyId("test-key");
+        
+        JwtService differentKeyService = new JwtService(jwksService, differentConfig);
         String token = differentKeyService.generateToken(userDetails);
         
         assertThrows(SignatureException.class, () -> {

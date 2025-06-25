@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -160,6 +161,54 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
+    /**
+     * OAuth2 required exceptions
+     */
+    @ExceptionHandler(OAuth2RequiredException.class)
+    public ResponseEntity<ErrorResponse> handleOAuth2RequiredException(OAuth2RequiredException ex) {
+        log.warn("OAuth2 authentication required: {}", ex.getMessage());
+        
+        ErrorResponse response = new ErrorResponse(
+                "OAUTH2_REQUIRED",
+                ex.getMessage(),
+                ZonedDateTime.now()
+        );
+        
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+    
+    /**
+     * Duplicate authorization code exceptions
+     */
+    @ExceptionHandler(DuplicateAuthorizationCodeException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateAuthorizationCodeException(DuplicateAuthorizationCodeException ex) {
+        log.warn("Duplicate authorization code used: {}", ex.getMessage());
+        
+        ErrorResponse response = new ErrorResponse(
+                "DUPLICATE_AUTH_CODE",
+                "The authorization code has already been used. Please try logging in again.",
+                ZonedDateTime.now()
+        );
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+    
+    /**
+     * Token decryption exceptions
+     */
+    @ExceptionHandler(TokenDecryptionException.class)
+    public ResponseEntity<ErrorResponse> handleTokenDecryptionException(TokenDecryptionException ex) {
+        log.warn("Token decryption failed: {}", ex.getMessage());
+        
+        ErrorResponse response = new ErrorResponse(
+                "TOKEN_DECRYPTION_FAILED",
+                "Your authentication tokens could not be decrypted. Please re-authenticate with Google.",
+                ZonedDateTime.now()
+        );
+        
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+    
     /**
      * 重複ユーザー登録エラー
      */

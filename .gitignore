@@ -43,3 +43,4 @@ logs/
 
 ### Local Documentation ###
 localdoc/
+src/main/resources/credentials.json
