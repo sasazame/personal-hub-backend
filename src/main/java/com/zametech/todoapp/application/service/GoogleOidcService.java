@@ -9,6 +9,8 @@ import com.zametech.todoapp.presentation.dto.request.OidcCallbackRequest;
 import com.zametech.todoapp.presentation.dto.response.AuthenticationResponse;
 import com.zametech.todoapp.presentation.dto.response.GoogleUserInfo;
 import com.zametech.todoapp.presentation.dto.response.UserResponse;
+import com.zametech.todoapp.infrastructure.security.TokenEncryptionService;
+import com.zametech.todoapp.common.exception.DuplicateAuthorizationCodeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,6 +52,8 @@ public class GoogleOidcService {
     private final SecurityEventService securityEventService;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    private final TokenEncryptionService tokenEncryptionService;
+    private final OAuthCodeCacheService codeCache;
 
     /**
      * Google認証URLを生成
@@ -66,7 +70,7 @@ public class GoogleOidcService {
                 .queryParam("client_id", clientId)
                 .queryParam("redirect_uri", redirectUri)
                 .queryParam("response_type", "code")
-                .queryParam("scope", "openid email profile")
+                .queryParam("scope", "openid email profile https://www.googleapis.com/auth/calendar")
                 .queryParam("state", state)
                 .queryParam("nonce", nonce)
                 .queryParam("access_type", "offline")
@@ -134,6 +138,17 @@ public class GoogleOidcService {
      * 認可コードをトークンに交換
      */
     private Map<String, Object> exchangeCodeForToken(String code) {
+        // Check if we've already processed this code
+        Map<String, Object> cachedResponse = codeCache.getCachedTokenResponse(code);
+        if (cachedResponse != null) {
+            log.info("Using cached token response for duplicate authorization code");
+            if (cachedResponse.isEmpty()) {
+                // This code was already used and failed
+                throw new DuplicateAuthorizationCodeException("Authorization code was already used and failed");
+            }
+            return cachedResponse;
+        }
+        
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -155,12 +170,16 @@ public class GoogleOidcService {
             );
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                // Cache the successful response
+                codeCache.cacheTokenResponse(code, response.getBody());
                 return response.getBody();
             }
             
             throw new RuntimeException("Failed to exchange code for token");
             
         } catch (Exception e) {
+            // Mark the code as failed so duplicate requests know it failed
+            codeCache.markCodeAsFailed(code);
             log.error("Error exchanging code for token", e);
             throw new RuntimeException("Failed to exchange authorization code", e);
         }
@@ -301,9 +320,14 @@ public class GoogleOidcService {
         // プロファイルデータを保存
         socialAccount.setProfileData(objectMapper.convertValue(userInfo, Map.class));
         
-        // トークンを暗号化して保存（TODO: 実装）
-        // socialAccount.setAccessTokenEncrypted(encryptToken(accessToken));
-        // socialAccount.setRefreshTokenEncrypted(encryptToken(refreshToken));
+        // トークンを暗号化して保存
+        socialAccount.setAccessTokenEncrypted(tokenEncryptionService.encryptToken(accessToken));
+        if (refreshToken != null) {
+            socialAccount.setRefreshTokenEncrypted(tokenEncryptionService.encryptToken(refreshToken));
+        }
+        
+        // トークンの有効期限を設定（1時間後）
+        socialAccount.setTokenExpiresAt(LocalDateTime.now().plusHours(1));
         
         socialAccountRepository.save(socialAccount);
     }
@@ -321,5 +345,63 @@ public class GoogleOidcService {
         }
         
         return username;
+    }
+    
+    /**
+     * リフレッシュトークンを使用してアクセストークンを更新
+     */
+    public void refreshAccessToken(UserSocialAccount socialAccount) {
+        if (socialAccount.getRefreshTokenEncrypted() == null) {
+            throw new IllegalStateException("No refresh token available for user");
+        }
+        
+        String refreshToken = tokenEncryptionService.decryptToken(socialAccount.getRefreshTokenEncrypted());
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("refresh_token", refreshToken);
+        params.add("client_id", clientId);
+        params.add("client_secret", clientSecret);
+        params.add("grant_type", "refresh_token");
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    GOOGLE_TOKEN_URL,
+                    HttpMethod.POST,
+                    request,
+                    Map.class
+            );
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                Map<String, Object> tokenResponse = response.getBody();
+                String newAccessToken = (String) tokenResponse.get("access_token");
+                Integer expiresIn = (Integer) tokenResponse.get("expires_in");
+                
+                // 新しいアクセストークンを保存
+                socialAccount.setAccessTokenEncrypted(tokenEncryptionService.encryptToken(newAccessToken));
+                
+                // 有効期限を更新（通常は1時間）
+                if (expiresIn != null) {
+                    socialAccount.setTokenExpiresAt(LocalDateTime.now().plusSeconds(expiresIn));
+                } else {
+                    socialAccount.setTokenExpiresAt(LocalDateTime.now().plusHours(1));
+                }
+                
+                socialAccount.setUpdatedAt(LocalDateTime.now());
+                socialAccountRepository.save(socialAccount);
+                
+                log.info("Successfully refreshed access token for user {}", socialAccount.getUser().getId());
+            } else {
+                throw new RuntimeException("Failed to refresh access token");
+            }
+        } catch (Exception e) {
+            log.error("Error refreshing access token for user {}: {}", 
+                    socialAccount.getUser().getId(), e.getMessage(), e);
+            throw new RuntimeException("Failed to refresh access token", e);
+        }
     }
 }

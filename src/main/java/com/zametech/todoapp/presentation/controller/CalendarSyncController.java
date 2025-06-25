@@ -6,8 +6,11 @@ import com.zametech.todoapp.application.service.UserContextService;
 import com.zametech.todoapp.domain.repository.CalendarSyncSettingsRepository;
 import com.zametech.todoapp.infrastructure.persistence.entity.CalendarSyncSettingsEntity;
 import com.zametech.todoapp.presentation.dto.request.CalendarSyncSettingsRequest;
+import com.zametech.todoapp.presentation.dto.request.GoogleSyncSettingsRequest;
 import com.zametech.todoapp.presentation.dto.response.CalendarSyncSettingsResponse;
 import com.zametech.todoapp.presentation.dto.response.CalendarSyncStatusResponse;
+import com.zametech.todoapp.presentation.dto.response.GoogleSyncSettingsResponse;
+import com.zametech.todoapp.presentation.dto.response.GoogleSyncStatusResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,10 +34,9 @@ public class CalendarSyncController {
 
     @PostMapping("/connect")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<CalendarListEntry>> connectGoogleCalendar(
-            @RequestBody String userCredentialsJson) {
+    public ResponseEntity<List<CalendarListEntry>> connectGoogleCalendar() {
         try {
-            List<CalendarListEntry> calendars = calendarSyncService.connectGoogleCalendar(userCredentialsJson);
+            List<CalendarListEntry> calendars = calendarSyncService.connectGoogleCalendar();
             return ResponseEntity.ok(calendars);
         } catch (Exception e) {
             log.error("Error connecting Google Calendar: {}", e.getMessage(), e);
@@ -54,12 +56,11 @@ public class CalendarSyncController {
         }
     }
 
-    @PostMapping("/manual")
+    @PostMapping("/manual/detailed")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<CalendarSyncStatusResponse> performManualSync(
-            @RequestBody String userCredentialsJson) {
+    public ResponseEntity<CalendarSyncStatusResponse> performManualSync() {
         try {
-            CalendarSyncStatusResponse status = calendarSyncService.performSync(userCredentialsJson);
+            CalendarSyncStatusResponse status = calendarSyncService.performSync();
             return ResponseEntity.ok(status);
         } catch (Exception e) {
             log.error("Error performing manual sync: {}", e.getMessage(), e);
@@ -67,7 +68,7 @@ public class CalendarSyncController {
         }
     }
 
-    @GetMapping("/status")
+    @GetMapping("/status/detailed")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<CalendarSyncStatusResponse> getSyncStatus() {
         try {
@@ -79,7 +80,7 @@ public class CalendarSyncController {
         }
     }
 
-    @GetMapping("/settings")
+    @GetMapping("/settings/list")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<CalendarSyncSettingsResponse>> getSyncSettings() {
         try {
@@ -104,7 +105,7 @@ public class CalendarSyncController {
         }
     }
 
-    @PutMapping("/settings/{calendarId}")
+    @PutMapping("/settings/calendar/{calendarId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<CalendarSyncSettingsResponse> updateSyncSettings(
             @PathVariable String calendarId,
@@ -151,13 +152,62 @@ public class CalendarSyncController {
 
     @PostMapping("/test")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<String> testConnection(@RequestBody String userCredentialsJson) {
+    public ResponseEntity<String> testConnection() {
         try {
-            List<CalendarListEntry> calendars = calendarSyncService.connectGoogleCalendar(userCredentialsJson);
+            List<CalendarListEntry> calendars = calendarSyncService.connectGoogleCalendar();
             return ResponseEntity.ok("Connection successful. Found " + calendars.size() + " calendars.");
         } catch (Exception e) {
             log.error("Error testing calendar connection: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body("Connection failed: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/settings")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<GoogleSyncSettingsResponse> getGoogleSyncSettings() {
+        try {
+            GoogleSyncSettingsResponse settings = calendarSyncService.getGoogleSyncSettings();
+            return ResponseEntity.ok(settings);
+        } catch (Exception e) {
+            log.error("Error getting Google sync settings: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PutMapping("/settings")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<GoogleSyncSettingsResponse> updateGoogleSyncSettings(
+            @Valid @RequestBody GoogleSyncSettingsRequest request) {
+        try {
+            GoogleSyncSettingsResponse settings = calendarSyncService.updateGoogleSyncSettings(request);
+            return ResponseEntity.ok(settings);
+        } catch (Exception e) {
+            log.error("Error updating Google sync settings: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<GoogleSyncStatusResponse> triggerManualSync() {
+        try {
+            GoogleSyncStatusResponse status = calendarSyncService.triggerManualSync();
+            return ResponseEntity.ok(status);
+        } catch (Exception e) {
+            log.error("Error triggering manual sync: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/status")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<GoogleSyncStatusResponse> getGoogleSyncStatus() {
+        try {
+            GoogleSyncStatusResponse status = calendarSyncService.getGoogleSyncStatus();
+            return ResponseEntity.ok(status);
+        } catch (Exception e) {
+            log.error("Error getting Google sync status: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().build();
         }
     }
 }

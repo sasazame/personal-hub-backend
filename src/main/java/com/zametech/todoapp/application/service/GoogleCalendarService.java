@@ -21,7 +21,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
@@ -52,10 +54,36 @@ public class GoogleCalendarService {
     public Calendar getCalendarService(String userCredentialsJson) throws IOException, GeneralSecurityException {
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         
-        // Load service account credentials
-        GoogleCredentials credentials = GoogleCredentials
-            .fromStream(new ByteArrayInputStream(userCredentialsJson.getBytes()))
-            .createScoped(Collections.singletonList(CalendarScopes.CALENDAR));
+        GoogleCredentials credentials;
+        
+        // Check if we should use service account file or provided credentials
+        if (userCredentialsJson == null || userCredentialsJson.trim().isEmpty() || "{}".equals(userCredentialsJson.trim())) {
+            // Use service account credentials from file
+            if (credentialsFilePath == null || credentialsFilePath.isEmpty()) {
+                throw new IllegalStateException("Google Calendar credentials not configured. Please set GOOGLE_CREDENTIALS_FILE environment variable.");
+            }
+            
+            log.info("Loading service account credentials from: {}", credentialsFilePath);
+            try (InputStream credentialsStream = getClass().getClassLoader().getResourceAsStream(credentialsFilePath)) {
+                if (credentialsStream == null) {
+                    log.warn("Credentials not found in classpath, trying as file path: {}", credentialsFilePath);
+                    // Try as file path
+                    credentials = GoogleCredentials
+                        .fromStream(new FileInputStream(credentialsFilePath))
+                        .createScoped(Collections.singletonList(CalendarScopes.CALENDAR));
+                } else {
+                    log.info("Successfully loaded credentials from classpath");
+                    credentials = GoogleCredentials
+                        .fromStream(credentialsStream)
+                        .createScoped(Collections.singletonList(CalendarScopes.CALENDAR));
+                }
+            }
+        } else {
+            // Use provided credentials
+            credentials = GoogleCredentials
+                .fromStream(new ByteArrayInputStream(userCredentialsJson.getBytes()))
+                .createScoped(Collections.singletonList(CalendarScopes.CALENDAR));
+        }
         
         HttpRequestInitializer requestInitializer = new HttpCredentialsAdapter(credentials);
         
@@ -70,8 +98,21 @@ public class GoogleCalendarService {
     public List<CalendarListEntry> getUserCalendars(String userCredentialsJson) {
         try {
             Calendar service = getCalendarService(userCredentialsJson);
+            log.info("Fetching calendar list...");
             CalendarList calendarList = service.calendarList().list().execute();
-            return calendarList.getItems();
+            List<CalendarListEntry> items = calendarList.getItems();
+            if (items == null || items.isEmpty()) {
+                log.warn("No calendars found. This might be because:");
+                log.warn("1. The service account doesn't have access to any calendars");
+                log.warn("2. You need to share your calendar with the service account email");
+                log.warn("3. Or enable domain-wide delegation for G Suite accounts");
+                return Collections.emptyList();
+            }
+            log.info("Found {} calendars", items.size());
+            for (CalendarListEntry entry : items) {
+                log.info("Calendar: {} ({})", entry.getSummary(), entry.getId());
+            }
+            return items;
         } catch (Exception e) {
             log.error("Error fetching user calendars: {}", e.getMessage(), e);
             return Collections.emptyList();

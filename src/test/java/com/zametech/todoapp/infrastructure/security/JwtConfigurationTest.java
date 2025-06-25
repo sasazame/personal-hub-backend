@@ -35,9 +35,10 @@ class JwtConfigurationTest {
     }
 
     @Test
-    void shouldCreateJwtServiceWithConfiguredValues() {
-        JwtService jwtService = jwtConfiguration.jwtService();
-        
-        assertNotNull(jwtService);
+    void shouldHaveValidConfiguration() {
+        // JwtService is now @Service component, not created by configuration bean
+        assertNotNull(jwtConfiguration.getSecretKey());
+        assertTrue(jwtConfiguration.getExpiration() > 0);
+        assertNotNull(jwtConfiguration.getKeyId());
     }
 }

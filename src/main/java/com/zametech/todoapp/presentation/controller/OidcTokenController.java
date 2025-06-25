@@ -6,6 +6,7 @@ import com.zametech.todoapp.presentation.dto.oidc.TokenResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -72,6 +73,68 @@ public class OidcTokenController {
         } catch (Exception e) {
             log.error("Error processing token request", e);
             return ResponseEntity.status(500).body(Map.of(
+                "error", "server_error",
+                "error_description", "Internal server error"
+            ));
+        }
+    }
+    
+    /**
+     * OAuth 2.0 Token Revocation Endpoint (RFC 7009)
+     * Revokes access tokens or refresh tokens
+     */
+    @PostMapping(value = "/revoke", 
+                 consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public ResponseEntity<?> revoke(
+            @RequestParam("token") String token,
+            @RequestParam(value = "token_type_hint", required = false) String tokenTypeHint,
+            @RequestParam(value = "client_id", required = false) String clientId,
+            @RequestParam(value = "client_secret", required = false) String clientSecret,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        
+        try {
+            // Handle client authentication
+            if (authorization != null && authorization.startsWith("Basic ")) {
+                String credentials = new String(Base64.getDecoder().decode(
+                    authorization.substring(6)), StandardCharsets.UTF_8);
+                String[] parts = credentials.split(":", 2);
+                if (parts.length == 2) {
+                    clientId = parts[0];
+                    clientSecret = parts[1];
+                }
+            }
+            
+            // Validate required parameters
+            if (token == null || token.trim().isEmpty()) {
+                log.warn("Token revocation request missing token parameter");
+                return ResponseEntity.badRequest().body(Map.of(
+                    "error", "invalid_request",
+                    "error_description", "Missing required parameter: token"
+                ));
+            }
+            
+            // Revoke the token
+            boolean revoked = tokenService.revokeToken(token, tokenTypeHint, clientId);
+            
+            if (revoked) {
+                log.info("Token successfully revoked for client: {}", clientId);
+                // RFC 7009: Return 200 OK for successful revocation
+                return ResponseEntity.ok().build();
+            } else {
+                log.info("Token not found or already revoked for client: {}", clientId);
+                // RFC 7009: Return 200 OK even if token was not found (for security)
+                return ResponseEntity.ok().build();
+            }
+            
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid token revocation request: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "invalid_request",
+                "error_description", e.getMessage()
+            ));
+        } catch (Exception e) {
+            log.error("Error processing token revocation request", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                 "error", "server_error",
                 "error_description", "Internal server error"
             ));

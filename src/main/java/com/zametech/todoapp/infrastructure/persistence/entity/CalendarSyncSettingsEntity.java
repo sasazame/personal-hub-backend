@@ -39,6 +39,12 @@ public class CalendarSyncSettingsEntity {
     @Column(name = "sync_direction", length = 20, nullable = false)
     private String syncDirection = "BIDIRECTIONAL";
 
+    @Column(name = "auto_sync", nullable = false)
+    private Boolean autoSync = true;
+
+    @Column(name = "sync_interval", nullable = false)
+    private Integer syncInterval = 30;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -53,5 +59,7 @@ public class CalendarSyncSettingsEntity {
         this.calendarName = calendarName;
         this.syncEnabled = true;
         this.syncDirection = "BIDIRECTIONAL";
+        this.autoSync = true;
+        this.syncInterval = 30;
     }
 }

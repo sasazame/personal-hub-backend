@@ -52,7 +52,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/oidc/**").permitAll()
                 .requestMatchers("/api/v1/.well-known/**").permitAll()
                 .requestMatchers("/api/v1/oauth2/jwks").permitAll()
-                .requestMatchers("/api/v1/auth/me").authenticated()
+                .requestMatchers("/auth/token", "/auth/revoke").permitAll() // OAuth 2.0 endpoints
+                .requestMatchers("/api/v1/auth/me", "/api/v1/auth/logout").authenticated()
                 .requestMatchers("/api/v1/oauth2/userinfo").authenticated()
                 .requestMatchers("/api/v1/todos/**").authenticated()
                 .requestMatchers("/api/v1/users/**").authenticated()
