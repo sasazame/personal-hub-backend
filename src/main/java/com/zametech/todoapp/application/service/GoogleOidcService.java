@@ -116,6 +116,7 @@ public class GoogleOidcService {
                     user.getId(),
                     user.getUsername(),
                     user.getEmail(),
+                    user.getWeekStartDay(),
                     user.getCreatedAt(),
                     user.getUpdatedAt()
             );

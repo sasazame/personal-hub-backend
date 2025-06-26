@@ -4,6 +4,7 @@ import com.zametech.todoapp.application.service.UserService;
 import com.zametech.todoapp.domain.model.User;
 import com.zametech.todoapp.presentation.dto.request.ChangePasswordRequest;
 import com.zametech.todoapp.presentation.dto.request.UpdateUserRequest;
+import com.zametech.todoapp.presentation.dto.request.UpdateWeekStartDayRequest;
 import com.zametech.todoapp.presentation.dto.response.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -59,11 +60,22 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
     
+    @PutMapping("/{id}/week-start-day")
+    public ResponseEntity<UserResponse> updateWeekStartDay(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateWeekStartDayRequest request) {
+        log.info("Updating week start day for user id: {} to day: {}", id, request.getWeekStartDay());
+        User updatedUser = userService.updateWeekStartDay(id, request.getWeekStartDay());
+        UserResponse response = mapToUserResponse(updatedUser);
+        return ResponseEntity.ok(response);
+    }
+    
     private UserResponse mapToUserResponse(User user) {
         return new UserResponse(
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
+                user.getWeekStartDay(),
                 user.getCreatedAt(),
                 user.getUpdatedAt()
         );

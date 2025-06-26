@@ -56,6 +56,7 @@ public class AuthenticationController {
                 currentUser.getId(),
                 currentUser.getUsername(),
                 currentUser.getEmail(),
+                currentUser.getWeekStartDay(),
                 currentUser.getCreatedAt(),
                 currentUser.getUpdatedAt()
         );
