@@ -56,6 +56,7 @@ class UserContextServiceTest {
                 null,
                 null,
                 null,
+                1,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
@@ -128,6 +129,7 @@ class UserContextServiceTest {
                 null,
                 null,
                 null,
+                1,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
@@ -156,6 +158,7 @@ class UserContextServiceTest {
                 null,
                 null,
                 null,
+                1,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
@@ -184,6 +187,7 @@ class UserContextServiceTest {
                 null,
                 null,
                 null,
+                1,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );

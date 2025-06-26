@@ -73,6 +73,7 @@ class AuthenticationServiceTest {
                 null,
                 null,
                 null,
+                1,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
@@ -134,6 +135,7 @@ class AuthenticationServiceTest {
                 null,
                 null,
                 null,
+                1,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
