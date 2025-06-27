@@ -1,5 +1,7 @@
 package com.zametech.todoapp.presentation.controller;
 
+import com.zametech.todoapp.application.goal.dto.GoalWithTrackingResponse;
+import com.zametech.todoapp.application.goal.dto.ToggleAchievementResponse;
 import com.zametech.todoapp.application.service.GoalService;
 import com.zametech.todoapp.domain.model.Goal;
 import com.zametech.todoapp.domain.model.GoalMilestone;
@@ -26,7 +28,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/goals")
+@RequestMapping("/api/v1/goals")
 @RequiredArgsConstructor
 public class GoalController {
     private final GoalService goalService;
@@ -41,9 +43,9 @@ public class GoalController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<GoalResponse> getGoal(@PathVariable Long id) {
-        Goal goal = goalService.getGoalById(id);
-        return ResponseEntity.ok(goalMapper.toGoalResponse(goal));
+    public ResponseEntity<GoalWithTrackingResponse> getGoal(@PathVariable Long id) {
+        GoalWithTrackingResponse goalWithTracking = goalService.getGoalWithTracking(id);
+        return ResponseEntity.ok(goalWithTracking);
     }
 
     @GetMapping
@@ -138,5 +140,20 @@ public class GoalController {
     public ResponseEntity<Void> resetWeeklyGoals() {
         goalService.resetWeeklyGoals();
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/toggle-achievement")
+    public ResponseEntity<ToggleAchievementResponse> toggleAchievement(@PathVariable Long id) {
+        ToggleAchievementResponse response = goalService.toggleAchievement(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/achievement-history")
+    public ResponseEntity<List<GoalProgressResponse>> getAchievementHistory(@PathVariable Long id) {
+        List<GoalProgress> achievements = goalService.getAchievementHistory(id);
+        List<GoalProgressResponse> responses = achievements.stream()
+                .map(goalMapper::toGoalProgressResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
     }
 }

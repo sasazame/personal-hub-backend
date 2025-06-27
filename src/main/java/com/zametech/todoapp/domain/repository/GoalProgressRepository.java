@@ -12,6 +12,7 @@ public interface GoalProgressRepository {
     Optional<GoalProgress> findByGoalIdAndDate(Long goalId, LocalDate date);
     List<GoalProgress> findByGoalId(Long goalId);
     List<GoalProgress> findByGoalIdAndDateRange(Long goalId, LocalDate startDate, LocalDate endDate);
+    List<GoalProgress> findByGoalIdOrderByDateDesc(Long goalId);
     void deleteById(Long id);
     void deleteByGoalId(Long goalId);
 }

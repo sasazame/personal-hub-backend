@@ -1,10 +1,17 @@
 package com.zametech.todoapp.application.service;
 
+import com.zametech.todoapp.application.goal.dto.GoalTrackingInfo;
+import com.zametech.todoapp.application.goal.dto.GoalWithTrackingResponse;
+import com.zametech.todoapp.application.goal.dto.ToggleAchievementResponse;
+import com.zametech.todoapp.domain.goal.model.GoalStreak;
+import com.zametech.todoapp.domain.goal.repository.GoalStreakRepository;
 import com.zametech.todoapp.domain.model.*;
 import com.zametech.todoapp.domain.repository.GoalMilestoneRepository;
 import com.zametech.todoapp.domain.repository.GoalProgressRepository;
 import com.zametech.todoapp.domain.repository.GoalRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +30,7 @@ public class GoalService {
     private final GoalRepository goalRepository;
     private final GoalProgressRepository goalProgressRepository;
     private final GoalMilestoneRepository goalMilestoneRepository;
+    private final GoalStreakRepository goalStreakRepository;
     private final UserContextService userContextService;
 
     public Goal createGoal(Goal goal) {
@@ -207,5 +215,159 @@ public class GoalService {
             goal.setCurrentValue(BigDecimal.ZERO);
             goalRepository.save(goal);
         }
+    }
+
+    public ToggleAchievementResponse toggleAchievement(Long goalId) {
+        UUID userId = userContextService.getCurrentUserId();
+        Goal goal = getGoalById(goalId);
+        
+        LocalDate targetDate = determineTargetDate(goal.getGoalType());
+        
+        // Check if progress exists for the period
+        GoalProgress existingProgress = goalProgressRepository.findByGoalIdAndDate(goalId, targetDate)
+                .orElse(null);
+        
+        boolean achieved;
+        Long progressId;
+        
+        if (existingProgress != null) {
+            // Delete existing progress (uncheck)
+            goalProgressRepository.deleteById(existingProgress.getId());
+            achieved = false;
+            progressId = null;
+        } else {
+            // Create new progress (check)
+            GoalProgress newProgress = new GoalProgress();
+            newProgress.setGoalId(goalId);
+            newProgress.setDate(targetDate);
+            newProgress.setValue(goal.getTargetValue());
+            newProgress.setNote("Achievement toggled via checkbox");
+            
+            GoalProgress savedProgress = goalProgressRepository.save(newProgress);
+            achieved = true;
+            progressId = savedProgress.getId();
+        }
+        
+        // Update goal's current value
+        updateGoalCurrentValue(goal);
+        
+        return new ToggleAchievementResponse(
+                goalId,
+                goal.getGoalType().name(),
+                targetDate.toString(),
+                achieved,
+                progressId
+        );
+    }
+    
+    public GoalWithTrackingResponse getGoalWithTracking(Long goalId) {
+        Goal goal = getGoalById(goalId);
+        GoalTrackingInfo trackingInfo = calculateTrackingInfo(goal);
+        
+        return new GoalWithTrackingResponse(
+                goal.getId(),
+                goal.getTitle(),
+                goal.getDescription(),
+                goal.getGoalType(),
+                goal.getMetricType(),
+                goal.getTargetValue().doubleValue(),
+                goal.getCurrentValue().doubleValue(),
+                goal.getMetricUnit(),
+                goal.getStartDate(),
+                goal.getEndDate(),
+                goal.getStatus(),
+                goal.getCreatedAt(),
+                goal.getUpdatedAt(),
+                trackingInfo
+        );
+    }
+    
+    private GoalTrackingInfo calculateTrackingInfo(Goal goal) {
+        LocalDate startDate = goal.getStartDate();
+        LocalDate endDate = LocalDate.now();
+        
+        // Calculate period-specific dates
+        if (goal.getGoalType() == GoalType.WEEKLY) {
+            User user = userContextService.getCurrentUser();
+            Integer weekStartDay = user.getWeekStartDay() != null ? user.getWeekStartDay() : 1;
+            startDate = getWeekStart(endDate, weekStartDay);
+            endDate = startDate.plusDays(6);
+        } else if (goal.getGoalType() == GoalType.MONTHLY) {
+            startDate = endDate.with(TemporalAdjusters.firstDayOfMonth());
+            endDate = startDate.with(TemporalAdjusters.lastDayOfMonth());
+        } else if (goal.getGoalType() == GoalType.ANNUAL) {
+            startDate = endDate.with(TemporalAdjusters.firstDayOfYear());
+            endDate = startDate.with(TemporalAdjusters.lastDayOfYear());
+        }
+        
+        // Get progress records
+        List<GoalProgress> progressList = goalProgressRepository.findByGoalIdAndDateRange(
+                goal.getId(), startDate, endDate);
+        
+        // Calculate metrics
+        int totalDays = (int) ChronoUnit.DAYS.between(startDate, endDate) + 1;
+        int achievedDays = progressList.size();
+        double achievementRate = totalDays > 0 ? (double) achievedDays / totalDays * 100 : 0;
+        
+        // Get streak info
+        GoalStreak streak = goalStreakRepository.findByGoalId(goal.getId())
+                .orElse(new GoalStreak(goal.getId()));
+        
+        // Check today's status
+        LocalDate today = LocalDate.now();
+        boolean todayAchieved = progressList.stream()
+                .anyMatch(p -> p.getDate().equals(today));
+        
+        String todayStatus = todayAchieved ? "ACHIEVED" : "PENDING";
+        String currentPeriodStatus = goal.getStatus().name();
+        
+        // Check if current period is achieved
+        boolean currentPeriodAchieved = false;
+        LocalDate periodDate = determineTargetDate(goal.getGoalType());
+        if (goal.getGoalType() == GoalType.DAILY) {
+            currentPeriodAchieved = todayAchieved;
+        } else {
+            currentPeriodAchieved = goalProgressRepository.findByGoalIdAndDate(goal.getId(), periodDate)
+                    .isPresent();
+        }
+        
+        return new GoalTrackingInfo(
+                totalDays,
+                achievedDays,
+                achievementRate,
+                streak.getCurrentStreak(),
+                streak.getLongestStreak(),
+                todayStatus,
+                currentPeriodStatus,
+                currentPeriodAchieved
+        );
+    }
+    
+    private LocalDate determineTargetDate(GoalType goalType) {
+        LocalDate today = LocalDate.now();
+        
+        switch (goalType) {
+            case DAILY:
+                return today;
+            case WEEKLY:
+                User user = userContextService.getCurrentUser();
+                Integer weekStartDay = user.getWeekStartDay() != null ? user.getWeekStartDay() : 1;
+                return getWeekStart(today, weekStartDay);
+            case MONTHLY:
+                return today.with(TemporalAdjusters.firstDayOfMonth());
+            case ANNUAL:
+                return today.with(TemporalAdjusters.firstDayOfYear());
+            default:
+                return today;
+        }
+    }
+
+    public List<GoalProgress> getAchievementHistory(Long goalId) {
+        Goal goal = getGoalById(goalId);
+        // Fetch all progress records for the goal
+        List<GoalProgress> progressList = goalProgressRepository.findByGoalId(goalId);
+        // Sort by date descending manually
+        progressList.sort((a, b) -> b.getDate().compareTo(a.getDate()));
+        return progressList;
     }
 }

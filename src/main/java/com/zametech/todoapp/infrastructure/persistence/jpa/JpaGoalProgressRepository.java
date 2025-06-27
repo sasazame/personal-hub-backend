@@ -21,5 +21,8 @@ public interface JpaGoalProgressRepository extends JpaRepository<GoalProgressEnt
                                                        @Param("startDate") LocalDate startDate,
                                                        @Param("endDate") LocalDate endDate);
     
+    @Query("SELECT p FROM GoalProgressEntity p WHERE p.goalId = :goalId ORDER BY p.date DESC")
+    List<GoalProgressEntity> findByGoalIdOrderByDateDesc(@Param("goalId") Long goalId);
+    
     void deleteByGoalId(Long goalId);
 }

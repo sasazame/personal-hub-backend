@@ -49,6 +49,13 @@ public class GoalProgressRepositoryImpl implements GoalProgressRepository {
     }
 
     @Override
+    public List<GoalProgress> findByGoalIdOrderByDateDesc(Long goalId) {
+        return jpaGoalProgressRepository.findByGoalIdOrderByDateDesc(goalId).stream()
+                .map(this::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public void deleteById(Long id) {
         jpaGoalProgressRepository.deleteById(id);
     }
