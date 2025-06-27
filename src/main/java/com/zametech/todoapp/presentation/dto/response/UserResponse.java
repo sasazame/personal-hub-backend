@@ -7,6 +7,7 @@ public record UserResponse(
         UUID id,
         String username,
         String email,
+        Integer weekStartDay,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

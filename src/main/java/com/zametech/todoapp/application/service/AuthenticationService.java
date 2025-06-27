@@ -59,6 +59,7 @@ public class AuthenticationService {
                 savedUser.getId(),
                 savedUser.getUsername(),
                 savedUser.getEmail(),
+                savedUser.getWeekStartDay(),
                 savedUser.getCreatedAt(),
                 savedUser.getUpdatedAt()
         );
@@ -92,6 +93,7 @@ public class AuthenticationService {
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
+                user.getWeekStartDay(),
                 user.getCreatedAt(),
                 user.getUpdatedAt()
         );
@@ -124,6 +126,7 @@ public class AuthenticationService {
                             user.getId(),
                             user.getUsername(),
                             user.getEmail(),
+                            user.getWeekStartDay(),
                             user.getCreatedAt(),
                             user.getUpdatedAt()
                     );

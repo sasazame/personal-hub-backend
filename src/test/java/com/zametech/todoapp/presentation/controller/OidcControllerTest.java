@@ -49,6 +49,7 @@ class OidcControllerTest {
                 UUID.randomUUID(),
                 "testuser",
                 "test@example.com",
+                1,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );

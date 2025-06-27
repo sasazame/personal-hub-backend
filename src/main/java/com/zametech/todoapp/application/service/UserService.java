@@ -115,4 +115,20 @@ public class UserService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new TodoNotFoundException("User not found with id: " + userId));
     }
+    
+    @Transactional
+    public User updateWeekStartDay(UUID userId, Integer weekStartDay) {
+        UUID currentUserId = userContextService.getCurrentUserId();
+        if (!currentUserId.equals(userId)) {
+            throw new AccessDeniedException("You can only update your own settings");
+        }
+        
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new TodoNotFoundException("User not found with id: " + userId));
+        
+        user.setWeekStartDay(weekStartDay);
+        
+        log.info("Updating week start day for userId: {} to day: {}", userId, weekStartDay);
+        return userRepository.save(user);
+    }
 }
