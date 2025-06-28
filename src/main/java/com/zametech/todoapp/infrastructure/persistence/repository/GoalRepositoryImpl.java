@@ -27,7 +27,7 @@ public class GoalRepositoryImpl implements GoalRepository {
     }
 
     @Override
-    public Optional<Goal> findById(String id) {
+    public Optional<Goal> findById(Long id) {
         return jpaGoalRepository.findById(id).map(this::toDomain);
     }
 
@@ -60,12 +60,12 @@ public class GoalRepositoryImpl implements GoalRepository {
     }
 
     @Override
-    public void deleteById(String id) {
+    public void deleteById(Long id) {
         jpaGoalRepository.deleteById(id);
     }
 
     @Override
-    public boolean existsByIdAndUserId(String id, UUID userId) {
+    public boolean existsByIdAndUserId(Long id, UUID userId) {
         return jpaGoalRepository.existsByIdAndUserId(id, userId);
     }
 

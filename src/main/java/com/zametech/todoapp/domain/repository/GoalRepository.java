@@ -10,11 +10,11 @@ import java.util.UUID;
 
 public interface GoalRepository {
     Goal save(Goal goal);
-    Optional<Goal> findById(String id);
+    Optional<Goal> findById(Long id);
     List<Goal> findByUserId(UUID userId);
     List<Goal> findByUserIdAndIsActive(UUID userId, Boolean isActive);
     List<Goal> findByUserIdAndGoalType(UUID userId, GoalType goalType);
     List<Goal> findByUserIdAndDateBetween(UUID userId, LocalDate date);
-    void deleteById(String id);
-    boolean existsByIdAndUserId(String id, UUID userId);
+    void deleteById(Long id);
+    boolean existsByIdAndUserId(Long id, UUID userId);
 }

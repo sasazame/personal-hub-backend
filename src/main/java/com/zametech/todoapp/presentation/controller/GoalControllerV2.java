@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/v1/goals")
+@RequestMapping("/api/v2/goals")
 @RequiredArgsConstructor
 public class GoalControllerV2 {
     private final GoalServiceV2 goalService;
@@ -34,21 +34,21 @@ public class GoalControllerV2 {
 
     @PutMapping("/{id}")
     public ResponseEntity<Goal> updateGoal(
-            @PathVariable String id,
+            @PathVariable Long id,
             @Valid @RequestBody UpdateGoalRequest request) {
         Goal goal = goalService.updateGoal(id, request);
         return ResponseEntity.ok(goal);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteGoal(@PathVariable String id) {
+    public ResponseEntity<Void> deleteGoal(@PathVariable Long id) {
         goalService.deleteGoal(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/achievements")
     public ResponseEntity<Void> toggleAchievement(
-            @PathVariable String id,
+            @PathVariable Long id,
             @RequestBody(required = false) ToggleAchievementRequest request) {
         LocalDate date = request != null && request.date() != null ? request.date() : LocalDate.now();
         goalService.toggleAchievement(id, date);
@@ -57,7 +57,7 @@ public class GoalControllerV2 {
 
     @DeleteMapping("/{id}/achievements")
     public ResponseEntity<Void> deleteAchievement(
-            @PathVariable String id,
+            @PathVariable Long id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         goalService.toggleAchievement(id, date);
         return ResponseEntity.noContent().build();
@@ -65,7 +65,7 @@ public class GoalControllerV2 {
 
     @GetMapping("/{id}/achievements")
     public ResponseEntity<AchievementHistoryResponse> getAchievementHistory(
-            @PathVariable String id,
+            @PathVariable Long id,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         AchievementHistoryResponse response = goalService.getAchievementHistory(id, from, to);

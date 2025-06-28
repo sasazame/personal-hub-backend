@@ -33,7 +33,7 @@ public class GoalController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<GoalWithTrackingResponse> getGoal(@PathVariable String id) {
+    public ResponseEntity<GoalWithTrackingResponse> getGoal(@PathVariable Long id) {
         GoalWithTrackingResponse goalWithTracking = goalService.getGoalWithTracking(id);
         return ResponseEntity.ok(goalWithTracking);
     }
@@ -67,7 +67,7 @@ public class GoalController {
 
     @PutMapping("/{id}")
     public ResponseEntity<GoalResponse> updateGoal(
-            @PathVariable String id,
+            @PathVariable Long id,
             @Valid @RequestBody UpdateGoalRequest request) {
         Goal goalUpdate = new Goal();
         goalUpdate.setTitle(request.getTitle());
@@ -80,7 +80,7 @@ public class GoalController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteGoal(@PathVariable String id) {
+    public ResponseEntity<Void> deleteGoal(@PathVariable Long id) {
         goalService.deleteGoal(id);
         return ResponseEntity.noContent().build();
     }
@@ -92,7 +92,7 @@ public class GoalController {
     }
 
     @PostMapping("/{id}/toggle-achievement")
-    public ResponseEntity<ToggleAchievementResponse> toggleAchievement(@PathVariable String id) {
+    public ResponseEntity<ToggleAchievementResponse> toggleAchievement(@PathVariable Long id) {
         ToggleAchievementResponse response = goalService.toggleAchievement(id);
         return ResponseEntity.ok(response);
     }

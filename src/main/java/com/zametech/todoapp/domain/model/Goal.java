@@ -12,7 +12,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Goal {
-    private String id;
+    private Long id;
     private UUID userId;
     private String title;
     private String description;

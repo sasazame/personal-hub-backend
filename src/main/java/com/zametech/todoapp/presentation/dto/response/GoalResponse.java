@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GoalResponse {
-    private String id;
+    private Long id;
     private String title;
     private String description;
     private GoalType goalType;

@@ -25,19 +25,19 @@ public class GoalAchievementHistoryRepositoryImpl implements GoalAchievementHist
     }
 
     @Override
-    public Optional<GoalAchievementHistory> findByGoalIdAndAchievedDate(String goalId, LocalDate achievedDate) {
+    public Optional<GoalAchievementHistory> findByGoalIdAndAchievedDate(Long goalId, LocalDate achievedDate) {
         return jpaRepository.findByGoalIdAndAchievedDate(goalId, achievedDate).map(this::toDomain);
     }
 
     @Override
-    public List<GoalAchievementHistory> findByGoalId(String goalId) {
+    public List<GoalAchievementHistory> findByGoalId(Long goalId) {
         return jpaRepository.findByGoalId(goalId).stream()
                 .map(this::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<GoalAchievementHistory> findByGoalIdAndAchievedDateBetween(String goalId, LocalDate startDate, LocalDate endDate) {
+    public List<GoalAchievementHistory> findByGoalIdAndAchievedDateBetween(Long goalId, LocalDate startDate, LocalDate endDate) {
         return jpaRepository.findByGoalIdAndAchievedDateBetween(goalId, startDate, endDate).stream()
                 .map(this::toDomain)
                 .collect(Collectors.toList());
@@ -50,17 +50,17 @@ public class GoalAchievementHistoryRepositoryImpl implements GoalAchievementHist
     }
 
     @Override
-    public void deleteByGoalIdAndAchievedDate(String goalId, LocalDate achievedDate) {
+    public void deleteByGoalIdAndAchievedDate(Long goalId, LocalDate achievedDate) {
         jpaRepository.deleteByGoalIdAndAchievedDate(goalId, achievedDate);
     }
 
     @Override
-    public long countByGoalId(String goalId) {
+    public long countByGoalId(Long goalId) {
         return jpaRepository.countByGoalId(goalId);
     }
 
     @Override
-    public long countByGoalIdAndAchievedDateBetween(String goalId, LocalDate startDate, LocalDate endDate) {
+    public long countByGoalIdAndAchievedDateBetween(Long goalId, LocalDate startDate, LocalDate endDate) {
         return jpaRepository.countByGoalIdAndAchievedDateBetween(goalId, startDate, endDate);
     }
 

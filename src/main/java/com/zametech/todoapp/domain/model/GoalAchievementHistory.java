@@ -11,8 +11,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GoalAchievementHistory {
-    private String id;
-    private String goalId;
+    private Long id;
+    private Long goalId;
     private LocalDate achievedDate;
     private LocalDateTime createdAt;
 }

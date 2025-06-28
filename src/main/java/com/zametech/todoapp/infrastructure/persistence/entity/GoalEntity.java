@@ -19,8 +19,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class GoalEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "user_id", nullable = false)
     private UUID userId;

@@ -17,11 +17,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class GoalAchievementHistoryEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     
     @Column(name = "goal_id", nullable = false)
-    private String goalId;
+    private Long goalId;
     
     @Column(name = "achieved_date", nullable = false)
     private LocalDate achievedDate;

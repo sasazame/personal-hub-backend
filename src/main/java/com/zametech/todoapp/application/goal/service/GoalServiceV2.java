@@ -80,7 +80,7 @@ public class GoalServiceV2 {
         return goalRepository.save(goal);
     }
 
-    public Goal updateGoal(String goalId, UpdateGoalRequest request) {
+    public Goal updateGoal(Long goalId, UpdateGoalRequest request) {
         UUID userId = userContextService.getCurrentUserId();
         Goal goal = goalRepository.findById(goalId)
                 .filter(g -> g.getUserId().equals(userId))
@@ -96,7 +96,7 @@ public class GoalServiceV2 {
         return goalRepository.save(goal);
     }
 
-    public void deleteGoal(String goalId) {
+    public void deleteGoal(Long goalId) {
         UUID userId = userContextService.getCurrentUserId();
         if (!goalRepository.existsByIdAndUserId(goalId, userId)) {
             throw new RuntimeException("Goal not found or access denied");
@@ -106,7 +106,7 @@ public class GoalServiceV2 {
         goalRepository.deleteById(goalId);
     }
 
-    public void toggleAchievement(String goalId, LocalDate date) {
+    public void toggleAchievement(Long goalId, LocalDate date) {
         UUID userId = userContextService.getCurrentUserId();
         Goal goal = goalRepository.findById(goalId)
                 .filter(g -> g.getUserId().equals(userId))
@@ -131,7 +131,7 @@ public class GoalServiceV2 {
         }
     }
 
-    public AchievementHistoryResponse getAchievementHistory(String goalId, LocalDate from, LocalDate to) {
+    public AchievementHistoryResponse getAchievementHistory(Long goalId, LocalDate from, LocalDate to) {
         UUID userId = userContextService.getCurrentUserId();
         Goal goal = goalRepository.findById(goalId)
                 .filter(g -> g.getUserId().equals(userId))

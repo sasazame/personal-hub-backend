@@ -8,11 +8,11 @@ import java.util.Optional;
 
 public interface GoalAchievementHistoryRepository {
     GoalAchievementHistory save(GoalAchievementHistory achievement);
-    Optional<GoalAchievementHistory> findByGoalIdAndAchievedDate(String goalId, LocalDate achievedDate);
-    List<GoalAchievementHistory> findByGoalId(String goalId);
-    List<GoalAchievementHistory> findByGoalIdAndAchievedDateBetween(String goalId, LocalDate startDate, LocalDate endDate);
+    Optional<GoalAchievementHistory> findByGoalIdAndAchievedDate(Long goalId, LocalDate achievedDate);
+    List<GoalAchievementHistory> findByGoalId(Long goalId);
+    List<GoalAchievementHistory> findByGoalIdAndAchievedDateBetween(Long goalId, LocalDate startDate, LocalDate endDate);
     void delete(GoalAchievementHistory achievement);
-    void deleteByGoalIdAndAchievedDate(String goalId, LocalDate achievedDate);
-    long countByGoalId(String goalId);
-    long countByGoalIdAndAchievedDateBetween(String goalId, LocalDate startDate, LocalDate endDate);
+    void deleteByGoalIdAndAchievedDate(Long goalId, LocalDate achievedDate);
+    long countByGoalId(Long goalId);
+    long countByGoalIdAndAchievedDateBetween(Long goalId, LocalDate startDate, LocalDate endDate);
 }

@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public record GoalResponse(
-        String id,
+        Long id,
         String title,
         String description,
         GoalType goalType,

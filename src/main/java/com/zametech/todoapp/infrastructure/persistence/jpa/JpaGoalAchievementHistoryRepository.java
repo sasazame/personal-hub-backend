@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface JpaGoalAchievementHistoryRepository extends JpaRepository<GoalAchievementHistoryEntity, String> {
-    Optional<GoalAchievementHistoryEntity> findByGoalIdAndAchievedDate(String goalId, LocalDate achievedDate);
-    List<GoalAchievementHistoryEntity> findByGoalId(String goalId);
-    List<GoalAchievementHistoryEntity> findByGoalIdAndAchievedDateBetween(String goalId, LocalDate startDate, LocalDate endDate);
-    void deleteByGoalIdAndAchievedDate(String goalId, LocalDate achievedDate);
-    long countByGoalId(String goalId);
-    long countByGoalIdAndAchievedDateBetween(String goalId, LocalDate startDate, LocalDate endDate);
+public interface JpaGoalAchievementHistoryRepository extends JpaRepository<GoalAchievementHistoryEntity, Long> {
+    Optional<GoalAchievementHistoryEntity> findByGoalIdAndAchievedDate(Long goalId, LocalDate achievedDate);
+    List<GoalAchievementHistoryEntity> findByGoalId(Long goalId);
+    List<GoalAchievementHistoryEntity> findByGoalIdAndAchievedDateBetween(Long goalId, LocalDate startDate, LocalDate endDate);
+    void deleteByGoalIdAndAchievedDate(Long goalId, LocalDate achievedDate);
+    long countByGoalId(Long goalId);
+    long countByGoalIdAndAchievedDateBetween(Long goalId, LocalDate startDate, LocalDate endDate);
 }

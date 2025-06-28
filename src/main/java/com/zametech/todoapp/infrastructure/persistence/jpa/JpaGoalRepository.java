@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface JpaGoalRepository extends JpaRepository<GoalEntity, String> {
+public interface JpaGoalRepository extends JpaRepository<GoalEntity, Long> {
     List<GoalEntity> findByUserId(UUID userId);
     List<GoalEntity> findByUserIdAndIsActive(UUID userId, Boolean isActive);
     List<GoalEntity> findByUserIdAndGoalType(UUID userId, GoalType goalType);
     List<GoalEntity> findByUserIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(UUID userId, LocalDate startDate, LocalDate endDate);
-    boolean existsByIdAndUserId(String id, UUID userId);
+    boolean existsByIdAndUserId(Long id, UUID userId);
 }

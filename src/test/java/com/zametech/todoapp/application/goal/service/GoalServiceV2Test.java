@@ -22,6 +22,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class GoalServiceV2Test {
@@ -49,7 +50,7 @@ class GoalServiceV2Test {
         testUser.setWeekStartDay(1); // Monday
 
         when(userContextService.getCurrentUserId()).thenReturn(userId);
-        when(userContextService.getCurrentUser()).thenReturn(testUser);
+        lenient().when(userContextService.getCurrentUser()).thenReturn(testUser);
     }
 
     @Test
@@ -100,7 +101,7 @@ class GoalServiceV2Test {
         );
 
         Goal savedGoal = new Goal();
-        savedGoal.setId("goal-id");
+        savedGoal.setId(1L);
         savedGoal.setTitle(request.title());
         savedGoal.setGoalType(request.goalType());
         savedGoal.setStartDate(LocalDate.of(2025, 1, 1));
@@ -123,7 +124,7 @@ class GoalServiceV2Test {
     @Test
     void updateGoal_ShouldUpdateExistingGoal() {
         // Given
-        String goalId = "goal-id";
+        Long goalId = 1L;
         Goal existingGoal = createTestGoal(goalId, GoalType.DAILY, true);
         UpdateGoalRequest request = new UpdateGoalRequest(
                 "Updated Title",
@@ -147,7 +148,7 @@ class GoalServiceV2Test {
     @Test
     void deleteGoal_ShouldDeleteGoal() {
         // Given
-        String goalId = "goal-id";
+        Long goalId = 1L;
         when(goalRepository.existsByIdAndUserId(goalId, userId)).thenReturn(true);
 
         // When
@@ -160,7 +161,7 @@ class GoalServiceV2Test {
     @Test
     void toggleAchievement_ShouldAddAchievement() {
         // Given
-        String goalId = "goal-id";
+        Long goalId = 1L;
         LocalDate achievementDate = LocalDate.now();
         Goal goal = createTestGoal(goalId, GoalType.DAILY, true);
 
@@ -178,11 +179,11 @@ class GoalServiceV2Test {
     @Test
     void toggleAchievement_ShouldRemoveExistingAchievement() {
         // Given
-        String goalId = "goal-id";
+        Long goalId = 1L;
         LocalDate achievementDate = LocalDate.now();
         Goal goal = createTestGoal(goalId, GoalType.DAILY, true);
         GoalAchievementHistory existingAchievement = new GoalAchievementHistory();
-        existingAchievement.setId("achievement-id");
+        existingAchievement.setId(1L);
         existingAchievement.setGoalId(goalId);
         existingAchievement.setAchievedDate(achievementDate);
 
@@ -200,7 +201,7 @@ class GoalServiceV2Test {
     @Test
     void getAchievementHistory_ShouldReturnCorrectHistory() {
         // Given
-        String goalId = "goal-id";
+        Long goalId = 1L;
         LocalDate startDate = LocalDate.of(2025, 1, 1);
         LocalDate endDate = LocalDate.of(2025, 1, 5);
         Goal goal = createTestGoal(goalId, GoalType.DAILY, true);
@@ -229,7 +230,7 @@ class GoalServiceV2Test {
     @Test
     void calculateStreak_ShouldReturnCorrectStreaks() {
         // Given
-        String goalId = "goal-id";
+        Long goalId = 1L;
         LocalDate today = LocalDate.now();
         List<Goal> goals = Arrays.asList(createTestGoal(goalId, GoalType.DAILY, true));
         
@@ -263,19 +264,19 @@ class GoalServiceV2Test {
         List<Goal> goals = new ArrayList<>();
         
         // Active daily goal
-        goals.add(createTestGoal("daily-1", GoalType.DAILY, true));
+        goals.add(createTestGoal(1L, GoalType.DAILY, true));
         
         // Active weekly goal
-        goals.add(createTestGoal("weekly-1", GoalType.WEEKLY, true));
+        goals.add(createTestGoal(2L, GoalType.WEEKLY, true));
         
         // Inactive monthly goal
-        Goal monthlyGoal = createTestGoal("monthly-1", GoalType.MONTHLY, false);
+        Goal monthlyGoal = createTestGoal(3L, GoalType.MONTHLY, false);
         goals.add(monthlyGoal);
         
         return goals;
     }
 
-    private Goal createTestGoal(String id, GoalType type, boolean isActive) {
+    private Goal createTestGoal(Long id, GoalType type, boolean isActive) {
         Goal goal = new Goal();
         goal.setId(id);
         goal.setUserId(userId);
@@ -290,9 +291,9 @@ class GoalServiceV2Test {
         return goal;
     }
 
-    private GoalAchievementHistory createAchievement(String goalId, LocalDate date) {
+    private GoalAchievementHistory createAchievement(Long goalId, LocalDate date) {
         GoalAchievementHistory achievement = new GoalAchievementHistory();
-        achievement.setId(UUID.randomUUID().toString());
+        achievement.setId(Long.valueOf(UUID.randomUUID().hashCode()));
         achievement.setGoalId(goalId);
         achievement.setAchievedDate(date);
         achievement.setCreatedAt(LocalDateTime.now());
