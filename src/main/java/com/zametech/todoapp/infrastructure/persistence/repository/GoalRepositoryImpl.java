@@ -1,7 +1,6 @@
 package com.zametech.todoapp.infrastructure.persistence.repository;
 
 import com.zametech.todoapp.domain.model.Goal;
-import com.zametech.todoapp.domain.model.GoalStatus;
 import com.zametech.todoapp.domain.model.GoalType;
 import com.zametech.todoapp.domain.repository.GoalRepository;
 import com.zametech.todoapp.infrastructure.persistence.entity.GoalEntity;
@@ -28,7 +27,7 @@ public class GoalRepositoryImpl implements GoalRepository {
     }
 
     @Override
-    public Optional<Goal> findById(Long id) {
+    public Optional<Goal> findById(String id) {
         return jpaGoalRepository.findById(id).map(this::toDomain);
     }
 
@@ -40,8 +39,8 @@ public class GoalRepositoryImpl implements GoalRepository {
     }
 
     @Override
-    public List<Goal> findByUserIdAndStatus(UUID userId, GoalStatus status) {
-        return jpaGoalRepository.findByUserIdAndStatus(userId, status).stream()
+    public List<Goal> findByUserIdAndIsActive(UUID userId, Boolean isActive) {
+        return jpaGoalRepository.findByUserIdAndIsActive(userId, isActive).stream()
                 .map(this::toDomain)
                 .collect(Collectors.toList());
     }
@@ -54,19 +53,19 @@ public class GoalRepositoryImpl implements GoalRepository {
     }
 
     @Override
-    public List<Goal> findActiveGoalsByUserIdAndDateRange(UUID userId, LocalDate startDate, LocalDate endDate) {
-        return jpaGoalRepository.findActiveGoalsByUserIdAndDateRange(userId, startDate, endDate).stream()
+    public List<Goal> findByUserIdAndDateBetween(UUID userId, LocalDate date) {
+        return jpaGoalRepository.findByUserIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(userId, date, date).stream()
                 .map(this::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public void deleteById(Long id) {
+    public void deleteById(String id) {
         jpaGoalRepository.deleteById(id);
     }
 
     @Override
-    public boolean existsByIdAndUserId(Long id, UUID userId) {
+    public boolean existsByIdAndUserId(String id, UUID userId) {
         return jpaGoalRepository.existsByIdAndUserId(id, userId);
     }
 
@@ -77,13 +76,9 @@ public class GoalRepositoryImpl implements GoalRepository {
         goal.setTitle(entity.getTitle());
         goal.setDescription(entity.getDescription());
         goal.setGoalType(entity.getGoalType());
-        goal.setMetricType(entity.getMetricType());
-        goal.setMetricUnit(entity.getMetricUnit());
-        goal.setTargetValue(entity.getTargetValue());
-        goal.setCurrentValue(entity.getCurrentValue());
+        goal.setIsActive(entity.getIsActive());
         goal.setStartDate(entity.getStartDate());
         goal.setEndDate(entity.getEndDate());
-        goal.setStatus(entity.getStatus());
         goal.setCreatedAt(entity.getCreatedAt());
         goal.setUpdatedAt(entity.getUpdatedAt());
         return goal;
@@ -96,13 +91,9 @@ public class GoalRepositoryImpl implements GoalRepository {
         entity.setTitle(goal.getTitle());
         entity.setDescription(goal.getDescription());
         entity.setGoalType(goal.getGoalType());
-        entity.setMetricType(goal.getMetricType());
-        entity.setMetricUnit(goal.getMetricUnit());
-        entity.setTargetValue(goal.getTargetValue());
-        entity.setCurrentValue(goal.getCurrentValue());
+        entity.setIsActive(goal.getIsActive());
         entity.setStartDate(goal.getStartDate());
         entity.setEndDate(goal.getEndDate());
-        entity.setStatus(goal.getStatus());
         entity.setCreatedAt(goal.getCreatedAt());
         entity.setUpdatedAt(goal.getUpdatedAt());
         return entity;

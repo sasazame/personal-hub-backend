@@ -1,9 +1,9 @@
 package com.zametech.todoapp.application.goal.dto;
 
 public record ToggleAchievementResponse(
-    Long goalId,
+    String goalId,
     String periodType,
     String periodDate,
     boolean achieved,
-    Long progressId
+    String achievementId
 ) {}
