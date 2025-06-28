@@ -47,6 +47,9 @@ public class UserEntity {
 
     private String locale;
 
+    @Column(name = "week_start_day")
+    private Integer weekStartDay = 1;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -1,7 +1,6 @@
 package com.zametech.todoapp.domain.repository;
 
 import com.zametech.todoapp.domain.model.Goal;
-import com.zametech.todoapp.domain.model.GoalStatus;
 import com.zametech.todoapp.domain.model.GoalType;
 
 import java.time.LocalDate;
@@ -13,9 +12,9 @@ public interface GoalRepository {
     Goal save(Goal goal);
     Optional<Goal> findById(Long id);
     List<Goal> findByUserId(UUID userId);
-    List<Goal> findByUserIdAndStatus(UUID userId, GoalStatus status);
+    List<Goal> findByUserIdAndIsActive(UUID userId, Boolean isActive);
     List<Goal> findByUserIdAndGoalType(UUID userId, GoalType goalType);
-    List<Goal> findActiveGoalsByUserIdAndDateRange(UUID userId, LocalDate startDate, LocalDate endDate);
+    List<Goal> findByUserIdAndDateBetween(UUID userId, LocalDate date);
     void deleteById(Long id);
     boolean existsByIdAndUserId(Long id, UUID userId);
 }

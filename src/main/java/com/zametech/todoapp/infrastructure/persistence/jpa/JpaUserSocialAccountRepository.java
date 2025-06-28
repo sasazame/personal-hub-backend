@@ -1,6 +1,6 @@
 package com.zametech.todoapp.infrastructure.persistence.jpa;
 
-import com.zametech.todoapp.domain.model.UserSocialAccount;
+import com.zametech.todoapp.infrastructure.persistence.entity.UserSocialAccountEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -12,16 +12,16 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface JpaUserSocialAccountRepository extends JpaRepository<UserSocialAccount, UUID> {
-    Optional<UserSocialAccount> findByProviderAndProviderUserId(String provider, String providerUserId);
+public interface JpaUserSocialAccountRepository extends JpaRepository<UserSocialAccountEntity, UUID> {
+    Optional<UserSocialAccountEntity> findByProviderAndProviderUserId(String provider, String providerUserId);
     
-    @Query("SELECT usa FROM UserSocialAccount usa WHERE usa.user.id = :userId AND usa.provider = :provider")
-    Optional<UserSocialAccount> findByUserIdAndProvider(@Param("userId") UUID userId, @Param("provider") String provider);
+    @Query("SELECT usa FROM UserSocialAccountEntity usa WHERE usa.user.id = :userId AND usa.provider = :provider")
+    Optional<UserSocialAccountEntity> findByUserIdAndProvider(@Param("userId") UUID userId, @Param("provider") String provider);
     
-    List<UserSocialAccount> findByUserId(UUID userId);
+    List<UserSocialAccountEntity> findByUserId(UUID userId);
     
     @Modifying
-    @Query("DELETE FROM UserSocialAccount usa WHERE usa.user.id = :userId AND usa.provider = :provider")
+    @Query("DELETE FROM UserSocialAccountEntity usa WHERE usa.user.id = :userId AND usa.provider = :provider")
     void deleteByUserIdAndProvider(@Param("userId") UUID userId, @Param("provider") String provider);
     
     boolean existsByProviderAndProviderUserId(String provider, String providerUserId);

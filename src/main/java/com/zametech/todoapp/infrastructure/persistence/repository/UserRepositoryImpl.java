@@ -64,6 +64,7 @@ public class UserRepositoryImpl implements UserRepository {
         user.setGivenName(entity.getGivenName());
         user.setFamilyName(entity.getFamilyName());
         user.setLocale(entity.getLocale());
+        user.setWeekStartDay(entity.getWeekStartDay());
         user.setCreatedAt(entity.getCreatedAt());
         user.setUpdatedAt(entity.getUpdatedAt());
         return user;
@@ -81,6 +82,7 @@ public class UserRepositoryImpl implements UserRepository {
         entity.setGivenName(user.getGivenName());
         entity.setFamilyName(user.getFamilyName());
         entity.setLocale(user.getLocale());
+        entity.setWeekStartDay(user.getWeekStartDay());
         entity.setCreatedAt(user.getCreatedAt());
         entity.setUpdatedAt(user.getUpdatedAt());
         return entity;
