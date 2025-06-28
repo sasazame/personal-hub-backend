@@ -228,6 +228,106 @@ class GoalServiceV2Test {
     }
 
     @Test
+    void getGoalsByDateAndFilter_WeeklyGoal_ShouldShowCompletedIfAchievedAnyDayInWeek() {
+        // Given
+        LocalDate testDate = LocalDate.of(2025, 1, 15); // Wednesday
+        LocalDate weekStart = LocalDate.of(2025, 1, 13); // Monday
+        Long goalId = 1L;
+        
+        Goal weeklyGoal = createTestGoal(goalId, GoalType.WEEKLY, true);
+        when(goalRepository.findByUserId(userId)).thenReturn(Arrays.asList(weeklyGoal));
+        
+        // Achievement on Tuesday (not the week start)
+        GoalAchievementHistory achievement = createAchievement(goalId, LocalDate.of(2025, 1, 14));
+        when(achievementRepository.findByGoalIdAndAchievedDateBetween(
+                goalId, weekStart, weekStart.plusDays(6)))
+                .thenReturn(Arrays.asList(achievement));
+        when(achievementRepository.findByGoalId(goalId)).thenReturn(Arrays.asList(achievement));
+
+        // When
+        GroupedGoalsResponse response = goalService.getGoalsByDateAndFilter(testDate, "active");
+
+        // Then
+        assertEquals(1, response.weekly().size());
+        GoalResponse goalResponse = response.weekly().get(0);
+        assertTrue(goalResponse.completed(), "Weekly goal should be marked as completed");
+    }
+
+    @Test
+    void getGoalsByDateAndFilter_MonthlyGoal_ShouldShowCompletedIfAchievedAnyDayInMonth() {
+        // Given
+        LocalDate testDate = LocalDate.of(2025, 1, 20); // January 20th
+        Long goalId = 1L;
+        
+        Goal monthlyGoal = createTestGoal(goalId, GoalType.MONTHLY, true);
+        when(goalRepository.findByUserId(userId)).thenReturn(Arrays.asList(monthlyGoal));
+        
+        // Achievement on January 5th (not the first day of month)
+        GoalAchievementHistory achievement = createAchievement(goalId, LocalDate.of(2025, 1, 5));
+        when(achievementRepository.findByGoalIdAndAchievedDateBetween(
+                goalId, LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31)))
+                .thenReturn(Arrays.asList(achievement));
+        when(achievementRepository.findByGoalId(goalId)).thenReturn(Arrays.asList(achievement));
+
+        // When
+        GroupedGoalsResponse response = goalService.getGoalsByDateAndFilter(testDate, "active");
+
+        // Then
+        assertEquals(1, response.monthly().size());
+        GoalResponse goalResponse = response.monthly().get(0);
+        assertTrue(goalResponse.completed(), "Monthly goal should be marked as completed");
+    }
+
+    @Test
+    void getGoalsByDateAndFilter_AnnualGoal_ShouldShowCompletedIfAchievedAnyDayInYear() {
+        // Given
+        LocalDate testDate = LocalDate.of(2025, 6, 15); // June 15th
+        Long goalId = 1L;
+        
+        Goal annualGoal = createTestGoal(goalId, GoalType.ANNUAL, true);
+        when(goalRepository.findByUserId(userId)).thenReturn(Arrays.asList(annualGoal));
+        
+        // Achievement on March 10th (not the first day of year)
+        GoalAchievementHistory achievement = createAchievement(goalId, LocalDate.of(2025, 3, 10));
+        when(achievementRepository.findByGoalIdAndAchievedDateBetween(
+                goalId, LocalDate.of(2025, 1, 1), LocalDate.of(2025, 12, 31)))
+                .thenReturn(Arrays.asList(achievement));
+        when(achievementRepository.findByGoalId(goalId)).thenReturn(Arrays.asList(achievement));
+
+        // When
+        GroupedGoalsResponse response = goalService.getGoalsByDateAndFilter(testDate, "active");
+
+        // Then
+        assertEquals(1, response.annual().size());
+        GoalResponse goalResponse = response.annual().get(0);
+        assertTrue(goalResponse.completed(), "Annual goal should be marked as completed");
+    }
+
+    @Test
+    void getGoalsByDateAndFilter_DailyGoal_ShouldOnlyShowCompletedForSpecificDay() {
+        // Given
+        LocalDate testDate = LocalDate.of(2025, 1, 15);
+        Long goalId = 1L;
+        
+        Goal dailyGoal = createTestGoal(goalId, GoalType.DAILY, true);
+        when(goalRepository.findByUserId(userId)).thenReturn(Arrays.asList(dailyGoal));
+        
+        // Achievement on different day
+        GoalAchievementHistory achievement = createAchievement(goalId, LocalDate.of(2025, 1, 14));
+        when(achievementRepository.findByGoalIdAndAchievedDate(goalId, testDate))
+                .thenReturn(Optional.empty());
+        when(achievementRepository.findByGoalId(goalId)).thenReturn(Arrays.asList(achievement));
+
+        // When
+        GroupedGoalsResponse response = goalService.getGoalsByDateAndFilter(testDate, "active");
+
+        // Then
+        assertEquals(1, response.daily().size());
+        GoalResponse goalResponse = response.daily().get(0);
+        assertFalse(goalResponse.completed(), "Daily goal should not be marked as completed for different day");
+    }
+
+    @Test
     void calculateStreak_ShouldReturnCorrectStreaks() {
         // Given
         Long goalId = 1L;

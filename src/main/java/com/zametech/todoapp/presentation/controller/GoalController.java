@@ -1,82 +1,43 @@
 package com.zametech.todoapp.presentation.controller;
 
-import com.zametech.todoapp.application.goal.dto.GoalWithTrackingResponse;
-import com.zametech.todoapp.application.goal.dto.ToggleAchievementResponse;
-import com.zametech.todoapp.application.service.GoalService;
+import com.zametech.todoapp.application.goal.dto.*;
+import com.zametech.todoapp.application.goal.service.GoalServiceV2;
 import com.zametech.todoapp.domain.model.Goal;
-import com.zametech.todoapp.domain.model.GoalType;
-import com.zametech.todoapp.presentation.dto.request.CreateGoalRequest;
-import com.zametech.todoapp.presentation.dto.request.UpdateGoalRequest;
-import com.zametech.todoapp.presentation.dto.response.GoalResponse;
-import com.zametech.todoapp.presentation.mapper.GoalMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/v1/goals")
 @RequiredArgsConstructor
 public class GoalController {
-    private final GoalService goalService;
-    private final GoalMapper goalMapper;
-
-    @PostMapping
-    public ResponseEntity<GoalResponse> createGoal(@Valid @RequestBody CreateGoalRequest request) {
-        Goal goal = goalMapper.toGoal(request);
-        Goal createdGoal = goalService.createGoal(goal);
-        return ResponseEntity.status(HttpStatus.CREATED).body(goalMapper.toGoalResponse(createdGoal));
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<GoalWithTrackingResponse> getGoal(@PathVariable Long id) {
-        GoalWithTrackingResponse goalWithTracking = goalService.getGoalWithTracking(id);
-        return ResponseEntity.ok(goalWithTracking);
-    }
+    private final GoalServiceV2 goalService;
 
     @GetMapping
-    public ResponseEntity<List<GoalResponse>> getUserGoals() {
-        List<Goal> goals = goalService.getUserGoals();
-        List<GoalResponse> responses = goals.stream()
-                .map(goalMapper::toGoalResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+    public ResponseEntity<GroupedGoalsResponse> getGoals(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false, defaultValue = "active") String filter) {
+        GroupedGoalsResponse response = goalService.getGoalsByDateAndFilter(date, filter);
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/active")
-    public ResponseEntity<List<GoalResponse>> getActiveGoals() {
-        List<Goal> goals = goalService.getActiveGoals();
-        List<GoalResponse> responses = goals.stream()
-                .map(goalMapper::toGoalResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
-    }
-
-    @GetMapping("/type/{goalType}")
-    public ResponseEntity<List<GoalResponse>> getGoalsByType(@PathVariable GoalType goalType) {
-        List<Goal> goals = goalService.getGoalsByType(goalType);
-        List<GoalResponse> responses = goals.stream()
-                .map(goalMapper::toGoalResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+    @PostMapping
+    public ResponseEntity<Goal> createGoal(@Valid @RequestBody CreateGoalRequest request) {
+        Goal goal = goalService.createGoal(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(goal);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<GoalResponse> updateGoal(
+    public ResponseEntity<Goal> updateGoal(
             @PathVariable Long id,
             @Valid @RequestBody UpdateGoalRequest request) {
-        Goal goalUpdate = new Goal();
-        goalUpdate.setTitle(request.getTitle());
-        goalUpdate.setDescription(request.getDescription());
-        goalUpdate.setIsActive(request.getIsActive());
-        goalUpdate.setEndDate(request.getEndDate());
-        
-        Goal updatedGoal = goalService.updateGoal(id, goalUpdate);
-        return ResponseEntity.ok(goalMapper.toGoalResponse(updatedGoal));
+        Goal goal = goalService.updateGoal(id, request);
+        return ResponseEntity.ok(goal);
     }
 
     @DeleteMapping("/{id}")
@@ -85,15 +46,29 @@ public class GoalController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/reset-weekly")
-    public ResponseEntity<Void> resetWeeklyGoals() {
-        goalService.resetWeeklyGoals();
+    @PostMapping("/{id}/achievements")
+    public ResponseEntity<Void> toggleAchievement(
+            @PathVariable Long id,
+            @RequestBody(required = false) ToggleAchievementRequest request) {
+        LocalDate date = request != null && request.date() != null ? request.date() : LocalDate.now();
+        goalService.toggleAchievement(id, date);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/{id}/toggle-achievement")
-    public ResponseEntity<ToggleAchievementResponse> toggleAchievement(@PathVariable Long id) {
-        ToggleAchievementResponse response = goalService.toggleAchievement(id);
+    @DeleteMapping("/{id}/achievements")
+    public ResponseEntity<Void> deleteAchievement(
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        goalService.toggleAchievement(id, date);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/achievements")
+    public ResponseEntity<AchievementHistoryResponse> getAchievementHistory(
+            @PathVariable Long id,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        AchievementHistoryResponse response = goalService.getAchievementHistory(id, from, to);
         return ResponseEntity.ok(response);
     }
 }

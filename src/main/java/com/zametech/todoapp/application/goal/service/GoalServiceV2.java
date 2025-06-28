@@ -214,8 +214,34 @@ public class GoalServiceV2 {
     }
 
     private boolean isGoalCompletedForPeriod(Goal goal, LocalDate referenceDate) {
-        LocalDate periodDate = calculatePeriodDate(goal.getGoalType(), referenceDate);
-        return achievementRepository.findByGoalIdAndAchievedDate(goal.getId(), periodDate).isPresent();
+        switch (goal.getGoalType()) {
+            case DAILY:
+                // For daily goals, check the specific date
+                return achievementRepository.findByGoalIdAndAchievedDate(goal.getId(), referenceDate).isPresent();
+            
+            case WEEKLY:
+                // For weekly goals, check if achieved any day within the week
+                User user = userContextService.getCurrentUser();
+                Integer weekStartDay = user.getWeekStartDay() != null ? user.getWeekStartDay() : 1;
+                LocalDate weekStart = getWeekStart(referenceDate, weekStartDay);
+                LocalDate weekEnd = weekStart.plusDays(6);
+                return !achievementRepository.findByGoalIdAndAchievedDateBetween(goal.getId(), weekStart, weekEnd).isEmpty();
+            
+            case MONTHLY:
+                // For monthly goals, check if achieved any day within the month
+                LocalDate monthStart = referenceDate.with(TemporalAdjusters.firstDayOfMonth());
+                LocalDate monthEnd = referenceDate.with(TemporalAdjusters.lastDayOfMonth());
+                return !achievementRepository.findByGoalIdAndAchievedDateBetween(goal.getId(), monthStart, monthEnd).isEmpty();
+            
+            case ANNUAL:
+                // For annual goals, check if achieved any day within the year
+                LocalDate yearStart = referenceDate.with(TemporalAdjusters.firstDayOfYear());
+                LocalDate yearEnd = referenceDate.with(TemporalAdjusters.lastDayOfYear());
+                return !achievementRepository.findByGoalIdAndAchievedDateBetween(goal.getId(), yearStart, yearEnd).isEmpty();
+            
+            default:
+                return achievementRepository.findByGoalIdAndAchievedDate(goal.getId(), referenceDate).isPresent();
+        }
     }
 
     private LocalDate calculatePeriodDate(GoalType goalType, LocalDate referenceDate) {

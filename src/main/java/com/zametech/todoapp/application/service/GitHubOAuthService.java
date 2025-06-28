@@ -296,7 +296,7 @@ public class GitHubOAuthService {
      * 既存ユーザー情報をGitHubから更新
      */
     private void updateUserFromGitHub(User user, Map<String, Object> userInfo, Map<String, Object> emailInfo) {
-        if (!user.isEmailVerified() && (boolean) emailInfo.get("verified")) {
+        if (!user.getEmailVerified() && (boolean) emailInfo.get("verified")) {
             user.setEmailVerified(true);
         }
         

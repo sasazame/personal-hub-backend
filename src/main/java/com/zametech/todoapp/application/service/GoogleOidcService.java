@@ -267,7 +267,7 @@ public class GoogleOidcService {
      * 既存ユーザー情報をGoogleから更新
      */
     private void updateUserFromGoogle(User user, GoogleUserInfo userInfo) {
-        if (!user.isEmailVerified() && userInfo.emailVerified()) {
+        if (!user.getEmailVerified() && userInfo.emailVerified()) {
             user.setEmailVerified(true);
         }
         
