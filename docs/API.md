@@ -1,5 +1,7 @@
 # API Specification
 
+> 📌 **Looking for a quick reference?** Check out the [API Reference Guide](API_REFERENCE.md) for a concise overview of all endpoints.
+
 ## Overview
 RESTful API specification for Personal Hub application
 Integrated personal management system providing TODO, calendar, note, and analytics features
