@@ -49,6 +49,7 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
+                .requestMatchers("/api/v1/auth/forgot-password", "/api/v1/auth/reset-password", "/api/v1/auth/validate-reset-token").permitAll()
                 .requestMatchers("/api/v1/auth/oidc/**").permitAll()
                 .requestMatchers("/api/v1/.well-known/**").permitAll()
                 .requestMatchers("/api/v1/oauth2/jwks").permitAll()

@@ -1,12 +1,16 @@
 package com.zametech.todoapp.presentation.controller;
 
 import com.zametech.todoapp.application.service.AuthenticationService;
+import com.zametech.todoapp.application.service.PasswordResetService;
 import com.zametech.todoapp.application.service.UserContextService;
 import com.zametech.todoapp.domain.model.User;
+import com.zametech.todoapp.presentation.dto.request.ForgotPasswordRequest;
 import com.zametech.todoapp.presentation.dto.request.LoginRequest;
 import com.zametech.todoapp.presentation.dto.request.RefreshTokenRequest;
 import com.zametech.todoapp.presentation.dto.request.RegisterRequest;
+import com.zametech.todoapp.presentation.dto.request.ResetPasswordRequest;
 import com.zametech.todoapp.presentation.dto.response.AuthenticationResponse;
+import com.zametech.todoapp.presentation.dto.response.PasswordResetResponse;
 import com.zametech.todoapp.presentation.dto.response.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +27,7 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
     private final UserContextService userContextService;
+    private final PasswordResetService passwordResetService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthenticationResponse> register(
@@ -74,6 +79,47 @@ public class AuthenticationController {
         return ResponseEntity.ok(Map.of(
             "message", "Logout successful",
             "note", "Please remove the token from client storage"
+        ));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<PasswordResetResponse> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request
+    ) {
+        try {
+            passwordResetService.requestPasswordReset(request.email());
+            return ResponseEntity.ok(new PasswordResetResponse(
+                "If an account with this email exists, you will receive a password reset email.",
+                true
+            ));
+        } catch (Exception e) {
+            // Always return success to prevent email enumeration
+            return ResponseEntity.ok(new PasswordResetResponse(
+                "If an account with this email exists, you will receive a password reset email.",
+                true
+            ));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<PasswordResetResponse> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request
+    ) {
+        passwordResetService.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.ok(new PasswordResetResponse(
+            "Password has been successfully reset. You can now login with your new password.",
+            true
+        ));
+    }
+
+    @GetMapping("/validate-reset-token")
+    public ResponseEntity<PasswordResetResponse> validateResetToken(
+            @RequestParam String token
+    ) {
+        passwordResetService.validateToken(token);
+        return ResponseEntity.ok(new PasswordResetResponse(
+            "Token is valid",
+            true
         ));
     }
 }

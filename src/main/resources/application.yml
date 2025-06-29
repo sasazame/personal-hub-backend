@@ -54,6 +54,13 @@ server:
     include-binding-errors: always
 
 app:
+  frontend-url: ${APP_FRONTEND_URL:http://localhost:3000}
+  
+  email:
+    provider: ${APP_EMAIL_PROVIDER:mock} # mock, smtp, sendgrid, or brevo
+    from: ${APP_EMAIL_FROM:noreply@personalhub.com}
+    from-name: ${APP_EMAIL_FROM_NAME:Personal Hub}
+  
   security:
     jwt:
       secret-key: ${JWT_SECRET_KEY:your-secret-key-that-is-at-least-256-bits-long-for-HS256-algorithm-security}
@@ -118,6 +125,29 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+
+spring.mail:
+  host: ${MAIL_HOST:smtp.gmail.com}
+  port: ${MAIL_PORT:587}
+  username: ${MAIL_USERNAME:}
+  password: ${MAIL_PASSWORD:}
+  properties:
+    mail:
+      smtp:
+        auth: true
+        starttls:
+          enable: true
+          required: true
+        timeout: 5000
+        connectiontimeout: 5000
+        writetimeout: 5000
+
+sendgrid:
+  api-key: ${SENDGRID_API_KEY:}
+
+brevo:
+  api-key: ${BREVO_API_KEY:}
+  api-url: ${BREVO_API_URL:https://api.brevo.com/v3}
 
 logging:
   level:
