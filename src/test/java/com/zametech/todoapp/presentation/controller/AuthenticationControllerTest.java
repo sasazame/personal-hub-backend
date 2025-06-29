@@ -1,6 +1,7 @@
 package com.zametech.todoapp.presentation.controller;
 
 import com.zametech.todoapp.application.service.AuthenticationService;
+import com.zametech.todoapp.application.service.PasswordResetService;
 import com.zametech.todoapp.application.service.UserContextService;
 import com.zametech.todoapp.domain.model.User;
 import com.zametech.todoapp.presentation.dto.request.LoginRequest;
@@ -44,6 +45,9 @@ class AuthenticationControllerTest {
     
     @MockBean
     private UserContextService userContextService;
+    
+    @MockBean
+    private PasswordResetService passwordResetService;
 
     @Test
     void shouldRegisterUserSuccessfully() throws Exception {

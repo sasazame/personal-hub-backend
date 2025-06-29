@@ -1,6 +1,8 @@
 package com.zametech.todoapp.presentation.controller;
 
+import com.zametech.todoapp.application.service.GitHubOAuthService;
 import com.zametech.todoapp.application.service.GoogleOidcService;
+import com.zametech.todoapp.application.service.OAuthStateService;
 import com.zametech.todoapp.presentation.dto.request.OidcCallbackRequest;
 import com.zametech.todoapp.presentation.dto.response.AuthenticationResponse;
 import com.zametech.todoapp.presentation.dto.response.UserResponse;
@@ -26,13 +28,28 @@ class OidcControllerTest {
     @Mock
     private GoogleOidcService googleOidcService;
     
+    @Mock
+    private GitHubOAuthService gitHubOAuthService;
+    
+    @Mock
+    private OAuthStateService oAuthStateService;
+    
     @InjectMocks
     private OidcController oidcController;
     
     @Test
     void testInitiateGoogleAuth() {
+        // Arrange
+        String state = "test-state-123";
+        String authUrl = "https://accounts.google.com/oauth2/v2/auth?client_id=test&state=test-state-123";
+        
+        when(oAuthStateService.generateState("google")).thenReturn(state);
+        when(googleOidcService.generateAuthorizationUrl(anyString(), anyString())).thenReturn(authUrl);
+        
+        // Act
         ResponseEntity<?> response = oidcController.initiateGoogleAuth();
         
+        // Assert
         assertThat(response.getStatusCodeValue()).isEqualTo(200);
         assertThat(response.getBody()).isNotNull();
     }
@@ -60,6 +77,7 @@ class OidcControllerTest {
                 userResponse
         );
         
+        when(oAuthStateService.validateStateAndGetProvider("test-state")).thenReturn("google");
         when(googleOidcService.handleCallback(any(OidcCallbackRequest.class), anyString(), anyString()))
                 .thenReturn(authResponse);
         

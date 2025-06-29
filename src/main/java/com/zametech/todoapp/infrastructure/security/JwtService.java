@@ -5,8 +5,12 @@ import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jwt.SignedJWT;
 import com.zametech.todoapp.application.service.JwksService;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
@@ -159,8 +163,12 @@ public class JwtService {
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
+        } catch (ExpiredJwtException | MalformedJwtException | SignatureException | UnsupportedJwtException e) {
+            // Propagate specific JWT exceptions as-is
+            log.error("JWT token validation failed: {}", e.getMessage());
+            throw e;
         } catch (Exception e) {
-            log.error("Failed to parse JWT token with both RS256 and HS256", e);
+            log.error("Unexpected error parsing JWT token", e);
             throw new io.jsonwebtoken.JwtException("Invalid JWT token", e);
         }
     }

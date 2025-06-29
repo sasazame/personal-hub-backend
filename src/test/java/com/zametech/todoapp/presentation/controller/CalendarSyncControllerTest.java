@@ -63,7 +63,7 @@ class CalendarSyncControllerTest {
         when(calendarSyncService.getSyncStatus()).thenReturn(response);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/calendar/sync/status"))
+        mockMvc.perform(get("/api/v1/calendar/sync/status/detailed"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isConnected").value(true))
                 .andExpect(jsonPath("$.syncStatus").value("SUCCESS"))
@@ -82,7 +82,7 @@ class CalendarSyncControllerTest {
         when(calendarSyncSettingsRepository.findByUserId(userId)).thenReturn(List.of());
         
         // When & Then
-        mockMvc.perform(get("/api/v1/calendar/sync/settings"))
+        mockMvc.perform(get("/api/v1/calendar/sync/settings/list"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$").isEmpty());
