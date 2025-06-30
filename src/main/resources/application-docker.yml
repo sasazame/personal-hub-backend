@@ -1,0 +1,22 @@
+spring:
+  # DataSource configuration is handled by DatabaseConfig class
+  # to properly convert render.com DATABASE_URL format
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        show_sql: false
+
+logging:
+  level:
+    root: INFO
+    com.zametech.todoapp: INFO
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
