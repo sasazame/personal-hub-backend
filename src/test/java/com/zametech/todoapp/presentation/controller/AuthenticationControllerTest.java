@@ -22,6 +22,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -159,5 +160,86 @@ class AuthenticationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("test@example.com"))
                 .andExpect(jsonPath("$.username").value("testuser"));
+    }
+    
+    @Test
+    void shouldRefreshTokenSuccessfully() throws Exception {
+        String refreshToken = "refresh-token-12345";
+        
+        UserResponse userResponse = new UserResponse(
+                UUID.randomUUID(),
+                "testuser",
+                "test@example.com",
+                1,
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+        
+        AuthenticationResponse response = new AuthenticationResponse(
+                "new-jwt-token",
+                "new-refresh-token",
+                userResponse
+        );
+        
+        when(authenticationService.refreshToken(refreshToken))
+                .thenReturn(response);
+        
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + refreshToken + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("new-jwt-token"))
+                .andExpect(jsonPath("$.refreshToken").value("new-refresh-token"));
+    }
+    
+    @Test
+    void shouldLogoutSuccessfully() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Logout successful"))
+                .andExpect(jsonPath("$.note").value("Please remove the token from client storage"));
+    }
+    
+    @Test
+    void shouldHandleForgotPasswordRequest() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"test@example.com\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("If an account with this email exists, you will receive a password reset email."))
+                .andExpect(jsonPath("$.success").value(true));
+    }
+    
+    @Test
+    void shouldHandleForgotPasswordRequestWithException() throws Exception {
+        doThrow(new RuntimeException("Service error"))
+                .when(passwordResetService).requestPasswordReset(any());
+        
+        // Should still return success to prevent email enumeration
+        mockMvc.perform(post("/api/v1/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"nonexistent@example.com\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("If an account with this email exists, you will receive a password reset email."))
+                .andExpect(jsonPath("$.success").value(true));
+    }
+    
+    @Test
+    void shouldResetPasswordSuccessfully() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"reset-token-123\",\"newPassword\":\"NewPassword123!\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Password has been successfully reset. You can now login with your new password."))
+                .andExpect(jsonPath("$.success").value(true));
+    }
+    
+    @Test
+    void shouldValidateResetToken() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/validate-reset-token")
+                        .param("token", "valid-token-123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Token is valid"))
+                .andExpect(jsonPath("$.success").value(true));
     }
 }

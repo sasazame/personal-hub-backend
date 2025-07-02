@@ -23,7 +23,7 @@ public class OidcUserInfoController {
     private final OidcUserInfoService userInfoService;
     
     @GetMapping(value = "/userinfo", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getUserInfo(@RequestHeader("Authorization") String authorization) {
+    public ResponseEntity<?> getUserInfo(@RequestHeader(value = "Authorization", required = false) String authorization) {
         try {
             if (authorization == null || !authorization.startsWith("Bearer ")) {
                 return ResponseEntity.status(401).body(Map.of(
@@ -55,7 +55,7 @@ public class OidcUserInfoController {
     }
     
     @PostMapping(value = "/userinfo", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getUserInfoPost(@RequestHeader("Authorization") String authorization) {
+    public ResponseEntity<?> getUserInfoPost(@RequestHeader(value = "Authorization", required = false) String authorization) {
         return getUserInfo(authorization);
     }
 }
