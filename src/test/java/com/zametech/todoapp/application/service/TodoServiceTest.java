@@ -475,4 +475,371 @@ class TodoServiceTest {
         assertThat(response.get(0).title()).isEqualTo("Generated TODO");
         verify(todoRepository).save(any(TodoEntity.class));
     }
+
+    @Test
+    void getRepeatInstances_withValidOriginalTodoId_shouldReturnInstances() {
+        // Given
+        Long originalTodoId = 1L;
+        TodoEntity instance1 = new TodoEntity(
+            userId,
+            "Instance 1",
+            null,
+            TodoStatus.TODO,
+            TodoPriority.MEDIUM,
+            LocalDate.now(),
+            null
+        );
+        instance1.setId(10L);
+        instance1.setOriginalTodoId(originalTodoId);
+        
+        TodoEntity instance2 = new TodoEntity(
+            userId,
+            "Instance 2",
+            null,
+            TodoStatus.TODO,
+            TodoPriority.MEDIUM,
+            LocalDate.now().plusDays(7),
+            null
+        );
+        instance2.setId(11L);
+        instance2.setOriginalTodoId(originalTodoId);
+        
+        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        when(todoRepository.findById(originalTodoId)).thenReturn(Optional.of(todoEntity));
+        when(todoRepository.findByOriginalTodoId(originalTodoId))
+            .thenReturn(Arrays.asList(instance1, instance2));
+
+        // When
+        List<TodoResponse> response = todoService.getRepeatInstances(originalTodoId);
+
+        // Then
+        assertThat(response).hasSize(2);
+        assertThat(response.get(0).originalTodoId()).isEqualTo(originalTodoId);
+        assertThat(response.get(1).originalTodoId()).isEqualTo(originalTodoId);
+    }
+
+    @Test
+    void getRepeatInstances_withNonExistentOriginalTodoId_shouldThrowNotFoundException() {
+        // Given
+        Long nonExistentId = 999L;
+        when(todoRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> todoService.getRepeatInstances(nonExistentId))
+            .isInstanceOf(TodoNotFoundException.class)
+            .hasMessageContaining("999");
+    }
+
+    @Test
+    void getRepeatInstances_fromDifferentUser_shouldThrowAccessDeniedException() {
+        // Given
+        Long originalTodoId = 1L;
+        UUID otherUserId = UUID.randomUUID();
+        when(userContextService.getCurrentUserId()).thenReturn(otherUserId);
+        when(todoRepository.findById(originalTodoId)).thenReturn(Optional.of(todoEntity));
+
+        // When & Then
+        assertThatThrownBy(() -> todoService.getRepeatInstances(originalTodoId))
+            .isInstanceOf(AccessDeniedException.class)
+            .hasMessageContaining("Access denied");
+    }
+
+    @Test
+    void updateTodo_completingRepeatableTask_shouldGenerateNextOccurrence() {
+        // Given
+        TodoEntity repeatableTodo = new TodoEntity(
+            userId,
+            "Daily Task",
+            null,
+            TodoStatus.TODO,
+            TodoPriority.MEDIUM,
+            LocalDate.now(),
+            null,
+            true,
+            RepeatType.DAILY,
+            1,
+            null,
+            null,
+            null,
+            null
+        );
+        repeatableTodo.setId(1L);
+        
+        UpdateTodoRequest request = new UpdateTodoRequest(
+            "Daily Task",
+            null,
+            TodoStatus.DONE,
+            TodoPriority.MEDIUM,
+            LocalDate.now(),
+            null,
+            true,
+            new RepeatConfigRequest(RepeatType.DAILY, 1, null, null, null)
+        );
+        
+        TodoEntity nextOccurrence = new TodoEntity(
+            userId,
+            "Daily Task",
+            null,
+            TodoStatus.TODO,
+            TodoPriority.MEDIUM,
+            LocalDate.now().plusDays(1),
+            null
+        );
+        nextOccurrence.setOriginalTodoId(1L);
+        
+        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        when(todoRepository.findById(1L)).thenReturn(Optional.of(repeatableTodo));
+        when(todoRepository.save(any(TodoEntity.class))).thenAnswer(i -> i.getArguments()[0]);
+        when(repeatService.generateNextOccurrence(any(TodoEntity.class))).thenReturn(nextOccurrence);
+
+        // When
+        TodoResponse response = todoService.updateTodo(1L, request);
+
+        // Then
+        assertThat(response.status()).isEqualTo(TodoStatus.DONE);
+        verify(repeatService).generateNextOccurrence(any(TodoEntity.class));
+        verify(todoRepository, times(2)).save(any(TodoEntity.class)); // Once for update, once for new instance
+    }
+
+    @Test
+    void updateTodo_addingRepeatConfig_shouldUpdateRepeatFields() {
+        // Given
+        TodoEntity nonRepeatableTodo = new TodoEntity(
+            userId,
+            "Normal Task",
+            null,
+            TodoStatus.TODO,
+            TodoPriority.MEDIUM,
+            LocalDate.now(),
+            null
+        );
+        nonRepeatableTodo.setId(1L);
+        
+        RepeatConfigRequest repeatConfig = new RepeatConfigRequest(
+            RepeatType.WEEKLY,
+            1,
+            Arrays.asList(1, 3, 5),
+            null,
+            LocalDate.now().plusMonths(2)
+        );
+        
+        UpdateTodoRequest request = new UpdateTodoRequest(
+            "Normal Task",
+            null,
+            TodoStatus.TODO,
+            TodoPriority.MEDIUM,
+            LocalDate.now(),
+            null,
+            true,
+            repeatConfig
+        );
+        
+        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        when(todoRepository.findById(1L)).thenReturn(Optional.of(nonRepeatableTodo));
+        when(todoRepository.save(any(TodoEntity.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        // When
+        TodoResponse response = todoService.updateTodo(1L, request);
+
+        // Then
+        assertThat(response.isRepeatable()).isTrue();
+        assertThat(response.repeatConfig()).isNotNull();
+        assertThat(response.repeatConfig().repeatType()).isEqualTo(RepeatType.WEEKLY);
+        assertThat(response.repeatConfig().daysOfWeek()).containsExactly(1, 3, 5);
+    }
+
+    @Test
+    void updateTodo_removingRepeatConfig_shouldClearRepeatFields() {
+        // Given
+        TodoEntity repeatableTodo = new TodoEntity(
+            userId,
+            "Repeatable Task",
+            null,
+            TodoStatus.TODO,
+            TodoPriority.MEDIUM,
+            LocalDate.now(),
+            null,
+            true,
+            RepeatType.DAILY,
+            1,
+            null,
+            null,
+            null,
+            null
+        );
+        repeatableTodo.setId(1L);
+        
+        UpdateTodoRequest request = new UpdateTodoRequest(
+            "Repeatable Task",
+            null,
+            TodoStatus.TODO,
+            TodoPriority.MEDIUM,
+            LocalDate.now(),
+            null,
+            false,
+            null
+        );
+        
+        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        when(todoRepository.findById(1L)).thenReturn(Optional.of(repeatableTodo));
+        when(todoRepository.save(any(TodoEntity.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        // When
+        TodoResponse response = todoService.updateTodo(1L, request);
+
+        // Then
+        assertThat(response.isRepeatable()).isFalse();
+        assertThat(response.repeatConfig()).isNull();
+        verify(todoRepository).save(argThat(todo -> 
+            !todo.getIsRepeatable() && 
+            todo.getRepeatType() == null &&
+            todo.getRepeatInterval() == null
+        ));
+    }
+
+    @Test
+    void updateTodo_withParentFromDifferentUser_shouldThrowAccessDeniedException() {
+        // Given
+        UUID otherUserId = UUID.randomUUID();
+        TodoEntity parentTodo = new TodoEntity(
+            otherUserId,
+            "Parent TODO",
+            null,
+            TodoStatus.TODO,
+            TodoPriority.MEDIUM,
+            null,
+            null
+        );
+        parentTodo.setId(100L);
+        
+        UpdateTodoRequest request = new UpdateTodoRequest(
+            "Updated TODO",
+            null,
+            TodoStatus.TODO,
+            TodoPriority.MEDIUM,
+            null,
+            100L,
+            false,
+            null
+        );
+        
+        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        when(todoRepository.findById(1L)).thenReturn(Optional.of(todoEntity));
+        when(todoRepository.findById(100L)).thenReturn(Optional.of(parentTodo));
+
+        // When & Then
+        assertThatThrownBy(() -> todoService.updateTodo(1L, request))
+            .isInstanceOf(AccessDeniedException.class)
+            .hasMessageContaining("parent TODO");
+    }
+
+    @Test
+    void toggleTodoStatus_completingRepeatInstance_shouldGenerateNewInstance() {
+        // Given
+        TodoEntity originalTodo = new TodoEntity(
+            userId,
+            "Daily Task",
+            null,
+            TodoStatus.TODO,
+            TodoPriority.MEDIUM,
+            LocalDate.now(),
+            null,
+            true,
+            RepeatType.DAILY,
+            1,
+            null,
+            null,
+            null,
+            null
+        );
+        originalTodo.setId(1L);
+        
+        TodoEntity repeatInstance = new TodoEntity(
+            userId,
+            "Daily Task",
+            null,
+            TodoStatus.TODO,
+            TodoPriority.MEDIUM,
+            LocalDate.now(),
+            null
+        );
+        repeatInstance.setId(10L);
+        repeatInstance.setOriginalTodoId(1L);
+        
+        TodoEntity nextInstance = new TodoEntity(
+            userId,
+            "Daily Task",
+            null,
+            TodoStatus.TODO,
+            TodoPriority.MEDIUM,
+            LocalDate.now().plusDays(1),
+            null
+        );
+        nextInstance.setOriginalTodoId(1L);
+        
+        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        when(todoRepository.findById(10L)).thenReturn(Optional.of(repeatInstance));
+        when(todoRepository.findById(1L)).thenReturn(Optional.of(originalTodo));
+        when(todoRepository.save(any(TodoEntity.class))).thenAnswer(i -> i.getArguments()[0]);
+        when(repeatService.generateNextOccurrence(originalTodo)).thenReturn(nextInstance);
+
+        // When
+        TodoResponse response = todoService.toggleTodoStatus(10L);
+
+        // Then
+        assertThat(response.status()).isEqualTo(TodoStatus.DONE);
+        verify(repeatService).generateNextOccurrence(originalTodo);
+        verify(todoRepository, times(2)).save(any(TodoEntity.class)); // Once for status update, once for new instance
+    }
+
+    @Test
+    void deleteTodo_withNonExistentId_shouldThrowNotFoundException() {
+        // Given
+        when(todoRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> todoService.deleteTodo(999L))
+            .isInstanceOf(TodoNotFoundException.class)
+            .hasMessageContaining("999");
+    }
+
+    @Test
+    void getChildTasks_withParentFromDifferentUser_shouldThrowAccessDeniedException() {
+        // Given
+        UUID otherUserId = UUID.randomUUID();
+        TodoEntity parentTodo = new TodoEntity(
+            otherUserId,
+            "Parent TODO",
+            null,
+            TodoStatus.TODO,
+            TodoPriority.MEDIUM,
+            null,
+            null
+        );
+        parentTodo.setId(100L);
+        
+        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        when(todoRepository.findById(100L)).thenReturn(Optional.of(parentTodo));
+
+        // When & Then
+        assertThatThrownBy(() -> todoService.getChildTasks(100L))
+            .isInstanceOf(AccessDeniedException.class)
+            .hasMessageContaining("Access denied");
+    }
+
+    @Test
+    void toggleTodoStatus_fromInProgressToDone_shouldUpdateStatus() {
+        // Given
+        todoEntity.setStatus(TodoStatus.IN_PROGRESS);
+        when(userContextService.getCurrentUserId()).thenReturn(userId);
+        when(todoRepository.findById(1L)).thenReturn(Optional.of(todoEntity));
+        when(todoRepository.save(any(TodoEntity.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        // When
+        TodoResponse response = todoService.toggleTodoStatus(1L);
+
+        // Then
+        assertThat(response.status()).isEqualTo(TodoStatus.DONE);
+        verify(todoRepository).save(argThat(todo -> todo.getStatus() == TodoStatus.DONE));
+    }
 }

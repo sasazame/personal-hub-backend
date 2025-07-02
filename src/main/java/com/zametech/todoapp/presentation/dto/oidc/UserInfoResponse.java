@@ -1,6 +1,7 @@
 package com.zametech.todoapp.presentation.dto.oidc;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 
 @Builder
@@ -8,33 +9,33 @@ import lombok.Builder;
 public record UserInfoResponse(
     String sub,
     String name,
-    String givenName,
-    String familyName,
-    String middleName,
+    @JsonProperty("given_name") String givenName,
+    @JsonProperty("family_name") String familyName,
+    @JsonProperty("middle_name") String middleName,
     String nickname,
-    String preferredUsername,
+    @JsonProperty("preferred_username") String preferredUsername,
     String profile,
     String picture,
     String website,
     String email,
-    Boolean emailVerified,
+    @JsonProperty("email_verified") Boolean emailVerified,
     String gender,
     String birthdate,
     String zoneinfo,
     String locale,
-    String phoneNumber,
-    Boolean phoneNumberVerified,
+    @JsonProperty("phone_number") String phoneNumber,
+    @JsonProperty("phone_number_verified") Boolean phoneNumberVerified,
     AddressInfo address,
-    Long updatedAt
+    @JsonProperty("updated_at") Long updatedAt
 ) {
     @Builder
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record AddressInfo(
         String formatted,
-        String streetAddress,
+        @JsonProperty("street_address") String streetAddress,
         String locality,
         String region,
-        String postalCode,
+        @JsonProperty("postal_code") String postalCode,
         String country
     ) {}
 }

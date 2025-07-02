@@ -215,4 +215,175 @@ class UserServiceTest {
                 .isInstanceOf(TodoNotFoundException.class)
                 .hasMessage("User not found with id: " + USER_ID);
     }
+
+    @Test
+    void updateUserProfile_EmailAlreadyExists() {
+        // Given
+        UpdateUserRequest request = new UpdateUserRequest(
+                null,
+                "existing@example.com",
+                CURRENT_PASSWORD,
+                null
+        );
+
+        when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches(CURRENT_PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
+        when(userRepository.existsByEmail("existing@example.com")).thenReturn(true);
+
+        // When & Then
+        assertThatThrownBy(() -> userService.updateUserProfile(USER_ID, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Email already exists");
+    }
+
+    @Test
+    void updateUserProfile_UserNotFound() {
+        // Given
+        UpdateUserRequest request = new UpdateUserRequest(
+                null,
+                null,
+                CURRENT_PASSWORD,
+                null
+        );
+
+        when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> userService.updateUserProfile(USER_ID, request))
+                .isInstanceOf(TodoNotFoundException.class)
+                .hasMessage("User not found with id: " + USER_ID);
+    }
+
+    @Test
+    void changePassword_AccessDenied_DifferentUser() {
+        // Given
+        ChangePasswordRequest request = new ChangePasswordRequest(CURRENT_PASSWORD, NEW_PASSWORD);
+        when(userContextService.getCurrentUserId()).thenReturn(OTHER_USER_ID);
+
+        // When & Then
+        assertThatThrownBy(() -> userService.changePassword(USER_ID, request))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessage("You can only change your own password");
+    }
+
+    @Test
+    void changePassword_UserNotFound() {
+        // Given
+        ChangePasswordRequest request = new ChangePasswordRequest(CURRENT_PASSWORD, NEW_PASSWORD);
+        
+        when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> userService.changePassword(USER_ID, request))
+                .isInstanceOf(TodoNotFoundException.class)
+                .hasMessage("User not found with id: " + USER_ID);
+    }
+
+    @Test
+    void changePassword_InvalidCurrentPassword() {
+        // Given
+        ChangePasswordRequest request = new ChangePasswordRequest("wrongPassword", NEW_PASSWORD);
+
+        when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("wrongPassword", ENCODED_PASSWORD)).thenReturn(false);
+
+        // When & Then
+        assertThatThrownBy(() -> userService.changePassword(USER_ID, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid current password");
+    }
+
+    @Test
+    void deleteUser_UserNotFound() {
+        // Given
+        when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> userService.deleteUser(USER_ID))
+                .isInstanceOf(TodoNotFoundException.class)
+                .hasMessage("User not found with id: " + USER_ID);
+    }
+
+    @Test
+    void getUserById_AccessDenied_DifferentUser() {
+        // Given
+        when(userContextService.getCurrentUserId()).thenReturn(OTHER_USER_ID);
+
+        // When & Then
+        assertThatThrownBy(() -> userService.getUserById(USER_ID))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessage("You can only view your own profile");
+    }
+
+    @Test
+    void updateWeekStartDay_Success() {
+        // Given
+        Integer weekStartDay = 1; // Monday
+        when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        // When
+        User result = userService.updateWeekStartDay(USER_ID, weekStartDay);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(userRepository).save(argThat(user -> user.getWeekStartDay().equals(weekStartDay)));
+    }
+
+    @Test
+    void updateWeekStartDay_AccessDenied_DifferentUser() {
+        // Given
+        Integer weekStartDay = 1;
+        when(userContextService.getCurrentUserId()).thenReturn(OTHER_USER_ID);
+
+        // When & Then
+        assertThatThrownBy(() -> userService.updateWeekStartDay(USER_ID, weekStartDay))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessage("You can only update your own settings");
+    }
+
+    @Test
+    void updateWeekStartDay_UserNotFound() {
+        // Given
+        Integer weekStartDay = 1;
+        when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> userService.updateWeekStartDay(USER_ID, weekStartDay))
+                .isInstanceOf(TodoNotFoundException.class)
+                .hasMessage("User not found with id: " + USER_ID);
+    }
+
+    @Test
+    void updateUserProfile_NoChanges() {
+        // Given - request with nulls and same values
+        UpdateUserRequest request = new UpdateUserRequest(
+                testUser.getUsername(), // Same username
+                testUser.getEmail(),    // Same email
+                CURRENT_PASSWORD,
+                null                    // No new password
+        );
+
+        when(userContextService.getCurrentUserId()).thenReturn(USER_ID);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches(CURRENT_PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        // When
+        User result = userService.updateUserProfile(USER_ID, request);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(userRepository).save(any(User.class));
+        verify(userRepository, never()).existsByUsername(anyString());
+        verify(userRepository, never()).existsByEmail(anyString());
+        verify(passwordEncoder, never()).encode(anyString());
+    }
 }

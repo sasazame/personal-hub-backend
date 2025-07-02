@@ -86,7 +86,7 @@ public class OidcTokenController {
     @PostMapping(value = "/revoke", 
                  consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<?> revoke(
-            @RequestParam("token") String token,
+            @RequestParam(value = "token", required = false) String token,
             @RequestParam(value = "token_type_hint", required = false) String tokenTypeHint,
             @RequestParam(value = "client_id", required = false) String clientId,
             @RequestParam(value = "client_secret", required = false) String clientSecret,
