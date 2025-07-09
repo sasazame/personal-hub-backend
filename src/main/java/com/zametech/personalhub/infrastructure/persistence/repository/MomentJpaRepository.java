@@ -25,12 +25,18 @@ public interface MomentJpaRepository extends JpaRepository<MomentEntity, Long> {
     List<MomentEntity> searchByContent(@Param("userId") UUID userId, @Param("query") String query);
     
     @Query("SELECT m FROM MomentEntity m WHERE m.userId = :userId AND " +
-           "(m.tags LIKE CONCAT('%', :tag, '%'))")
+           "(m.tags = :tag OR " +
+           "m.tags LIKE CONCAT(:tag, ',%') OR " +
+           "m.tags LIKE CONCAT('%,', :tag, ',%') OR " +
+           "m.tags LIKE CONCAT('%,', :tag))")
     List<MomentEntity> findByTag(@Param("userId") UUID userId, @Param("tag") String tag);
     
     @Query("SELECT m FROM MomentEntity m WHERE m.userId = :userId AND " +
            "LOWER(m.content) LIKE LOWER(CONCAT('%', :query, '%')) AND " +
-           "(m.tags LIKE CONCAT('%', :tag, '%'))")
+           "(m.tags = :tag OR " +
+           "m.tags LIKE CONCAT(:tag, ',%') OR " +
+           "m.tags LIKE CONCAT('%,', :tag, ',%') OR " +
+           "m.tags LIKE CONCAT('%,', :tag))")
     List<MomentEntity> searchByContentAndTag(@Param("userId") UUID userId, @Param("query") String query, @Param("tag") String tag);
     
     void deleteByUserId(UUID userId);

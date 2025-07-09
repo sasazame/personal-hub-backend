@@ -4,9 +4,9 @@ services:
     image: postgres:16-alpine
     container_name: personal-hub-postgres
     environment:
-      POSTGRES_DB: personalhub
-      POSTGRES_USER: personalhub
-      POSTGRES_PASSWORD: personalhub
+      POSTGRES_DB: ${DATABASE_NAME:-personalhub}
+      POSTGRES_USER: ${DATABASE_USERNAME:-personalhub}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-personalhub}
     ports:
       - "5432:5432"
     volumes:
@@ -31,9 +31,9 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://personalhub:personalhub@postgres:5432/personalhub
-      DATABASE_USERNAME: personalhub
-      DATABASE_PASSWORD: personalhub
+      DATABASE_URL: postgresql://${DATABASE_USERNAME:-personalhub}:${DATABASE_PASSWORD:-personalhub}@postgres:5432/${DATABASE_NAME:-personalhub}
+      DATABASE_USERNAME: ${DATABASE_USERNAME:-personalhub}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-personalhub}
       SPRING_PROFILES_ACTIVE: docker
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       JWT_EXPIRATION: ${JWT_EXPIRATION}

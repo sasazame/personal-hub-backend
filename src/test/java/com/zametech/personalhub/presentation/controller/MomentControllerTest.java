@@ -2,7 +2,7 @@ package com.zametech.personalhub.presentation.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zametech.personalhub.application.service.MomentService;
-import com.zametech.personalhub.common.exception.TodoNotFoundException;
+import com.zametech.personalhub.common.exception.MomentNotFoundException;
 import com.zametech.personalhub.domain.model.Moment;
 import com.zametech.personalhub.presentation.dto.request.CreateMomentRequest;
 import com.zametech.personalhub.presentation.dto.request.UpdateMomentRequest;
@@ -134,11 +134,11 @@ class MomentControllerTest {
     @Test
     @WithMockUser
     void getMoment_withNonExistentId_shouldReturnNotFound() throws Exception {
-        when(momentService.getMomentById(999L)).thenThrow(new TodoNotFoundException("Moment not found with id: 999"));
+        when(momentService.getMomentById(999L)).thenThrow(new MomentNotFoundException(999L));
 
         mockMvc.perform(get("/api/v1/moments/999"))
             .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.code").value("TODO_NOT_FOUND"))
+            .andExpect(jsonPath("$.code").value("MOMENT_NOT_FOUND"))
             .andExpect(jsonPath("$.message").value("Moment not found with id: 999"));
 
         verify(momentService).getMomentById(999L);
@@ -317,13 +317,13 @@ class MomentControllerTest {
     @WithMockUser
     void updateMoment_withNonExistentId_shouldReturnNotFound() throws Exception {
         when(momentService.updateMoment(eq(999L), any(UpdateMomentRequest.class)))
-            .thenThrow(new TodoNotFoundException("Moment not found with id: 999"));
+            .thenThrow(new MomentNotFoundException(999L));
 
         mockMvc.perform(put("/api/v1/moments/999")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateMomentRequest)))
             .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.code").value("TODO_NOT_FOUND"))
+            .andExpect(jsonPath("$.code").value("MOMENT_NOT_FOUND"))
             .andExpect(jsonPath("$.message").value("Moment not found with id: 999"));
 
         verify(momentService).updateMoment(eq(999L), any(UpdateMomentRequest.class));
@@ -343,12 +343,12 @@ class MomentControllerTest {
     @Test
     @WithMockUser
     void deleteMoment_withNonExistentId_shouldReturnNotFound() throws Exception {
-        doThrow(new TodoNotFoundException("Moment not found with id: 999"))
+        doThrow(new MomentNotFoundException(999L))
             .when(momentService).deleteMoment(999L);
 
         mockMvc.perform(delete("/api/v1/moments/999"))
             .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.code").value("TODO_NOT_FOUND"))
+            .andExpect(jsonPath("$.code").value("MOMENT_NOT_FOUND"))
             .andExpect(jsonPath("$.message").value("Moment not found with id: 999"));
 
         verify(momentService).deleteMoment(999L);

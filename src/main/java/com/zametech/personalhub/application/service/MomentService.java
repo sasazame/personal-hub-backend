@@ -1,6 +1,6 @@
 package com.zametech.personalhub.application.service;
 
-import com.zametech.personalhub.common.exception.TodoNotFoundException;
+import com.zametech.personalhub.common.exception.MomentNotFoundException;
 import com.zametech.personalhub.domain.model.Moment;
 import com.zametech.personalhub.domain.repository.MomentRepository;
 import com.zametech.personalhub.presentation.dto.request.CreateMomentRequest;
@@ -43,7 +43,7 @@ public class MomentService {
         UUID currentUserId = userContextService.getCurrentUserId();
         
         Moment moment = momentRepository.findByIdAndUserId(momentId, currentUserId)
-                .orElseThrow(() -> new TodoNotFoundException("Moment not found with id: " + momentId));
+                .orElseThrow(() -> new MomentNotFoundException(momentId));
         
         log.info("Getting moment with id: {} for user: {}", momentId, currentUserId);
         return moment;
@@ -89,7 +89,7 @@ public class MomentService {
         UUID currentUserId = userContextService.getCurrentUserId();
         
         Moment moment = momentRepository.findByIdAndUserId(momentId, currentUserId)
-                .orElseThrow(() -> new TodoNotFoundException("Moment not found with id: " + momentId));
+                .orElseThrow(() -> new MomentNotFoundException(momentId));
 
         if (request.content() != null) {
             moment.setContent(request.content());
@@ -107,7 +107,7 @@ public class MomentService {
         UUID currentUserId = userContextService.getCurrentUserId();
         
         Moment moment = momentRepository.findByIdAndUserId(momentId, currentUserId)
-                .orElseThrow(() -> new TodoNotFoundException("Moment not found with id: " + momentId));
+                .orElseThrow(() -> new MomentNotFoundException(momentId));
 
         log.info("Deleting moment with id: {} for user: {}", momentId, currentUserId);
         momentRepository.deleteById(momentId);

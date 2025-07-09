@@ -1,6 +1,6 @@
 package com.zametech.personalhub.application.service;
 
-import com.zametech.personalhub.common.exception.TodoNotFoundException;
+import com.zametech.personalhub.common.exception.MomentNotFoundException;
 import com.zametech.personalhub.domain.model.Moment;
 import com.zametech.personalhub.domain.repository.MomentRepository;
 import com.zametech.personalhub.presentation.dto.request.CreateMomentRequest;
@@ -126,7 +126,7 @@ class MomentServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> momentService.getMomentById(999L))
-            .isInstanceOf(TodoNotFoundException.class)
+            .isInstanceOf(MomentNotFoundException.class)
             .hasMessageContaining("Moment not found with id: 999");
     }
 
@@ -139,7 +139,7 @@ class MomentServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> momentService.getMomentById(1L))
-            .isInstanceOf(TodoNotFoundException.class)
+            .isInstanceOf(MomentNotFoundException.class)
             .hasMessageContaining("Moment not found with id: 1");
     }
 
@@ -319,7 +319,7 @@ class MomentServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> momentService.updateMoment(999L, request))
-            .isInstanceOf(TodoNotFoundException.class)
+            .isInstanceOf(MomentNotFoundException.class)
             .hasMessageContaining("Moment not found with id: 999");
     }
 
@@ -344,7 +344,7 @@ class MomentServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> momentService.deleteMoment(999L))
-            .isInstanceOf(TodoNotFoundException.class)
+            .isInstanceOf(MomentNotFoundException.class)
             .hasMessageContaining("Moment not found with id: 999");
     }
 
@@ -357,7 +357,7 @@ class MomentServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> momentService.deleteMoment(1L))
-            .isInstanceOf(TodoNotFoundException.class)
+            .isInstanceOf(MomentNotFoundException.class)
             .hasMessageContaining("Moment not found with id: 1");
     }
 
