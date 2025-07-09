@@ -38,6 +38,7 @@ The API will be available at `http://localhost:8080`
 - **✅ TODO Management**: Hierarchical tasks with priorities
 - **📅 Calendar**: Event management with reminders
 - **📝 Notes**: Markdown support with tagging
+- **⏰ Moments**: Timeline-based thought capture with tagging
 - **📊 Analytics**: Productivity insights
 - **🛡️ Security**: User data isolation, rate limiting
 

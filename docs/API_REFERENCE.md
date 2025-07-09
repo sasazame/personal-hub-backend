@@ -62,6 +62,19 @@ Authorization: Bearer YOUR_JWT_TOKEN
 | DELETE | `/notes/{id}` | Delete note |
 | GET | `/notes/search` | Search notes |
 
+### ⏰ Moments
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/moments` | List moments (paginated) |
+| POST | `/moments` | Create moment |
+| GET | `/moments/{id}` | Get moment |
+| PUT | `/moments/{id}` | Update moment |
+| DELETE | `/moments/{id}` | Delete moment |
+| GET | `/moments/search` | Search moments |
+| GET | `/moments/tag/{tag}` | Get moments by tag |
+| GET | `/moments/tags/default` | Get default tags |
+| GET | `/moments/range` | Get moments by date range |
+
 ### 📊 Analytics
 | Method | Endpoint | Description |
 |--------|----------|-------------|
