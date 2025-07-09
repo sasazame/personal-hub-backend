@@ -4,9 +4,9 @@ services:
     image: postgres:16-alpine
     container_name: personal-hub-postgres
     environment:
-      POSTGRES_DB: personalhub
-      POSTGRES_USER: personalhub
-      POSTGRES_PASSWORD: personalhub
+      POSTGRES_DB: ${DATABASE_NAME:-personalhub}
+      POSTGRES_USER: ${DATABASE_USERNAME:-personalhub}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-personalhub}
     ports:
       - "5432:5432"
     volumes:
@@ -17,6 +17,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - personal-hub-network
 
   app:
     build: .
@@ -26,13 +28,35 @@ services:
         condition: service_healthy
     ports:
       - "8080:8080"
+    env_file:
+      - .env
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/personalhub
-      SPRING_DATASOURCE_USERNAME: personalhub
-      SPRING_DATASOURCE_PASSWORD: personalhub
+      DATABASE_URL: postgresql://${DATABASE_USERNAME:-personalhub}:${DATABASE_PASSWORD:-personalhub}@postgres:5432/${DATABASE_NAME:-personalhub}
+      DATABASE_USERNAME: ${DATABASE_USERNAME:-personalhub}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-personalhub}
       SPRING_PROFILES_ACTIVE: docker
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      APP_BASE_URL: ${APP_BASE_URL}
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:3000}
+      APP_EMAIL_PROVIDER: ${APP_EMAIL_PROVIDER}
+      APP_EMAIL_FROM: ${APP_EMAIL_FROM}
+      APP_EMAIL_FROM_NAME: ${APP_EMAIL_FROM_NAME}
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      GOOGLE_OIDC_CLIENT_ID: ${GOOGLE_OIDC_CLIENT_ID:-}
+      GOOGLE_OIDC_CLIENT_SECRET: ${GOOGLE_OIDC_CLIENT_SECRET:-}
+      GOOGLE_OIDC_REDIRECT_URI: ${GOOGLE_OIDC_REDIRECT_URI:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GITHUB_REDIRECT_URI: ${GITHUB_REDIRECT_URI:-}
     volumes:
       - ./logs:/app/logs
+    networks:
+      - personal-hub-network
 
 volumes:
   postgres_data:
+
+networks:
+  personal-hub-network:
+    driver: bridge

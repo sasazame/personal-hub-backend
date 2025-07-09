@@ -41,6 +41,22 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Momentが見つからない場合
+     */
+    @ExceptionHandler(MomentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleMomentNotFoundException(MomentNotFoundException e) {
+        log.warn("Moment not found: {}", e.getMessage());
+        
+        ErrorResponse errorResponse = new ErrorResponse(
+            "MOMENT_NOT_FOUND",
+            e.getMessage(),
+            ZonedDateTime.now()
+        );
+        
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    /**
      * バリデーションエラー
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
