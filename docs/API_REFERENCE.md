@@ -75,6 +75,19 @@ Authorization: Bearer YOUR_JWT_TOKEN
 | GET | `/moments/tags/default` | Get default tags |
 | GET | `/moments/range` | Get moments by date range |
 
+### 🍅 Pomodoro Timer
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/pomodoro/sessions` | Create new session |
+| PUT | `/pomodoro/sessions/{id}` | Update session (start/pause/complete) |
+| GET | `/pomodoro/sessions/active` | Get active session |
+| GET | `/pomodoro/sessions` | Get session history |
+| POST | `/pomodoro/sessions/{id}/tasks` | Add task to session |
+| PUT | `/pomodoro/tasks/{id}` | Update task |
+| DELETE | `/pomodoro/tasks/{id}` | Remove task |
+| GET | `/pomodoro/config` | Get user config |
+| PUT | `/pomodoro/config` | Update config |
+
 ### 📊 Analytics
 | Method | Endpoint | Description |
 |--------|----------|-------------|

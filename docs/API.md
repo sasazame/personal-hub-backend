@@ -766,4 +766,155 @@ The API supports Cross-Origin Resource Sharing (CORS) for the following origins:
 ### Allowed Headers
 - Authorization, Content-Type, Accept, X-XSRF-TOKEN, X-Requested-With
 
+## Pomodoro Timer API
+
+### Create Pomodoro Session
+Creates a new Pomodoro timer session.
+
+**Endpoint**: `POST /api/pomodoro/sessions`
+
+**Request Body**:
+```json
+{
+  "workDuration": 25,
+  "breakDuration": 5,
+  "tasks": [
+    {
+      "todoId": "123e4567-e89b-12d3-a456-426614174000",
+      "description": "Complete API documentation"
+    }
+  ]
+}
+```
+
+**Response**: `201 Created`
+```json
+{
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "userId": "user123",
+  "startTime": null,
+  "endTime": null,
+  "workDuration": 25,
+  "breakDuration": 5,
+  "completedCycles": 0,
+  "status": "ACTIVE",
+  "sessionType": "WORK",
+  "tasks": [
+    {
+      "id": "task123",
+      "sessionId": "123e4567-e89b-12d3-a456-426614174000",
+      "todoId": "123e4567-e89b-12d3-a456-426614174000",
+      "description": "Complete API documentation",
+      "completed": false,
+      "orderIndex": 0,
+      "linkedTodo": {
+        "id": "123e4567-e89b-12d3-a456-426614174000",
+        "title": "Complete API documentation",
+        "status": "PENDING"
+      }
+    }
+  ],
+  "createdAt": "2025-06-23T10:00:00Z",
+  "updatedAt": "2025-06-23T10:00:00Z"
+}
+```
+
+### Update Pomodoro Session
+Updates an existing Pomodoro session (start, pause, resume, complete, etc.).
+
+**Endpoint**: `PUT /api/pomodoro/sessions/{sessionId}`
+
+**Request Body**:
+```json
+{
+  "action": "START",
+  "sessionType": "WORK"
+}
+```
+
+Actions: `START`, `PAUSE`, `RESUME`, `COMPLETE`, `CANCEL`, `SWITCH_TYPE`
+Session Types: `WORK`, `SHORT_BREAK`, `LONG_BREAK`
+
+### Get Active Session
+Retrieves the current active Pomodoro session.
+
+**Endpoint**: `GET /api/pomodoro/sessions/active`
+
+### Get Session History
+Retrieves paginated Pomodoro session history.
+
+**Endpoint**: `GET /api/pomodoro/sessions?page=0&size=20&sort=createdAt,desc`
+
+### Add Task to Session
+Adds a task to an existing Pomodoro session.
+
+**Endpoint**: `POST /api/pomodoro/sessions/{sessionId}/tasks`
+
+**Request Body**:
+```json
+{
+  "todoId": "123e4567-e89b-12d3-a456-426614174000",
+  "description": "Review pull request"
+}
+```
+
+### Update Task
+Updates a task within a Pomodoro session.
+
+**Endpoint**: `PUT /api/pomodoro/tasks/{taskId}`
+
+**Request Body**:
+```json
+{
+  "completed": true
+}
+```
+
+### Remove Task
+Removes a task from a Pomodoro session.
+
+**Endpoint**: `DELETE /api/pomodoro/tasks/{taskId}`
+
+### Get Pomodoro Configuration
+Retrieves user's Pomodoro configuration settings.
+
+**Endpoint**: `GET /api/pomodoro/config`
+
+**Response**:
+```json
+{
+  "id": "config123",
+  "userId": "user123",
+  "workDuration": 25,
+  "shortBreakDuration": 5,
+  "longBreakDuration": 15,
+  "cyclesBeforeLongBreak": 4,
+  "alarmSound": "default",
+  "alarmVolume": 50,
+  "autoStartBreaks": true,
+  "autoStartWork": false,
+  "createdAt": "2025-06-23T10:00:00Z",
+  "updatedAt": "2025-06-23T10:00:00Z"
+}
+```
+
+### Update Pomodoro Configuration
+Updates user's Pomodoro configuration settings.
+
+**Endpoint**: `PUT /api/pomodoro/config`
+
+**Request Body**:
+```json
+{
+  "workDuration": 30,
+  "shortBreakDuration": 5,
+  "longBreakDuration": 20,
+  "cyclesBeforeLongBreak": 4,
+  "alarmSound": "bell",
+  "alarmVolume": 75,
+  "autoStartBreaks": true,
+  "autoStartWork": true
+}
+```
+
 This API specification provides comprehensive coverage of all available endpoints and their usage patterns for the Personal Hub application.

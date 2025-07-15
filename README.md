@@ -39,6 +39,7 @@ The API will be available at `http://localhost:8080`
 - **📅 Calendar**: Event management with reminders
 - **📝 Notes**: Markdown support with tagging
 - **⏰ Moments**: Timeline-based thought capture with tagging
+- **🍅 Pomodoro Timer**: Focus sessions with task tracking
 - **📊 Analytics**: Productivity insights
 - **🛡️ Security**: User data isolation, rate limiting
 
@@ -126,6 +127,10 @@ mvn jacoco:report # Generate coverage report
 - **[Database Schema](docs/DATABASE.md)** - Data model documentation
 - **[OAuth Setup](docs/OAUTH_SETUP.md)** - Google/GitHub integration
 - **[Frontend Examples](docs/FRONTEND_API_EXAMPLES.md)** - Integration code samples
+
+### Feature Documentation
+- **[Pomodoro Timer](docs/POMODORO_FEATURE.md)** - Time management system
+- **[Pomodoro Quick Reference](docs/POMODORO_QUICK_REFERENCE.md)** - Essential commands
 
 ## 🚧 Roadmap
 
