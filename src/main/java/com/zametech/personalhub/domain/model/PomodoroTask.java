@@ -75,6 +75,9 @@ public class PomodoroTask {
     }
 
     public void setOrderIndex(Integer orderIndex) {
+        if (orderIndex != null && orderIndex < 0) {
+            throw new IllegalArgumentException("Order index must be non-negative");
+        }
         this.orderIndex = orderIndex;
     }
 

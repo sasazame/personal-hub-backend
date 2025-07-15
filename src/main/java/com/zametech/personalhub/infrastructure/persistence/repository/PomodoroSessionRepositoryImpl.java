@@ -6,6 +6,7 @@ import com.zametech.personalhub.domain.repository.PomodoroSessionRepository;
 import com.zametech.personalhub.infrastructure.persistence.entity.PomodoroSessionEntity;
 import com.zametech.personalhub.infrastructure.persistence.entity.PomodoroTaskEntity;
 import com.zametech.personalhub.infrastructure.persistence.jpa.JpaPomodoroSessionRepository;
+import com.zametech.personalhub.shared.constants.SessionType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -102,7 +103,7 @@ public class PomodoroSessionRepositoryImpl implements PomodoroSessionRepository 
         session.setBreakDuration(entity.getBreakDuration());
         session.setCompletedCycles(entity.getCompletedCycles());
         session.setStatus(PomodoroSession.SessionStatus.valueOf(entity.getStatus().name()));
-        session.setSessionType(PomodoroSession.SessionType.valueOf(entity.getSessionType().name()));
+        session.setSessionType(entity.getSessionType());
         session.setCreatedAt(entity.getCreatedAt());
         session.setUpdatedAt(entity.getUpdatedAt());
         
@@ -148,7 +149,7 @@ public class PomodoroSessionRepositoryImpl implements PomodoroSessionRepository 
         entity.setBreakDuration(session.getBreakDuration());
         entity.setCompletedCycles(session.getCompletedCycles());
         entity.setStatus(PomodoroSessionEntity.SessionStatus.valueOf(session.getStatus().name()));
-        entity.setSessionType(PomodoroSessionEntity.SessionType.valueOf(session.getSessionType().name()));
+        entity.setSessionType(session.getSessionType());
         entity.setCreatedAt(session.getCreatedAt());
         entity.setUpdatedAt(session.getUpdatedAt());
         

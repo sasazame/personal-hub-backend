@@ -1,5 +1,6 @@
 package com.zametech.personalhub.domain.model;
 
+import com.zametech.personalhub.shared.constants.SessionType;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,12 +29,6 @@ public class PomodoroSession {
         PAUSED,
         COMPLETED,
         CANCELLED
-    }
-
-    public enum SessionType {
-        WORK,
-        SHORT_BREAK,
-        LONG_BREAK
     }
 
     // Constructors
@@ -124,11 +119,21 @@ public class PomodoroSession {
     }
 
     public List<PomodoroTask> getTasks() {
-        return tasks;
+        return new ArrayList<>(tasks);
     }
 
     public void setTasks(List<PomodoroTask> tasks) {
-        this.tasks = tasks;
+        this.tasks = tasks != null ? new ArrayList<>(tasks) : new ArrayList<>();
+    }
+    
+    public void addTask(PomodoroTask task) {
+        if (task != null) {
+            this.tasks.add(task);
+        }
+    }
+    
+    public void removeTask(PomodoroTask task) {
+        this.tasks.remove(task);
     }
 
     public LocalDateTime getCreatedAt() {

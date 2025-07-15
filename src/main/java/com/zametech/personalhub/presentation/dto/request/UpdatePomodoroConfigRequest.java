@@ -1,5 +1,6 @@
 package com.zametech.personalhub.presentation.dto.request;
 
+import com.zametech.personalhub.presentation.validation.ValidAlarmSound;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
@@ -23,6 +24,7 @@ public class UpdatePomodoroConfigRequest {
     @Max(value = 10, message = "Cycles before long break cannot exceed 10")
     private Integer cyclesBeforeLongBreak;
 
+    @ValidAlarmSound
     private String alarmSound;
 
     @Min(value = 0, message = "Alarm volume must be at least 0")

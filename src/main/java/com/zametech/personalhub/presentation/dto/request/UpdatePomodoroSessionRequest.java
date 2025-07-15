@@ -1,30 +1,19 @@
 package com.zametech.personalhub.presentation.dto.request;
 
+import com.zametech.personalhub.presentation.validation.ValidSessionTypeForAction;
+import com.zametech.personalhub.shared.constants.SessionAction;
+import com.zametech.personalhub.shared.constants.SessionType;
 import jakarta.validation.constraints.NotNull;
 
 /**
  * Request DTO for updating a Pomodoro session.
  */
+@ValidSessionTypeForAction
 public class UpdatePomodoroSessionRequest {
     @NotNull(message = "Action is required")
     private SessionAction action;
     
     private SessionType sessionType;
-
-    public enum SessionAction {
-        START,
-        PAUSE,
-        RESUME,
-        COMPLETE,
-        CANCEL,
-        SWITCH_TYPE
-    }
-
-    public enum SessionType {
-        WORK,
-        SHORT_BREAK,
-        LONG_BREAK
-    }
 
     // Getters and Setters
     public SessionAction getAction() {

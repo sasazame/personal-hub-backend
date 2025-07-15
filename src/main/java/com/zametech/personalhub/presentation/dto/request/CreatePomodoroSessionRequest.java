@@ -1,5 +1,6 @@
 package com.zametech.personalhub.presentation.dto.request;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -20,6 +21,7 @@ public class CreatePomodoroSessionRequest {
     @Max(value = 60, message = "Break duration cannot exceed 60 minutes")
     private Integer breakDuration;
 
+    @Valid
     private List<CreatePomodoroTaskRequest> tasks;
 
     // Getters and Setters

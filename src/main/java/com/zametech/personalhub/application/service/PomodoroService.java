@@ -1,9 +1,12 @@
 package com.zametech.personalhub.application.service;
 
+import com.zametech.personalhub.domain.exception.ActiveSessionNotFoundException;
 import com.zametech.personalhub.domain.model.*;
 import com.zametech.personalhub.domain.repository.*;
 import com.zametech.personalhub.presentation.dto.request.*;
 import com.zametech.personalhub.presentation.dto.response.*;
+import com.zametech.personalhub.shared.constants.AlarmSound;
+import com.zametech.personalhub.shared.constants.SessionType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -108,7 +111,7 @@ public class PomodoroService {
             case COMPLETE:
                 session.setStatus(PomodoroSession.SessionStatus.COMPLETED);
                 session.setEndTime(LocalDateTime.now());
-                if (session.getSessionType() == PomodoroSession.SessionType.WORK) {
+                if (session.getSessionType() == SessionType.WORK) {
                     session.setCompletedCycles(session.getCompletedCycles() + 1);
                 }
                 break;
@@ -120,7 +123,7 @@ public class PomodoroService {
                 
             case SWITCH_TYPE:
                 if (request.getSessionType() != null) {
-                    session.setSessionType(PomodoroSession.SessionType.valueOf(request.getSessionType().name()));
+                    session.setSessionType(request.getSessionType());
                 }
                 break;
         }
@@ -137,7 +140,7 @@ public class PomodoroService {
         
         return sessionRepository.findActiveSessionByUserId(userId)
                 .map(this::toSessionResponse)
-                .orElse(null);
+                .orElseThrow(() -> new ActiveSessionNotFoundException());
     }
 
     /**
@@ -283,7 +286,7 @@ public class PomodoroService {
             config.setCyclesBeforeLongBreak(request.getCyclesBeforeLongBreak());
         }
         if (request.getAlarmSound() != null) {
-            config.setAlarmSound(request.getAlarmSound());
+            config.setAlarmSound(AlarmSound.fromValue(request.getAlarmSound()));
         }
         if (request.getAlarmVolume() != null) {
             config.setAlarmVolume(request.getAlarmVolume());
@@ -367,7 +370,7 @@ public class PomodoroService {
         response.setShortBreakDuration(config.getShortBreakDuration());
         response.setLongBreakDuration(config.getLongBreakDuration());
         response.setCyclesBeforeLongBreak(config.getCyclesBeforeLongBreak());
-        response.setAlarmSound(config.getAlarmSound());
+        response.setAlarmSound(config.getAlarmSound().getValue());
         response.setAlarmVolume(config.getAlarmVolume());
         response.setAutoStartBreaks(config.getAutoStartBreaks());
         response.setAutoStartWork(config.getAutoStartWork());

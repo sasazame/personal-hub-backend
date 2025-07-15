@@ -1,5 +1,6 @@
 package com.zametech.personalhub.infrastructure.persistence.entity;
 
+import com.zametech.personalhub.shared.constants.SessionType;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -57,12 +58,6 @@ public class PomodoroSessionEntity {
         PAUSED,
         COMPLETED,
         CANCELLED
-    }
-
-    public enum SessionType {
-        WORK,
-        SHORT_BREAK,
-        LONG_BREAK
     }
 
     @PrePersist

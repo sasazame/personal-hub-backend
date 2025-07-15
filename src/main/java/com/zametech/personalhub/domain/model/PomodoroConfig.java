@@ -1,5 +1,6 @@
 package com.zametech.personalhub.domain.model;
 
+import com.zametech.personalhub.shared.constants.AlarmSound;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -14,7 +15,7 @@ public class PomodoroConfig {
     private Integer shortBreakDuration; // in minutes, default 5
     private Integer longBreakDuration; // in minutes, default 15
     private Integer cyclesBeforeLongBreak; // default 4
-    private String alarmSound; // sound file identifier
+    private AlarmSound alarmSound; // sound file identifier
     private Integer alarmVolume; // 0-100
     private Boolean autoStartBreaks;
     private Boolean autoStartWork;
@@ -28,7 +29,7 @@ public class PomodoroConfig {
         this.shortBreakDuration = 5;
         this.longBreakDuration = 15;
         this.cyclesBeforeLongBreak = 4;
-        this.alarmSound = "default";
+        this.alarmSound = AlarmSound.DEFAULT;
         this.alarmVolume = 50;
         this.autoStartBreaks = true;
         this.autoStartWork = false;
@@ -90,11 +91,11 @@ public class PomodoroConfig {
         this.cyclesBeforeLongBreak = cyclesBeforeLongBreak;
     }
 
-    public String getAlarmSound() {
+    public AlarmSound getAlarmSound() {
         return alarmSound;
     }
 
-    public void setAlarmSound(String alarmSound) {
+    public void setAlarmSound(AlarmSound alarmSound) {
         this.alarmSound = alarmSound;
     }
 

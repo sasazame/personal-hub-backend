@@ -4,6 +4,7 @@ import com.zametech.personalhub.domain.model.PomodoroConfig;
 import com.zametech.personalhub.domain.repository.PomodoroConfigRepository;
 import com.zametech.personalhub.infrastructure.persistence.entity.PomodoroConfigEntity;
 import com.zametech.personalhub.infrastructure.persistence.jpa.JpaPomodoroConfigRepository;
+import com.zametech.personalhub.shared.constants.AlarmSound;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,7 +53,7 @@ public class PomodoroConfigRepositoryImpl implements PomodoroConfigRepository {
         config.setShortBreakDuration(entity.getShortBreakDuration());
         config.setLongBreakDuration(entity.getLongBreakDuration());
         config.setCyclesBeforeLongBreak(entity.getCyclesBeforeLongBreak());
-        config.setAlarmSound(entity.getAlarmSound());
+        config.setAlarmSound(AlarmSound.fromValue(entity.getAlarmSound()));
         config.setAlarmVolume(entity.getAlarmVolume());
         config.setAutoStartBreaks(entity.getAutoStartBreaks());
         config.setAutoStartWork(entity.getAutoStartWork());
@@ -71,7 +72,7 @@ public class PomodoroConfigRepositoryImpl implements PomodoroConfigRepository {
         entity.setShortBreakDuration(config.getShortBreakDuration());
         entity.setLongBreakDuration(config.getLongBreakDuration());
         entity.setCyclesBeforeLongBreak(config.getCyclesBeforeLongBreak());
-        entity.setAlarmSound(config.getAlarmSound());
+        entity.setAlarmSound(config.getAlarmSound().getValue());
         entity.setAlarmVolume(config.getAlarmVolume());
         entity.setAutoStartBreaks(config.getAutoStartBreaks());
         entity.setAutoStartWork(config.getAutoStartWork());
